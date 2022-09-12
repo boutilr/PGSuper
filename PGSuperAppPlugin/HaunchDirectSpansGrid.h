@@ -22,19 +22,19 @@
 
 
 #pragma once
-// HaunchSegmentGrid.h : header file
+// HaunchDirectSpansGrid.h : header file
 //
-#include "HaunchBearingGrid.h"
+#include "PgsExt/BridgeDescription2.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// CHaunchSegmentGrid window
+// CHaunchDirectSpansGrid window
 
-class CHaunchSegmentGrid : public CGXGridWnd
+class CHaunchDirectSpansGrid : public CGXGridWnd
 {
 	GRID_DECLARE_REGISTER()
 // Construction
 public:
-	CHaunchSegmentGrid();
+	CHaunchDirectSpansGrid();
 
 // Attributes
 public:
@@ -44,16 +44,16 @@ public:
 
 // Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CHaunchSegmentGrid)
+	//{{AFX_VIRTUAL(CHaunchDirectSpansGrid)
 	//}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CHaunchSegmentGrid();
+	virtual ~CHaunchDirectSpansGrid();
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CHaunchSegmentGrid)
+	//{{AFX_MSG(CHaunchDirectSpansGrid)
 		// NOTE - the ClassWizard will add and remove member functions here.
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
@@ -65,16 +65,18 @@ protected:
 
 public:
    // custom init for grid
-   void CustomInit(GroupIndexType grpIdx);
+   void CustomInit();
 
+   void  InvalidateGrid();
 
-
-private:
-   GroupIndexType m_GroupIdx;
-   ROWCOL m_nExtraHeaderRows;
-
+   void BuildGridAndHeader();
    void FillGrid();
    void GetGridData(CDataExchange* pDX);
+
+   pgsTypes::HaunchInputDistributionType GetHaunchInputDistributionType();
+
+private:
+   ROWCOL m_nExtraHeaderRows;
 
    CBridgeDescription2* GetBridgeDesc();
 
@@ -83,8 +85,6 @@ private:
 
    // Sets all the cells to read only initially
    void SetInitialRowStyle(ROWCOL row);
-
-   const WBFL::Units::LengthData* m_pUnit;
 public:
    afx_msg void OnDestroy();
 };

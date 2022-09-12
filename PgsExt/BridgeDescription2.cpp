@@ -39,7 +39,8 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define FILE_VERSION 13
+#define FILE_VERSION 14
+// Version 14 - added new Direct haunch depth input options
 // Version 13 - added starting pier renumbering
 // Version 12 - added work point location
 // Version 11 - Added BearingData, and Top Width Spacing for adjacent deck beams
@@ -60,6 +61,8 @@ CBridgeDescription2::CBridgeDescription2()
    m_Deck.SetBridgeDescription(this);
    m_TimelineManager.SetBridgeDescription(this);
 
+   m_HaunchInputDepthType = pgsTypes::hidACamber; // default to old method
+
    m_SlabOffset     = WBFL::Units::ConvertToSysUnits( 10.0, WBFL::Units::Measure::Inch );
    m_SlabOffsetType = pgsTypes::sotBridge;
 
@@ -67,6 +70,11 @@ CBridgeDescription2::CBridgeDescription2()
 
    m_AssumedExcessCamber = 0.0;
    m_AssumedExcessCamberType = pgsTypes::aecBridge;
+
+   m_HaunchInputLocationType = pgsTypes::hilSame4Bridge;
+   m_HaunchLayoutType = pgsTypes::hltAlongSpans;
+   m_HaunchInputDistributionType = pgsTypes::hidUniform; // seems reasonable
+   m_HaunchDepths.assign((int)m_HaunchInputDistributionType, m_Fillet);
 
    m_BearingType = pgsTypes::brtPier;
 
@@ -205,35 +213,67 @@ bool CBridgeDescription2::operator==(const CBridgeDescription2& rOther) const
       return false;
    }
 
-   if ( m_SlabOffsetType != rOther.m_SlabOffsetType )
+   if (m_HaunchInputDepthType != rOther.m_HaunchInputDepthType)
    {
       return false;
    }
 
-   if ( m_SlabOffsetType == pgsTypes::sotBridge )
+   if (pgsTypes::hidACamber == m_HaunchInputDepthType)
    {
-      if ( !IsEqual(m_SlabOffset,rOther.m_SlabOffset) )
+      // "A" dimension haunch input method variables
+      if (m_SlabOffsetType != rOther.m_SlabOffsetType)
+      {
+         return false;
+      }
+
+      if (m_SlabOffsetType == pgsTypes::sotBridge)
+      {
+         if (!IsEqual(m_SlabOffset,rOther.m_SlabOffset))
+         {
+            return false;
+         }
+      }
+
+      if (m_AssumedExcessCamberType != rOther.m_AssumedExcessCamberType)
+      {
+         return false;
+      }
+
+      if (m_AssumedExcessCamberType == pgsTypes::aecBridge)
+      {
+         if (!IsEqual(m_AssumedExcessCamber,rOther.m_AssumedExcessCamber))
+         {
+            return false;
+         }
+      }
+   }
+   else
+   {
+      // Haunch input directly
+      if (m_HaunchInputLocationType != rOther.m_HaunchInputLocationType)
+      {
+         return false;
+      }
+
+      if (m_HaunchLayoutType != rOther.m_HaunchLayoutType)
+      {
+         return false;
+      }
+
+      if (m_HaunchInputDistributionType != rOther.m_HaunchInputDistributionType)
+      {
+         return false;
+      }
+
+      if (!std::equal(m_HaunchDepths.cbegin(),m_HaunchDepths.cend(),rOther.m_HaunchDepths.cbegin(),[](const auto& a,const auto& b) {return IsEqual(a,b); }))
       {
          return false;
       }
    }
 
-   if ( !IsEqual(m_Fillet,rOther.m_Fillet) )
+   if (!IsEqual(m_Fillet,rOther.m_Fillet))
    {
       return false;
-   }
-   
-   if ( m_AssumedExcessCamberType != rOther.m_AssumedExcessCamberType )
-   {
-      return false;
-   }
-
-   if ( m_AssumedExcessCamberType == pgsTypes::aecBridge )
-   {
-      if ( !IsEqual(m_AssumedExcessCamber,rOther.m_AssumedExcessCamber) )
-      {
-         return false;
-      }
    }
 
    if ( m_DisplayStartSupportType != rOther.m_DisplayStartSupportType )
@@ -537,62 +577,114 @@ HRESULT CBridgeDescription2::Load(IStructuredLoad* pStrLoad,IProgress* pProgress
       hr = pStrLoad->get_Property(_T("AlignmentOffset"),&var);
       m_AlignmentOffset = var.dblVal;
 
-      var.vt = VT_UI4;
-      hr = pStrLoad->get_Property(_T("SlabOffsetType"),&var);
-      m_SlabOffsetType = (pgsTypes::SlabOffsetType)(var.lVal);
-      if ( m_SlabOffsetType == pgsTypes::sotBridge )
+      m_HaunchInputDepthType = pgsTypes::hidACamber; // the only type before version 14
+      if (13 < version)
       {
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("SlabOffset"),&var);
-         m_SlabOffset = var.dblVal;
+         var.vt = VT_UI4;
+         hr = pStrLoad->get_Property(_T("HaunchInputDepthType"),&var);
+         m_HaunchInputDepthType = (pgsTypes::HaunchInputDepthType)(var.lVal);
       }
 
-      m_bWasVersion3_1FilletRead = false;
-
-      if (version > 7)
+      if (m_HaunchInputDepthType == pgsTypes::hidACamber)
       {
-         if (version == 8 || version == 9)
-         {
-            // In version 8, we made a mistake and allowed fillets to be all over the bridge. This was fixed
-            // in vers 10, when we went back to a single fillet for the entire bridge. See mantis 209 and 752
          var.vt = VT_UI4;
-            hr = pStrLoad->get_Property(_T("FilletType"), &var);
-            LONG ft = (var.lVal); // if value was for entire bridge, we can just store
-            if (ft == 0 /* pgsTypes::sotBridge */)
+         hr = pStrLoad->get_Property(_T("SlabOffsetType"),&var);
+         m_SlabOffsetType = (pgsTypes::SlabOffsetType)(var.lVal);
+         if (m_SlabOffsetType == pgsTypes::sotBridge)
          {
             var.vt = VT_R8;
-               hr = pStrLoad->get_Property(_T("Fillet"), &var);
-               m_Fillet = var.dblVal;
+            hr = pStrLoad->get_Property(_T("SlabOffset"),&var);
+            m_SlabOffset = var.dblVal;
+         }
+
+         m_bWasVersion3_1FilletRead = false;
+
+         if (version > 7)
+         {
+            if (version == 8 || version == 9)
+            {
+               // In version 8, we made a mistake and allowed fillets to be all over the bridge. This was fixed
+               // in vers 10, when we went back to a single fillet for the entire bridge. See mantis 209 and 752
+               var.vt = VT_UI4;
+               hr = pStrLoad->get_Property(_T("FilletType"),&var);
+               LONG ft = (var.lVal); // if value was for entire bridge, we can just store
+               if (ft == 0 /* pgsTypes::sotBridge */)
+               {
+                  var.vt = VT_R8;
+                  hr = pStrLoad->get_Property(_T("Fillet"),&var);
+                  m_Fillet = var.dblVal;
+               }
+               else
+               {
+                  // Fillet was defined for multiple spans or girders. We will need get max value of all defined
+                  // fillets and assign it to our bridge after we are finished loading
+                  m_bWasVersion3_1FilletRead = true;
+                  m_Fillet = 0.0;
+               }
             }
             else
             {
-               // Fillet was defined for multiple spans or girders. We will need get max value of all defined
-               // fillets and assign it to our bridge after we are finished loading
-               m_bWasVersion3_1FilletRead = true;
-               m_Fillet = 0.0;
+               var.vt = VT_R8;
+               hr = pStrLoad->get_Property(_T("Fillet"),&var);
+               m_Fillet = var.dblVal;
             }
          }
-         else
+
+         if (9 < version)
          {
-            var.vt = VT_R8;
-            hr = pStrLoad->get_Property(_T("Fillet"), &var);
-            m_Fillet = var.dblVal;
+            var.vt = VT_UI4;
+            hr = pStrLoad->get_Property(_T("AssExcessCamberType"),&var);
+            pgsTypes::AssumedExcessCamberType ct = (pgsTypes::AssumedExcessCamberType)(var.lVal);
+            m_AssumedExcessCamberType = ct;
+
+            if (ct == pgsTypes::aecBridge)
+            {
+               var.vt = VT_R8;
+               hr = pStrLoad->get_Property(_T("AssExcessCamber"),&var);
+               m_AssumedExcessCamber = var.dblVal;
+            }
          }
       }
-      
-      if (9 < version)
+      else
       {
+         // Haunch depth input directly
          var.vt = VT_UI4;
-         hr = pStrLoad->get_Property(_T("AssExcessCamberType"), &var);
-         pgsTypes::AssumedExcessCamberType ct = (pgsTypes::AssumedExcessCamberType )(var.lVal);
-         m_AssumedExcessCamberType = ct;
+         hr = pStrLoad->get_Property(_T("HaunchInputLocationType"),&var);
+         pgsTypes::HaunchInputLocationType hit = (pgsTypes::HaunchInputLocationType)(var.lVal);
+         m_HaunchInputLocationType = hit;
 
-         if (ct == pgsTypes::aecBridge)
+         var.vt = VT_UI4;
+         hr = pStrLoad->get_Property(_T("HaunchLayoutType"),&var);
+         pgsTypes::HaunchLayoutType hlt = (pgsTypes::HaunchLayoutType)(var.lVal);
+         m_HaunchLayoutType = hlt;
+
+         var.vt = VT_UI4;
+         hr = pStrLoad->get_Property(_T("HaunchInputDistributionType"),&var);
+         pgsTypes::HaunchInputDistributionType hdt = (pgsTypes::HaunchInputDistributionType)(var.lVal);
+         m_HaunchInputDistributionType = hdt;
+
+         if (pgsTypes::hilSame4Bridge == m_HaunchInputLocationType)
          {
+            hr = pStrLoad->BeginUnit(_T("HaunchDepths"));
+
+            m_HaunchDepths.clear();
+            var.vt = VT_INDEX;
+            hr = pStrLoad->get_Property(_T("nValues"),&var);
+            IndexType nvals = VARIANT2INDEX(var);
+
             var.vt = VT_R8;
-            hr = pStrLoad->get_Property(_T("AssExcessCamber"), &var);
-            m_AssumedExcessCamber = var.dblVal;
+            for (IndexType iv = 0; iv < nvals; iv++)
+            {
+               hr = pStrLoad->get_Property(_T("HaunchVal"),&var);
+               m_HaunchDepths.push_back(var.dblVal);
+            }
+
+            pStrLoad->EndUnit();
          }
+
+         var.vt = VT_R8;
+         hr = pStrLoad->get_Property(_T("Fillet"),&var);
+         m_Fillet = var.dblVal;
       }
 
       if (13 <= version)
@@ -796,12 +888,17 @@ HRESULT CBridgeDescription2::Load(IStructuredLoad* pStrLoad,IProgress* pProgress
          m_TimelineManager.GetEventByIndex(erectSegmentEventIdx)->GetApplyLoadActivity().ApplyIntermediateDiaphragmLoad();
       }
 
+      bool doSlabOffset =    m_HaunchInputDepthType == pgsTypes::hidACamber && m_SlabOffsetType == pgsTypes::sotBridge;
+      bool doAssumedCamber = m_HaunchInputDepthType == pgsTypes::hidACamber && m_AssumedExcessCamberType == pgsTypes::aecBridge;
+      bool doDirectHaunch =  m_HaunchInputDepthType != pgsTypes::hidACamber && m_HaunchInputLocationType == pgsTypes::hilSame4Bridge;
+
       // Copy values down to the individual element level for parameters defined at the bridge level
       CopyDown(m_bSameNumberOfGirders, 
                m_bSameGirderName, 
                IsBridgeSpacing(m_GirderSpacingType),
-               m_SlabOffsetType == pgsTypes::sotBridge, 
-               m_AssumedExcessCamberType==pgsTypes::aecBridge,
+               doSlabOffset, 
+               doAssumedCamber,
+               doDirectHaunch,
                m_BearingType==pgsTypes::brtBridge);
    }
    catch (HRESULT)
@@ -859,18 +956,43 @@ HRESULT CBridgeDescription2::Save(IStructuredSave* pStrSave,IProgress* pProgress
 
    hr = pStrSave->put_Property(_T("AlignmentOffset"),CComVariant(m_AlignmentOffset)); // added in version 4
 
-   hr = pStrSave->put_Property(_T("SlabOffsetType"),CComVariant(m_SlabOffsetType));
-   if ( m_SlabOffsetType == pgsTypes::sotBridge )
-   {
-      hr = pStrSave->put_Property(_T("SlabOffset"),CComVariant(m_SlabOffset));
-   }
+   hr = pStrSave->put_Property(_T("HaunchInputDepthType"),CComVariant(m_HaunchInputDepthType)); // added in version 14
 
-   hr = pStrSave->put_Property(_T("Fillet"),CComVariant(m_Fillet));
-   
-   hr = pStrSave->put_Property(_T("AssExcessCamberType"),CComVariant(m_AssumedExcessCamberType)); // Added in version 8
-   if ( m_AssumedExcessCamberType == pgsTypes::aecBridge )
+   if (m_HaunchInputDepthType == pgsTypes::hidACamber)
    {
-      hr = pStrSave->put_Property(_T("AssExcessCamber"),CComVariant(m_AssumedExcessCamber));
+      hr = pStrSave->put_Property(_T("SlabOffsetType"),CComVariant(m_SlabOffsetType));
+      if (m_SlabOffsetType == pgsTypes::sotBridge)
+      {
+         hr = pStrSave->put_Property(_T("SlabOffset"),CComVariant(m_SlabOffset));
+      }
+
+      hr = pStrSave->put_Property(_T("Fillet"),CComVariant(m_Fillet));
+
+      hr = pStrSave->put_Property(_T("AssExcessCamberType"),CComVariant(m_AssumedExcessCamberType)); // Added in version 8
+      if (m_AssumedExcessCamberType == pgsTypes::aecBridge)
+      {
+         hr = pStrSave->put_Property(_T("AssExcessCamber"),CComVariant(m_AssumedExcessCamber));
+      }
+   }
+   else
+   {
+      // Direct input of haunch depths
+      hr = pStrSave->put_Property(_T("HaunchInputLocationType"),CComVariant(m_HaunchInputLocationType)); //         Added in version 14
+      hr = pStrSave->put_Property(_T("HaunchLayoutType"),CComVariant(m_HaunchLayoutType)); //                       Added in version 14
+      hr = pStrSave->put_Property(_T("HaunchInputDistributionType"),CComVariant(m_HaunchInputDistributionType)); // Added in version 14
+
+      if (pgsTypes::hilSame4Bridge == m_HaunchInputLocationType)
+      {
+         hr = pStrSave->BeginUnit(_T("HaunchDepths"),1.0);
+         pStrSave->put_Property(_T("nValues"),CComVariant(m_HaunchDepths.size()));
+         for (const auto haunchVal : m_HaunchDepths)
+         {
+            hr = pStrSave->put_Property(_T("HaunchVal"),CComVariant(haunchVal));
+         }
+         hr = pStrSave->EndUnit();
+      }
+
+      hr = pStrSave->put_Property(_T("Fillet"),CComVariant(m_Fillet));
    }
 
    // Pier renumbering. Added in version 13
@@ -993,6 +1115,16 @@ CRailingSystem* CBridgeDescription2::GetRightRailingSystem()
 const CRailingSystem* CBridgeDescription2::GetRightRailingSystem() const
 {
    return &m_RightRailingSystem;
+}
+
+void CBridgeDescription2::SetHaunchInputDepthType(pgsTypes::HaunchInputDepthType type)
+{
+   m_HaunchInputDepthType = type;
+}
+
+pgsTypes::HaunchInputDepthType CBridgeDescription2::GetHaunchInputDepthType() const
+{
+   return m_HaunchInputDepthType;
 }
 
 void CBridgeDescription2::SetSlabOffsetType(pgsTypes::SlabOffsetType slabOffsetType)
@@ -1125,6 +1257,47 @@ Float64 CBridgeDescription2::GetFillet(bool bGetRawValue) const
 bool CBridgeDescription2::WasVersion3_1FilletRead() const
 {
    return m_bWasVersion3_1FilletRead;
+}
+
+void CBridgeDescription2::SetHaunchInputLocationType(pgsTypes::HaunchInputLocationType type)
+{
+   m_HaunchInputLocationType = type;
+}
+
+pgsTypes::HaunchInputLocationType CBridgeDescription2::GetHaunchInputLocationType() const
+{
+   return m_HaunchInputLocationType;
+}
+
+void CBridgeDescription2::SetHaunchLayoutType(pgsTypes::HaunchLayoutType type)
+{
+   m_HaunchLayoutType = type;
+}
+
+pgsTypes::HaunchLayoutType CBridgeDescription2::GetHaunchLayoutType() const
+{
+   return m_HaunchLayoutType;
+}
+
+void CBridgeDescription2::SetHaunchInputDistributionType(pgsTypes::HaunchInputDistributionType type)
+{
+   m_HaunchInputDistributionType = type;
+}
+
+pgsTypes::HaunchInputDistributionType CBridgeDescription2::GetHaunchInputDistributionType() const
+{
+   return m_HaunchInputDistributionType;
+}
+
+void CBridgeDescription2::SetHaunchDepths(std::vector<Float64> depths)
+{
+   ATLASSERT(depths.size() == m_HaunchInputDistributionType);
+   m_HaunchDepths = depths;
+}
+
+std::vector<Float64> CBridgeDescription2::GetHaunchDepths() const
+{
+   return m_HaunchDepths;
 }
 
 void CBridgeDescription2::CreateFirstSpan(const CPierData2* pFirstPier,const CSpanData2* pFirstSpan,const CPierData2* pNextPier,EventIndexType pierErectionEventIdx)
@@ -3126,6 +3299,8 @@ void CBridgeDescription2::MakeCopy(const CBridgeDescription2& rOther)
    m_bSameNumberOfGirders     = rOther.m_bSameNumberOfGirders;
    m_nGirders                 = rOther.m_nGirders;
 
+   m_HaunchInputDepthType     = rOther.m_HaunchInputDepthType;
+
    m_SlabOffset               = rOther.m_SlabOffset;
    m_SlabOffsetType           = rOther.m_SlabOffsetType;
 
@@ -3133,6 +3308,11 @@ void CBridgeDescription2::MakeCopy(const CBridgeDescription2& rOther)
 
    m_AssumedExcessCamber = rOther.m_AssumedExcessCamber;
    m_AssumedExcessCamberType      = rOther.m_AssumedExcessCamberType;
+
+   m_HaunchInputLocationType     = rOther.m_HaunchInputLocationType;
+   m_HaunchLayoutType            = rOther.m_HaunchLayoutType;
+   m_HaunchInputDistributionType = rOther.m_HaunchInputDistributionType;
+   m_HaunchDepths                = rOther.m_HaunchDepths;
 
    m_BearingData          = rOther.m_BearingData;
    m_BearingType          = rOther.m_BearingType;
@@ -3221,8 +3401,12 @@ void CBridgeDescription2::MakeCopy(const CBridgeDescription2& rOther)
       m_GirderGroups.push_back(pNewGroup);
    }
 
+   bool doSlabOffset = m_HaunchInputDepthType == pgsTypes::hidACamber && m_SlabOffsetType == pgsTypes::sotBridge;
+   bool doAssumedCamber = m_HaunchInputDepthType == pgsTypes::hidACamber && m_AssumedExcessCamberType == pgsTypes::aecBridge;
+   bool doDirectHaunch = m_HaunchInputDepthType != pgsTypes::hidACamber && m_HaunchInputLocationType == pgsTypes::hilSame4Bridge;
+
    CopyDown(m_bSameNumberOfGirders,m_bSameGirderName,::IsBridgeSpacing(m_GirderSpacingType),
-            m_SlabOffsetType==pgsTypes::sotBridge,m_AssumedExcessCamberType==pgsTypes::aecBridge,
+            doSlabOffset,doAssumedCamber,doDirectHaunch,
             m_BearingType==pgsTypes::brtBridge); 
 
    PGS_ASSERT_VALID;
@@ -3411,7 +3595,7 @@ const CClosureJointData* CBridgeDescription2::FindClosureJoint(ClosureIDType clo
    return nullptr;
 }
 
-void CBridgeDescription2::CopyDown(bool bGirderCount,bool bGirderType,bool bSpacing,bool bSlabOffset,bool bAssumedExcessCamber, bool bBearingData)
+void CBridgeDescription2::CopyDown(bool bGirderCount,bool bGirderType,bool bSpacing,bool bSlabOffset,bool bAssumedExcessCamber,bool bDirectHaunchDepths,bool bBearingData)
 {
    for (auto* pGroup : m_GirderGroups)
    {
@@ -3488,17 +3672,42 @@ void CBridgeDescription2::CopyDown(bool bGirderCount,bool bGirderType,bool bSpac
       }
    }// group loop
 
-   if(bAssumedExcessCamber)
+   if(bDirectHaunchDepths)
    {
+      // Set for spans
       for(auto* pSpan : m_Spans)
       {
          GirderIndexType nGirders = pSpan->GetGirderCount();
          for ( GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++ )
          {
-            pSpan->SetAssumedExcessCamber(gdrIdx, m_AssumedExcessCamber);
+            pSpan->SetDirectHaunchDepth(m_HaunchDepths);
+         }
+      }
+
+      // Set for segments
+      for (auto* pGroup : m_GirderGroups)
+      {
+         GirderIndexType nGdrs = pGroup->GetGirderCount();
+         for (GirderIndexType iGdr = 0; iGdr < nGdrs; iGdr++)
+         {
+            auto pGdr = pGroup->GetGirder(iGdr);
+            pGdr->SetDirectHaunchDepth(m_HaunchDepths);
          }
       }
    }
+
+   if (bAssumedExcessCamber)
+   {
+      for (auto* pSpan : m_Spans)
+      {
+         GirderIndexType nGirders = pSpan->GetGirderCount();
+         for (GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++)
+         {
+            pSpan->SetAssumedExcessCamber(gdrIdx,m_AssumedExcessCamber);
+         }
+      }
+   }
+
 
    if ( bSpacing )
    {

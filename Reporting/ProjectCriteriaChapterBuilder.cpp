@@ -1188,7 +1188,7 @@ void write_haunch_dead_load(rptChapter* pChapter,IBroker* pBroker, IEAFDisplayUn
    {
       *pPara << _T("Composite section properties and capacities are computed assuming a Constant Haunch Depth equal to the Fillet value") << rptNewLine;
    }
-   else if (pgsTypes::hspVariableParabolic == hpctype)
+   else if (pgsTypes::hspDetailedDescription == hpctype)
    {
       *pPara << _T("Composite section properties and capacities are computed assuming a Parabolically varying Haunch Depth defined by the roadway geometry and assumed excess camber ") << rptNewLine;
    }

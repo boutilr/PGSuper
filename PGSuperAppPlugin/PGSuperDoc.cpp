@@ -344,7 +344,7 @@ void CPGSuperDoc::DesignGirder(bool bPrompt, arSlabOffsetDesignType designSlabOf
       noDesignMsg = (_T("The Project Criteria specifies an analysis based on Transformed Sections. "));
    }
 
-   if (pSectProp->GetHaunchAnalysisSectionPropertiesType() == pgsTypes::hspVariableParabolic && IsStructuralDeck(pBridge->GetDeckType()))
+   if (pSectProp->GetHaunchAnalysisSectionPropertiesType() == pgsTypes::hspDetailedDescription && IsStructuralDeck(pBridge->GetDeckType()))
    {
       if (!noDesignMsg.IsEmpty())
       {

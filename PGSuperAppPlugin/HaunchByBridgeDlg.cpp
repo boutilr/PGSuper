@@ -25,7 +25,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "HaunchByBridgeDlg.h"
-#include "EditHaunchDlg.h"
+#include "EditHaunchACamberDlg.h"
 
 #include <EAF\EAFDisplayUnits.h>
 #include "PGSuperUnits.h"
@@ -59,15 +59,16 @@ void CHaunchByBridgeDlg::DoDataExchange(CDataExchange* pDX)
    EAFGetBroker(&pBroker);
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
-   CEditHaunchDlg* pParent = (CEditHaunchDlg*)GetParent();
+   CEditHaunchACamberDlg* pParent = (CEditHaunchACamberDlg*)GetParent();
+   CBridgeDescription2* pBridge = pParent->GetBridgeDesc();
 
-   Float64 slabOffset = pParent->m_BridgeDesc.GetSlabOffset();
+   Float64 slabOffset = pBridge->GetSlabOffset();
    DDX_UnitValueAndTag( pDX, IDC_SLAB_OFFSET, IDC_SLAB_OFFSET_UNITS, slabOffset, pDisplayUnits->GetComponentDimUnit() );
 
    if (pDX->m_bSaveAndValidate && pParent->GetSlabOffsetType() == pgsTypes::sotBridge)
    {
       // Get min slab offset value and build error message for too small of A
-      Float64 minSlabOffset = pParent->m_BridgeDesc.GetMinSlabOffset();
+      Float64 minSlabOffset = pBridge->GetMinSlabOffset();
       if (::IsLT(slabOffset, minSlabOffset))
       {
          CString strMinValError;
@@ -76,7 +77,8 @@ void CHaunchByBridgeDlg::DoDataExchange(CDataExchange* pDX)
          pDX->PrepareEditCtrl(IDC_SLAB_OFFSET);
          pDX->Fail();
       }
-      pParent->m_BridgeDesc.SetSlabOffset(slabOffset);
+
+      pBridge->SetSlabOffset(slabOffset);
    }
 }
 

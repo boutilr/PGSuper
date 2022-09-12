@@ -25,7 +25,7 @@
 
 #include "stdafx.h"
 #include "HaunchBearingGrid.h"
-#include "EditHaunchDlg.h"
+#include "EditHaunchACamberDlg.h"
 
 #include <System\Tokenizer.h>
 #include "PGSuperUnits.h"
@@ -149,7 +149,7 @@ void CHaunchBearingGrid::DoDataExchange(CDataExchange*pDX)
 {
    if (pDX->m_bSaveAndValidate)
    {
-      CEditHaunchDlg* pParent = (CEditHaunchDlg*)(GetParent()->GetParent());
+      CEditHaunchACamberDlg* pParent = (CEditHaunchACamberDlg*)(GetParent()->GetParent());
       if (pParent->GetSlabOffsetType() == pgsTypes::sotBearingLine)
       {
          GetGridData(pDX);
@@ -175,22 +175,24 @@ void CHaunchBearingGrid::FillGrid()
    // we want to merge cells
    SetMergeCellsMode(gxnMergeEvalOnDisplay);
 
-   CEditHaunchDlg* pParent = (CEditHaunchDlg*)(GetParent()->GetParent());
+   CEditHaunchACamberDlg* pParent = (CEditHaunchACamberDlg*)(GetParent()->GetParent());
+   CBridgeDescription2* pBridge = pParent->GetBridgeDesc();
+
    // get all the piers and temporary supports where slab offset is defined
    std::vector<std::pair<const CPierData2*, const CTemporarySupportData*>> vSupports;
-   PierIndexType nPiers = pParent->m_BridgeDesc.GetPierCount();
+   PierIndexType nPiers = pBridge->GetPierCount();
    for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
    {
-      const CPierData2* pPier = pParent->m_BridgeDesc.GetPier(pierIdx);
+      const CPierData2* pPier = pBridge->GetPier(pierIdx);
       if (pPier->HasSlabOffset())
       {
          vSupports.emplace_back(pPier, nullptr);
       }
    }
-   SupportIndexType nTS = pParent->m_BridgeDesc.GetTemporarySupportCount();
+   SupportIndexType nTS = pBridge->GetTemporarySupportCount();
    for (SupportIndexType tsIdx = 0; tsIdx < nTS; tsIdx++)
    {
-      const CTemporarySupportData* pTS = pParent->m_BridgeDesc.GetTemporarySupport(tsIdx);
+      const CTemporarySupportData* pTS = pBridge->GetTemporarySupport(tsIdx);
       if (pTS->GetClosureJoint(0))
       {
          vSupports.emplace_back(nullptr, pTS);
@@ -212,7 +214,7 @@ void CHaunchBearingGrid::FillGrid()
          auto* pPier = support.first;
          auto pierIdx = pPier->GetIndex();
          std::array<Float64, 2> slabOffset;
-         pPier->GetSlabOffset(&slabOffset[pgsTypes::Back], &slabOffset[pgsTypes::Ahead],pParent->m_BridgeDesc.GetSlabOffsetType() == pgsTypes::sotSegment ? true : false);
+         pPier->GetSlabOffset(&slabOffset[pgsTypes::Back], &slabOffset[pgsTypes::Ahead],pBridge->GetSlabOffsetType() == pgsTypes::sotSegment ? true : false);
          CString strSupport;
          strSupport.Format(_T("%s"), LABEL_PIER_EX(pPier->IsAbutment(),pierIdx));
          if (pPier->IsAbutment())
@@ -254,7 +256,7 @@ void CHaunchBearingGrid::FillGrid()
          auto* pTS = support.second;
          auto tsIdx = pTS->GetIndex();
          std::array<Float64, 2> slabOffset;
-         pTS->GetSlabOffset(&slabOffset[pgsTypes::Back], &slabOffset[pgsTypes::Ahead], pParent->m_BridgeDesc.GetSlabOffsetType() == pgsTypes::sotSegment ? true : false);
+         pTS->GetSlabOffset(&slabOffset[pgsTypes::Back], &slabOffset[pgsTypes::Ahead], pBridge->GetSlabOffsetType() == pgsTypes::sotSegment ? true : false);
 
          InsertRows(row, 2);
          SetRowStyle(row);
@@ -291,9 +293,10 @@ void CHaunchBearingGrid::FillGrid()
 
 void CHaunchBearingGrid::GetGridData(CDataExchange* pDX)
 {
-   CEditHaunchDlg* pParent = (CEditHaunchDlg*)(GetParent()->GetParent());
+   CEditHaunchACamberDlg* pParent = (CEditHaunchACamberDlg*)(GetParent()->GetParent());
+   CBridgeDescription2* pBridge = pParent->GetBridgeDesc();
 
-   Float64 minSlabOffset = pParent->m_BridgeDesc.GetMinSlabOffset();
+   Float64 minSlabOffset = pBridge->GetMinSlabOffset();
    CString strMinValError;
    strMinValError.Format(_T("Slab Offset must be greater or equal to slab depth (%s)"), FormatDimension(minSlabOffset, *m_pUnit));
 
@@ -331,12 +334,12 @@ void CHaunchBearingGrid::GetGridData(CDataExchange* pDX)
 
          if (type == PIER)
          {
-            auto* pPier = pParent->m_BridgeDesc.GetPier(idx);
+            auto* pPier = pBridge->GetPier(idx);
             pPier->SetSlabOffset(face, slabOffset);
          }
          else
          {
-            auto* pTS = pParent->m_BridgeDesc.GetTemporarySupport(idx);
+            auto* pTS = pBridge->GetTemporarySupport(idx);
             pTS->SetSlabOffset(face, slabOffset);
          }
       }

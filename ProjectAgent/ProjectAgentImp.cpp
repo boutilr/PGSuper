@@ -3323,7 +3323,7 @@ HRESULT CProjectAgentImp::XSectionDataProc2(IStructuredSave* pSave,IStructuredLo
       pRightRailingSystem->strExteriorRailing = xSectionData.RightTrafficBarrier;
       pRightRailingSystem->Concrete           = pDeck->Concrete;
 
-      pObj->m_BridgeDescription.CopyDown(true,true,true,true,true,true);
+      pObj->m_BridgeDescription.CopyDown(true,true,true,true,true,true,true);
    }
 
    return S_OK;
@@ -5985,7 +5985,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
          }
       }
 
-      m_BridgeDescription.CopyDown(false, false, true, false, false,false); // copy the joint spacing down to the individual span/pier level
+      m_BridgeDescription.CopyDown(false, false, true, false, false, false, false); // copy the joint spacing down to the individual span/pier level
 
       if (m_pSpecEntry->GetLossMethod() != LOSSES_TIME_STEP)
       {
@@ -6018,7 +6018,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
          if ( 0 <= jointWidth )
          {
             m_BridgeDescription.SetGirderSpacing(jointWidth);
-            m_BridgeDescription.CopyDown(false,false,IsBridgeSpacing(m_BridgeDescription.GetGirderSpacingType()),false,false,false); // copy the joint spacing down
+            m_BridgeDescription.CopyDown(false,false,IsBridgeSpacing(m_BridgeDescription.GetGirderSpacingType()),false,false,false,false); // copy the joint spacing down
          }
       }
    }
@@ -6385,6 +6385,95 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
       pStatusCenter->Add(pStatusItem);
    }
 
+   if (pDocType->IsPGSpliceDocument() && m_BridgeDescription.GetHaunchInputDepthType() == pgsTypes::hidACamber && m_BridgeDescription.GetDeckDescription()->GetDeckType() != pgsTypes::sdtNone)
+   {
+      // Before version bridedesc 15 PGSplice used the slab offset to define the haunch. This is no longer supported. Need to convert
+      // old haunch data to direct haunch input
+      Float64 slabDepth = m_BridgeDescription.GetDeckDescription()->GrossDepth;
+      pgsTypes::SlabOffsetType soType = m_BridgeDescription.GetSlabOffsetType();
+      if (soType == pgsTypes::sotBridge)
+      {
+         m_BridgeDescription.SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
+         m_BridgeDescription.SetHaunchInputLocationType(pgsTypes::hilSame4Bridge);
+         m_BridgeDescription.SetHaunchLayoutType(pgsTypes::hltAlongSegments);
+         m_BridgeDescription.SetHaunchInputDistributionType(pgsTypes::hidUniform);
+
+         Float64 haunchDepth = m_BridgeDescription.GetSlabOffset() - slabDepth;
+         m_BridgeDescription.SetHaunchDepths( std::vector<Float64>(1,haunchDepth) );
+
+         m_BridgeDescription.CopyDown(false,false,false,false,false,true,false); // copy the down to the individual span/segment level
+      }
+      else if (soType == pgsTypes::sotBearingLine)
+      {
+         m_BridgeDescription.SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
+         m_BridgeDescription.SetHaunchInputLocationType(pgsTypes::hilSame4AllGirders);
+         m_BridgeDescription.SetHaunchLayoutType(pgsTypes::hltAlongSpans);
+         m_BridgeDescription.SetHaunchInputDistributionType(pgsTypes::hidAtEnds); // linear along spans
+
+         PierIndexType nPiers = m_BridgeDescription.GetPierCount();
+         for (PierIndexType iStartIdx = 0; iStartIdx < nPiers - 1; iStartIdx++)
+         {
+            CPierData2* pStartPier = m_BridgeDescription.GetPier(iStartIdx);
+            CPierData2* pEndPier = m_BridgeDescription.GetPier(iStartIdx+1);
+
+            Float64 startHaunch = pStartPier->GetSlabOffset(pgsTypes::Ahead) - slabDepth;
+            Float64 endHaunch = pEndPier->GetSlabOffset(pgsTypes::Back) - slabDepth;
+
+            ATLASSERT(startHaunch >= 0.0 && endHaunch >= 0.0);
+            startHaunch = startHaunch < 0.0 ? 0.0 : startHaunch;
+            endHaunch = endHaunch < 0.0 ? 0.0 : endHaunch;
+
+            CSpanData2* pSpan = m_BridgeDescription.GetSpan(iStartIdx);
+            std::vector<Float64> haunchVals{startHaunch, endHaunch};
+            pSpan->SetDirectHaunchDepth(haunchVals);
+         }
+      }
+      else if (soType == pgsTypes::sotSegment)
+      {
+         m_BridgeDescription.SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
+         m_BridgeDescription.SetHaunchInputLocationType(pgsTypes::hilPerEach);
+         m_BridgeDescription.SetHaunchLayoutType(pgsTypes::hltAlongSegments);
+         m_BridgeDescription.SetHaunchInputDistributionType(pgsTypes::hidAtEnds); // linear along segments
+
+         GroupIndexType nGrps = m_BridgeDescription.GetGirderGroupCount();
+         for (GroupIndexType iGrp = 0; iGrp < nGrps; iGrp++)
+         {
+            auto pGroup = m_BridgeDescription.GetGirderGroup(iGrp);
+            GirderIndexType nGirders = pGroup->GetGirderCount();
+            for (GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++)
+            {
+               CSplicedGirderData* pGirder = pGroup->GetGirder(gdrIdx);
+               SegmentIndexType nSegments = pGirder->GetSegmentCount();
+               for (SegmentIndexType segIdx = 0; segIdx < nSegments; segIdx++)
+               {
+                  const CPrecastSegmentData* pSegment = pGirder->GetSegment(segIdx);
+                  Float64 start,end;
+                  pSegment->GetSlabOffset(&start,&end);
+                  start -= slabDepth; // convert to haunch depth
+                  end -= slabDepth;
+
+                  // don't allow bad data
+                  ATLASSERT(start >= 0.0 && end >= 0.0);
+                  start = start < 0.0 ? 0.0 : start;
+                  end = end < 0.0 ? 0.0 : end;
+
+                  std::vector<Float64> haunchVals{ start, end };
+                  pGirder->SetDirectHaunchDepth(segIdx,haunchVals);
+               }
+            }
+         }
+      }
+      else
+      {
+         ATLASSERT(0); // problema grande
+      }
+
+      CString strMsg(_T("Definition of haunch depths using the slab offset method is no longer supported in PGSplice. Haunch input data has been converted to the direct input method."));
+      GET_IFACE(IEAFStatusCenter,pStatusCenter);
+      pgsInformationalStatusItem* pStatusItem = new pgsInformationalStatusItem(m_StatusGroupID,m_scidBridgeDescriptionInfo,strMsg);
+      pStatusCenter->Add(pStatusItem);
+   }
+
    // The UI was allowing some invalid pier connection geometry. The code that follows checks for the invalid geometry and fixes it.
    // If the input is altered, a warning is posted to the status center.
    PierIndexType nPiers = m_BridgeDescription.GetPierCount();
@@ -6425,30 +6514,6 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
          }
       }
    }
-
-   // There are multiple bugs in the elevation adjustment feature for temporary supports. This will be redone in version 8, so just zero out any adjustment values
-   // and let user know that this happened.
-   bool wereAdjustmentsZeroed(false);
-   SupportIndexType nTs = m_BridgeDescription.GetTemporarySupportCount();
-   for (SupportIndexType iTs = 0; iTs < nTs; iTs++)
-   {
-      CTemporarySupportData* tsData = m_BridgeDescription.GetTemporarySupport(iTs);
-      if (!IsZero(tsData->GetElevationAdjustment()))
-      {
-         tsData->SetElevationAdjustment(0.0);
-         wereAdjustmentsZeroed = true;
-      }
-   }
-
-   if (wereAdjustmentsZeroed)
-   {
-      GET_IFACE(IEAFStatusCenter,pStatusCenter);
-      CString strMsg(_T("This project file contains temporary supports with non-zero elevation adjustments. The elevation adjustment feature has been disabled for this version of the program. All temporary support adjustments have been set to zero."));
-
-      pgsInformationalStatusItem* pStatusItem = new pgsInformationalStatusItem(m_StatusGroupID,m_scidBridgeDescriptionInfo,strMsg);
-      pStatusCenter->Add(pStatusItem);
-   }
-
 
    ValidateBridgeModel();
 
@@ -9667,7 +9732,7 @@ bool CProjectAgentImp::IsAssumedExcessCamberForSectProps() const
    GET_IFACE(IDocumentType, pDocType);
    bool bIsSplicedGirder = (pDocType->IsPGSpliceDocument() ? true : false);
 
-   return !bIsSplicedGirder && m_pSpecEntry->GetHaunchAnalysisSectionPropertiesType() == pgsTypes::hspVariableParabolic;
+   return !bIsSplicedGirder && m_pSpecEntry->GetHaunchAnalysisSectionPropertiesType() == pgsTypes::hspDetailedDescription;
 }
 
 void CProjectAgentImp::GetRequiredSlabOffsetRoundingParameters(pgsTypes::SlabOffsetRoundingMethod * pMethod, Float64 * pTolerance) const
@@ -12472,6 +12537,7 @@ void CProjectAgentImp::CreatePrecastGirderBridgeTimelineEvents()
    pTimelineEvent->SetDescription(_T("Final with Live Load"));
    pTimelineEvent->GetApplyLoadActivity().ApplyLiveLoad();
    pTimelineEvent->GetApplyLoadActivity().ApplyRatingLiveLoad();
+   pTimelineEvent->GetGeometryControlActivity().SetGeometryControlEventType(pgsTypes::gcaGeometryControlEvent); // precast bridges have this hard-coded
    pTimelineManager->AddTimelineEvent(pTimelineEvent.get(), true, &eventIdx);
    maxDay = pTimelineEvent->GetDay() + 1;
    pTimelineEvent.release();
