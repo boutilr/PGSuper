@@ -121,6 +121,11 @@ public:
    CRailingSystem* GetRightRailingSystem();
    const CRailingSystem* GetRightRailingSystem() const;
 
+   // Define how haunch is input. This can be older "A" dimension method or newer hidHaunchDirectly and hidHaunchPlusSlabDirectly methods
+   void SetHaunchInputDepthType(pgsTypes::HaunchInputDepthType type);
+   pgsTypes::HaunchInputDepthType GetHaunchInputDepthType() const;
+
+   //// Older "A" dimension method for defining the haunch ///// - Data structures remain for this method, which is PGSuper's default method
    // set/get the slab offset type. This parameter indicates where the slab offset (aka haunch) is measured
    void SetSlabOffsetType(pgsTypes::SlabOffsetType slabOffsetType);
    pgsTypes::SlabOffsetType GetSlabOffsetType() const;
@@ -152,6 +157,20 @@ public:
    // Data for multiple fillets was read and dealt with (version 3.1 of PGSuper had this)
    bool WasVersion3_1FilletRead() const;
 
+   //// Direct input of Haunch depths /// - This method differe from PGSuper's older method using "A" dimension and assumed excess camber
+   void SetHaunchInputLocationType(pgsTypes::HaunchInputLocationType type);
+   pgsTypes::HaunchInputLocationType GetHaunchInputLocationType() const;
+
+   void SetHaunchLayoutType(pgsTypes::HaunchLayoutType type);
+   pgsTypes::HaunchLayoutType GetHaunchLayoutType() const;
+
+   void SetHaunchInputDistributionType(pgsTypes::HaunchInputDistributionType type);
+   pgsTypes::HaunchInputDistributionType GetHaunchInputDistributionType() const;
+
+   // Set haunch depth as same for all segments or spans on entire bridge. Has no effect unless SetHaunchInputLocationType==hilSame4Bridge
+   // Size of vector must match HaunchInputDistributionType enum val.
+   void SetHaunchDepths(std::vector<Float64> depths);
+   std::vector<Float64> GetHaunchDepths() const;
 
    // =================================================================================
    // Spans and Girder Groups
@@ -393,7 +412,7 @@ public:
    CClosureJointData* FindClosureJoint(ClosureIDType closureID);
    const CClosureJointData* FindClosureJoint(ClosureIDType closureID) const;
 
-   void CopyDown(bool bGirderCount,bool bGirderType,bool bSpacing,bool bSlabOffset,bool bAssumedExcessCamber, bool bBearingData); 
+   void CopyDown(bool bGirderCount,bool bGirderType,bool bSpacing,bool bSlabOffset,bool bAssumedExcessCamber, bool bDirectHaunchDepths, bool bBearingData); 
                     // takes all the data defined at the bridge level and copies
                     // it down to the spans and girders (only for this parameters set to true)
 
@@ -495,6 +514,8 @@ private:
    pgsTypes::MeasurementLocation m_MeasurementLocation;
    pgsTypes::WorkPointLocation m_WorkPointLocation;
 
+   pgsTypes::HaunchInputDepthType m_HaunchInputDepthType;
+
    Float64 m_SlabOffset;
    pgsTypes::SlabOffsetType m_SlabOffsetType;
 
@@ -504,6 +525,11 @@ private:
 
    Float64 m_AssumedExcessCamber; // assummed excess camber for entire bridge
    pgsTypes::AssumedExcessCamberType m_AssumedExcessCamberType;
+
+   pgsTypes::HaunchInputLocationType m_HaunchInputLocationType;
+   pgsTypes::HaunchLayoutType m_HaunchLayoutType;
+   pgsTypes::HaunchInputDistributionType m_HaunchInputDistributionType;
+   std::vector<Float64> m_HaunchDepths;
 
    CBearingData2 m_BearingData;
    pgsTypes::BearingType m_BearingType;

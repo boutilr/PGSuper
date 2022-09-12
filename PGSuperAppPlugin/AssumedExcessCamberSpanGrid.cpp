@@ -25,7 +25,7 @@
 
 #include "stdafx.h"
 #include "AssumedExcessCamberSpanGrid.h"
-#include "EditHaunchDlg.h"
+#include "EditHaunchACamberDlg.h"
 
 #include <System\Tokenizer.h>
 #include "PGSuperUnits.h"
@@ -170,7 +170,7 @@ void CAssumedExcessCamberSpanGrid::DoDataExchange(CDataExchange* pDX)
    __super::DoDataExchange(pDX);
    if (pDX->m_bSaveAndValidate)
    {
-      CEditHaunchDlg* pParent = (CEditHaunchDlg*)(GetParent()->GetParent());
+      CEditHaunchACamberDlg* pParent = (CEditHaunchACamberDlg*)(GetParent()->GetParent());
       if (pParent->GetAssumedExcessCamberType() == pgsTypes::aecSpan)
       {
          GetGridData(pDX);
@@ -195,11 +195,13 @@ void CAssumedExcessCamberSpanGrid::FillGrid()
    }
 
    ROWCOL row = 1;
-   CEditHaunchDlg* pParent = (CEditHaunchDlg*)(GetParent()->GetParent());
-   SpanIndexType nSpans = pParent->m_BridgeDesc.GetSpanCount();
+   CEditHaunchACamberDlg* pParent = (CEditHaunchACamberDlg*)(GetParent()->GetParent());
+   CBridgeDescription2* pBridge = pParent->GetBridgeDesc();
+
+   SpanIndexType nSpans = pBridge->GetSpanCount();
    for (SpanIndexType spanIdx = 0; spanIdx < nSpans; spanIdx++, row++)
    {
-      auto* pSpan = pParent->m_BridgeDesc.GetSpan(spanIdx);
+      auto* pSpan = pBridge->GetSpan(spanIdx);
       auto assumedExcessCamber = pSpan->GetAssumedExcessCamber(0);
 
       InsertRows(row,1);
@@ -223,7 +225,8 @@ void CAssumedExcessCamberSpanGrid::FillGrid()
 
 void CAssumedExcessCamberSpanGrid::GetGridData(CDataExchange* pDX)
 {
-   CEditHaunchDlg* pParent = (CEditHaunchDlg*)(GetParent()->GetParent());
+   CEditHaunchACamberDlg* pParent = (CEditHaunchACamberDlg*)(GetParent()->GetParent());
+   CBridgeDescription2* pBridge = pParent->GetBridgeDesc();
 
    CComPtr<IBroker> pBroker;
    EAFGetBroker(&pBroker);
@@ -248,7 +251,7 @@ void CAssumedExcessCamberSpanGrid::GetGridData(CDataExchange* pDX)
          GetStyleRowCol(row, 0, style);
          SpanIndexType spanIdx = (SpanIndexType)(style.GetItemDataPtr());
 
-         auto* pSpan = pParent->m_BridgeDesc.GetSpan(spanIdx);
+         auto* pSpan = pBridge->GetSpan(spanIdx);
          pSpan->SetAssumedExcessCamber(assumedExcessCamber);
       }
    }

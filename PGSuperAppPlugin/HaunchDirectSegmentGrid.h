@@ -22,19 +22,21 @@
 
 
 #pragma once
-// HaunchSegmentGrid.h : header file
+// HaunchDirectSegmentGrid.h : header file
 //
-#include "HaunchBearingGrid.h"
+#include "PgsExt/BridgeDescription2.h"
+
+class CEditHaunchByHaunchDlg;
 
 /////////////////////////////////////////////////////////////////////////////
-// CHaunchSegmentGrid window
+// CHaunchDirectSegmentGrid window
 
-class CHaunchSegmentGrid : public CGXGridWnd
+class CHaunchDirectSegmentGrid : public CGXGridWnd
 {
 	GRID_DECLARE_REGISTER()
 // Construction
 public:
-	CHaunchSegmentGrid();
+	CHaunchDirectSegmentGrid();
 
 // Attributes
 public:
@@ -44,16 +46,16 @@ public:
 
 // Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CHaunchSegmentGrid)
+	//{{AFX_VIRTUAL(CHaunchDirectSegmentGrid)
 	//}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CHaunchSegmentGrid();
+	virtual ~CHaunchDirectSegmentGrid();
 
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(CHaunchSegmentGrid)
+	//{{AFX_MSG(CHaunchDirectSegmentGrid)
 		// NOTE - the ClassWizard will add and remove member functions here.
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
@@ -65,14 +67,18 @@ protected:
 
 public:
    // custom init for grid
-   void CustomInit(GroupIndexType grpIdx);
+   void CustomInit(GroupIndexType grpIdx,CEditHaunchByHaunchDlg* pParent);
 
+   void  InvalidateGrid();
 
+   pgsTypes::HaunchInputDistributionType GetHaunchInputDistributionType();
 
 private:
    GroupIndexType m_GroupIdx;
    ROWCOL m_nExtraHeaderRows;
+   CEditHaunchByHaunchDlg* m_pParent; // we can live in dialog or a tab. this makes it easier to get our parent dialog
 
+   void BuildGridAndHeader();
    void FillGrid();
    void GetGridData(CDataExchange* pDX);
 
@@ -84,7 +90,6 @@ private:
    // Sets all the cells to read only initially
    void SetInitialRowStyle(ROWCOL row);
 
-   const WBFL::Units::LengthData* m_pUnit;
 public:
    afx_msg void OnDestroy();
 };

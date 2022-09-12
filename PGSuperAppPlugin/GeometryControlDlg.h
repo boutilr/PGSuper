@@ -19,56 +19,39 @@
 // P.O. Box  47340, Olympia, WA 98503, USA or e-mail 
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
+#pragma once
 
-// HaunchSame4Bridge.cpp : implementation file
-//
-#include "stdafx.h"
 #include "resource.h"
-#include "HaunchByBearingDlg.h"
-#include "EditHaunchDlg.h"
+#include <PgsExt\GeometryControlActivity.h>
+#include <PgsExt\TimelineManager.h>
 
+// CGeometryControlDlg dialog
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
-
-
-// CHaunchByBearingDlg dialog
-
-IMPLEMENT_DYNAMIC(CHaunchByBearingDlg, CDialog)
-
-CHaunchByBearingDlg::CHaunchByBearingDlg(CWnd* pParent /*=nullptr*/)
-	: CDialog(CHaunchByBearingDlg::IDD, pParent)
+class CGeometryControlDlg : public CDialog
 {
+	DECLARE_DYNAMIC(CGeometryControlDlg)
 
-}
+public:
+	CGeometryControlDlg(const CTimelineManager& timelineMgr,EventIndexType eventIdx,BOOL bReadOnly,CWnd* pParent = nullptr);   // standard constructor
+	virtual ~CGeometryControlDlg();
 
-CHaunchByBearingDlg::~CHaunchByBearingDlg()
-{
-}
+// Dialog Data
+	enum { IDD = IDD_GEOMETRY_CONTROL };
 
-void CHaunchByBearingDlg::DoDataExchange(CDataExchange* pDX)
-{
-	CDialog::DoDataExchange(pDX);
-   if (FALSE == m_Grid.UpdateData(pDX->m_bSaveAndValidate))
-   {
-      pDX->Fail();
-   }
-}
+   CTimelineManager m_TimelineMgr;
+   EventIndexType m_EventIndex;
 
-BEGIN_MESSAGE_MAP(CHaunchByBearingDlg, CDialog)
-END_MESSAGE_MAP()
+protected:
+   BOOL m_bReadOnly;
+   pgsTypes::GeometryControlActivityType m_GeometryControlActivityType;
 
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	DECLARE_MESSAGE_MAP()
 
-BOOL CHaunchByBearingDlg::OnInitDialog()
-{
-   m_Grid.SubclassDlgItem(IDC_HAUNCH_GRID, this);
-   m_Grid.CustomInit();
-
-   CDialog::OnInitDialog();
-
-   return TRUE;  // return TRUE unless you set the focus to a control
-   // EXCEPTION: OCX Property Pages should return FALSE
-}
+public:
+   virtual BOOL OnInitDialog();
+   afx_msg void OnHelp();
+   afx_msg void OnBnClickedRadio1();
+   afx_msg void OnBnClickedGceCheck();
+   afx_msg void OnBnClickedRadio2();
+};

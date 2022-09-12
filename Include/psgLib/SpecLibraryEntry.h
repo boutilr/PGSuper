@@ -779,7 +779,7 @@ public:
    void SetHaunchLoadComputationType(pgsTypes::HaunchLoadComputationType type);
 
    // set/get solution tolerance between camber used to compute haunch load and computed excess camber.
-   // This value is only used if HaunchLoadComputationType==hspAccountForCamber or HaunchAnalysisSectionPropertiesType==hspVariableParabolic
+   // This value is only used if HaunchLoadComputationType==hspAccountForCamber or HaunchAnalysisSectionPropertiesType==hspDetailedDescription
    Float64 GetHaunchLoadCamberTolerance() const;
    void SetHaunchLoadCamberTolerance(Float64 tol);
 
