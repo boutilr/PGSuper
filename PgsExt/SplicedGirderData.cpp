@@ -278,6 +278,11 @@ bool CSplicedGirderData::operator==(const CSplicedGirderData& rOther) const
       return false;
    }
 
+   if (m_vHaunchDepths != rOther.m_vHaunchDepths)
+   {
+      return false;
+   }
+
    return true;
 }
 
@@ -389,6 +394,8 @@ void CSplicedGirderData::MakeCopy(const CSplicedGirderData& rOther,bool bCopyDat
    m_ConditionFactor     = rOther.m_ConditionFactor;
    m_ConditionFactorType = rOther.m_ConditionFactorType;
 
+   m_vHaunchDepths = rOther.m_vHaunchDepths;
+
    PGS_ASSERT_VALID;
 }
 
@@ -400,7 +407,7 @@ void CSplicedGirderData::MakeAssignment(const CSplicedGirderData& rOther)
 
 HRESULT CSplicedGirderData::Save(IStructuredSave* pStrSave,IProgress* pProgress)
 {
-   pStrSave->BeginUnit(_T("Girder"),3.0);
+   pStrSave->BeginUnit(_T("Girder"),4.0);
 
    pStrSave->put_Property(_T("ID"),CComVariant(m_GirderID));
 
@@ -442,6 +449,25 @@ HRESULT CSplicedGirderData::Save(IStructuredSave* pStrSave,IProgress* pProgress)
 
    pStrSave->put_Property(_T("ConditionFactorType"),CComVariant(m_ConditionFactorType));
    pStrSave->put_Property(_T("ConditionFactor"),CComVariant(m_ConditionFactor));
+
+   if (pBridgeDesc->GetHaunchInputLocationType() != pgsTypes::hilSame4Bridge)
+   {
+      pStrSave->BeginUnit(_T("HaunchDepthsPerSegment"),1.0);
+      pStrSave->put_Property(_T("nSegments"),CComVariant(m_vHaunchDepths.size()));
+      for (const auto& vhaunch : m_vHaunchDepths)
+      {
+         pStrSave->BeginUnit(_T("HaunchDepths"),1.0);
+         pStrSave->put_Property(_T("nValues"),CComVariant(vhaunch.size()));
+         for (const auto& val : vhaunch)
+         {
+            pStrSave->put_Property(_T("HaunchVal"),CComVariant(val));
+         }
+
+         pStrSave->EndUnit(); // HaunchDepths
+      }
+
+      pStrSave->EndUnit(); // HaunchDepthsPerGirder
+   }
 
    pStrSave->EndUnit();
    return S_OK;
@@ -564,6 +590,41 @@ HRESULT CSplicedGirderData::Load(IStructuredLoad* pStrLoad,IProgress* pProgress)
       var.vt = VT_R8;
       hr = pStrLoad->get_Property(_T("ConditionFactor"),&var);
       m_ConditionFactor = var.dblVal;
+
+      if (3 < version)
+      {
+         if (pBridgeDesc->GetHaunchInputLocationType() != pgsTypes::hilSame4Bridge)
+         {
+            m_vHaunchDepths.clear();
+            pStrLoad->BeginUnit(_T("HaunchDepthsPerSegment"));
+
+            var.vt = VT_INDEX;
+            hr = pStrLoad->get_Property(_T("nSegments"),&var);
+            IndexType ng = VARIANT2INDEX(var);
+
+            for (IndexType ig = 0; ig < ng; ig++)
+            {
+               pStrLoad->BeginUnit(_T("HaunchDepths"));
+
+               var.vt = VT_INDEX;
+               hr = pStrLoad->get_Property(_T("nValues"),&var);
+               IndexType nvals = VARIANT2INDEX(var);
+
+               std::vector<Float64> vdepths;
+               var.vt = VT_R8;
+               for (IndexType iv = 0; iv < nvals; iv++)
+               {
+                  hr = pStrLoad->get_Property(_T("HaunchVal"),&var);
+                  vdepths.push_back(var.dblVal);
+               }
+
+               m_vHaunchDepths.push_back(vdepths);
+               pStrLoad->EndUnit(); // HaunchDepths
+            }
+
+            pStrLoad->EndUnit(); // HaunchDepthsPerSegment
+         }
+      }
 
       hr = pStrLoad->EndUnit();
    }
@@ -1026,6 +1087,83 @@ pgsTypes::ConditionFactorType CSplicedGirderData::GetConditionFactorType() const
 void CSplicedGirderData::SetConditionFactorType(pgsTypes::ConditionFactorType conditionFactorType)
 {
    m_ConditionFactorType = conditionFactorType;
+}
+
+void CSplicedGirderData::SetDirectHaunchDepth(const std::vector<Float64>& haunchDepths)
+{
+   GirderIndexType nSegs = GetSegmentCount();
+   m_vHaunchDepths.assign(nSegs, haunchDepths);
+}
+
+void CSplicedGirderData::SetDirectHaunchDepth(SegmentIndexType segIdx, const std::vector<Float64>& rHaunchDepth)
+{
+   ProtectHaunchDepth();
+   ATLASSERT(segIdx < m_vHaunchDepths.size());
+
+   m_vHaunchDepths[segIdx] = rHaunchDepth;
+}
+
+std::vector<Float64> CSplicedGirderData::GetDirectHaunchDepth(SegmentIndexType segIdx,bool bGetRawValue) const
+{
+   if (bGetRawValue)
+   {
+      ProtectHaunchDepth();
+      ATLASSERT(segIdx < m_vHaunchDepths.size());
+      return m_vHaunchDepths[segIdx];
+   }
+   else
+   {
+      const CBridgeDescription2* pBridgeDesc = GetBridgeDescription();
+      pgsTypes::HaunchInputLocationType type = pBridgeDesc->GetHaunchInputLocationType();
+      if (type == pgsTypes::hilSame4Bridge)
+      {
+         return pBridgeDesc->GetHaunchDepths();
+      }
+      else
+      {
+         ProtectHaunchDepth();
+         return m_vHaunchDepths[segIdx];
+      }
+   }
+}
+
+void CSplicedGirderData::CopyHaunchDepth(SegmentIndexType sourceSegIdx,GirderIndexType targetSegIdx)
+{
+   ProtectHaunchDepth();
+   ATLASSERT(sourceSegIdx < m_vHaunchDepths.size() && targetSegIdx < m_vHaunchDepths.size());
+
+   m_vHaunchDepths[targetSegIdx] = m_vHaunchDepths[sourceSegIdx];
+}
+
+void CSplicedGirderData::ProtectHaunchDepth() const
+{
+   // First: Compare size of our collection with current number of segments and resize if they don't match
+   SegmentIndexType nSegs = GetSegmentCount();
+   IndexType nFlts = m_vHaunchDepths.size();
+
+   if (nFlts == 0)
+   {
+      // probably switched from hilSame4Bridge. Get HaunchDepth value from bridge and assign as a default
+      const CBridgeDescription2* pBridgeDesc = GetBridgeDescription();
+      std::vector<Float64> defVal = pBridgeDesc->GetHaunchDepths();
+      m_vHaunchDepths.assign(nSegs,defVal);
+   }
+   else if (nFlts < nSegs)
+   {
+      // More segments than data - use back value for remaining segments
+      std::vector<Float64> back = m_vHaunchDepths.back();
+
+      m_vHaunchDepths.resize(nSegs); // performance
+      for (IndexType i = nFlts; i < nSegs; i++)
+      {
+         m_vHaunchDepths.push_back(back);
+      }
+   }
+   else if (nSegs < nFlts)
+   {
+      // more HaunchDepths than segments - truncate
+      m_vHaunchDepths.resize(nSegs);
+   }
 }
 
 CGirderKey CSplicedGirderData::GetGirderKey() const

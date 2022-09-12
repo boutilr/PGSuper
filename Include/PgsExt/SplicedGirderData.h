@@ -145,6 +145,23 @@ public:
    Float64 GetConditionFactor() const;
    void SetConditionFactor(Float64 conditionFactor);
 
+   // =================================================================================
+   // Direct Haunch Depth Used only when the parent bridge's HaunchInputDepthType==hidHaunchDirectly or hidHaunchPlusSlabDirectly,
+   // and  HaunchLayoutType==hltAlongSegments, and HaunchInputLocationType==hilSame4AllGirders or hilPerEach
+   // Note that data from girder 0 is used for all segments when hilSame4AllGirders
+   // =================================================================================
+   // Set the Haunch at a girder (same for all segments). i.e.; hilSame4AllGirders
+   void SetDirectHaunchDepth(const std::vector<Float64>& haunchDepth);
+
+   // Set/Get the Haunch Depth at a girder for a specific segment. i.e.; hilPerEach
+   // Use when hilPerEach
+   void SetDirectHaunchDepth(SegmentIndexType segIdx, const std::vector<Float64>& HaunchDepth);
+   std::vector<Float64> GetDirectHaunchDepth(SegmentIndexType segIdx,bool bGetRawValue = false) const;
+
+   // Copies segment-by-segment data from one segment to another
+   void CopyHaunchDepth(SegmentIndexType sourceSegIdx,SegmentIndexType targetSegIdx);
+
+
    CGirderKey GetGirderKey() const;
 
 #if defined _DEBUG
@@ -188,6 +205,10 @@ protected:
 
    void RemovePTFromTimelineManager();
 
+
+   // make sure Haunch Depth data stays intact from segment count changes
+   void ProtectHaunchDepth() const;
+
    // Initializes the girder by creating a single segment. 
    // Called by CGirderGroupData when new girders are created. 
    // In this context "new" means a 100% new girder, not a new girder that is a copy
@@ -213,6 +234,8 @@ protected:
    std::vector<CPrecastSegmentData*> m_Segments; // owned by this object
    std::vector<CClosureJointData*> m_Closures;    // owned by this object
 
+   mutable std::vector< std::vector<Float64>> m_vHaunchDepths; // vector of Haunch Depths for each segment in girder.
+
    std::_tstring m_GirderType;
    const GirderLibraryEntry* m_pGirderLibraryEntry;
 
@@ -226,6 +249,7 @@ protected:
    GirderIDType m_GirderID;
 
    PierIndexType m_PierIndex[2];
+
 
    // this is a special flag that is set to true when we are creating a new girder
    // that is a copy of an existing girder. it tells MakeCopy to ignore the

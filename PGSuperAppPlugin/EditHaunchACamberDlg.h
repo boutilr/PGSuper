@@ -22,35 +22,48 @@
 
 #pragma once
 #include "resource.h"
-#include "EditHaunchACamberDlg.h"
-#include "EditHaunchByHaunchDlg.h"
+#include "HaunchBearingGrid.h"
+#include "HaunchByBridgeDlg.h"
+#include "HaunchByBearingDlg.h"
+#include "HaunchBySegmentDlg.h"
+#include "AssumedExcessCamberByBridgeDlg.h"
+#include "AssumedExcessCamberBySpanDlg.h"
+#include "AssumedExcessCamberByGirderDlg.h"
 #include <PgsExt\HaunchShapeComboBox.h>
 
 class CBridgeDescription2;
 
-// CEditHaunchDlg dialog
+// CEditHaunchACamberDlg dialog
 
-
-class CEditHaunchDlg : public CDialog
+class CEditHaunchACamberDlg : public CDialog
 {
-	DECLARE_DYNAMIC(CEditHaunchDlg)
+	DECLARE_DYNAMIC(CEditHaunchACamberDlg)
 
 public:
    // constructor - holds on to bridge description while dialog is active
-	CEditHaunchDlg(const CBridgeDescription2* pBridgeDesc, CWnd* pParent = nullptr);
-	virtual ~CEditHaunchDlg();
+	CEditHaunchACamberDlg(CWnd* pParent = nullptr);
+	virtual ~CEditHaunchACamberDlg();
 
 // Dialog Data
-	enum { IDD = IDD_EDIT_HAUNCH };
+	enum { IDD = IDD_EDIT_HAUNCH_ACAMBER};
 
-   pgsTypes::HaunchInputDepthType GetHaunchInputDepthType();
-   pgsTypes::HaunchLayoutType GetHaunchLayoutType();
+// embedded dialogs for different haunch layouts
+   CHaunchByBridgeDlg m_HaunchByBridgeDlg;
+   CHaunchByBearingDlg m_HaunchByBearingDlg;
+   CHaunchBySegmentDlg m_HaunchBySegmentDlg;
 
-   // embedded dialogs for different haunch layouts
-   CEditHaunchACamberDlg m_EditHaunchACamberDlg;
-   CEditHaunchByHaunchDlg m_EditHaunchByHaunchDlg;
+// embedded dialogs for different AssumedExcessCamber layouts
+   CAssumedExcessCamberByBridgeDlg m_AssumedExcessCamberByBridgeDlg;
+   CAssumedExcessCamberBySpanDlg  m_AssumedExcessCamberBySpanDlg;
+   CAssumedExcessCamberByGirderDlg m_AssumedExcessCamberByGirderDlg;
 
-   CBridgeDescription2 m_BridgeDesc;
+   // returns the current selection for slab offset type
+   pgsTypes::SlabOffsetType GetSlabOffsetType();
+
+   // returns the current selection for assumed excess camber type
+   pgsTypes::AssumedExcessCamberType GetAssumedExcessCamberType();
+
+   bool m_bCanAssumedExcessCamberInputBeEnabled;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
@@ -58,15 +71,15 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
    virtual BOOL OnInitDialog();
+   afx_msg void OnSlabOffsetTypeChanged();
+   afx_msg void OnAssumedExcessCamberTypeChanged();
    afx_msg void OnBnClickedHelp();
-   afx_msg void OnHaunchDepthTypeChanged();
-   afx_msg void OnHaunchLayoutTypeChanged();
 
-private:
-   Float64 m_Fillet;
-   pgsTypes::HaunchShapeType m_HaunchShape;
-   CHaunchShapeComboBox m_cbHaunchShape;
-   pgsTypes::HaunchInputDepthType m_HaunchInputDepthType;
+   CBridgeDescription2* GetBridgeDesc();
+
+
+   pgsTypes::SlabOffsetType m_SlabOffsetType;
+   pgsTypes::AssumedExcessCamberType m_AssumedExcessCamberType;
 
    void InitializeData();
 };
