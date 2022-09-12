@@ -2497,6 +2497,7 @@ Uint32 CTimelineManager::Validate() const
       error |= TLM_GEOM_EVENT_MISSING_ERROR;
    }
 
+
    // Make sure railing system is installed after the deck, or if there is no
    // deck, after the last segment is erected
    EventIndexType diaphragmEventIdx = GetIntermediateDiaphragmsLoadEventIndex();

@@ -3378,7 +3378,7 @@ void CBridgeAgentImp::GetHaunchDepth4BySpanInput(const CPrecastSegmentData* pSeg
          std::size_t currLoc = 0;
          for (auto haunch : spanHaunches)
          {
-            Float64 Xspan = spanLength * (Float64)currLoc / (Float64)(numHaunches-1);
+            Float64 Xspan = spanLength * (Float64)currLoc / (Float64)numHaunches;
             pgsPointOfInterest spanPoi = ConvertSpanPointToPoi(spanKey,Xspan);
             Float64 Xgirderline = ConvertPoiToGirderlineCoordinate(spanPoi);
             pwLinearFunction.AddPoint(Xgirderline,haunch);
@@ -30412,15 +30412,17 @@ Float64 CBridgeAgentImp::GetDuration(IntervalIndexType idx) const
 LPCTSTR CBridgeAgentImp::GetDescription(IntervalIndexType idx) const
 {
    VALIDATE(BRIDGE);
-   return m_IntervalManager.GetDescription(idx);
+//   return m_IntervalManager.GetDescription(idx);
 
 // Roadway geom string causes differences in .test reg files we don't need to see yet
 #pragma Reminder("Remove code below after regression testing haunch stuff - rdp")
-   CString t = m_IntervalManager.GetDescription(idx);
-   t.Replace(_T(", Roadway Geometry Control"),_T(""));
-   std::_tstring str = t;
+   std::_tstring t = m_IntervalManager.GetDescription(idx);
+   std::_tstring s = _T(", Roadway Geometry Control");
+   std::_tstring::size_type i = t.find(s);
+   if (i != std::string::npos)
+      t.erase(i,s.length());
 
-   return str.c_str();
+   return t.c_str();
 }
 
 IntervalIndexType CBridgeAgentImp::GetInterval(EventIndexType eventIdx) const
@@ -36576,7 +36578,7 @@ void CBridgeAgentImp::ValidateGirderTopChordElevation(const CGirderKey& girderKe
    }
 }
 
-void CBridgeAgentImp::ValidateGirderTopChordElevationADimInput(const CGirderKey& girderKey,const CBridgeDescription2* pBridgeDesc,std::map<CSegmentKey,WBFL::Math::LinearFunction>* pFunctions) const
+void CBridgeAgentImp::ValidateGirderTopChordElevationADimInput(const CGirderKey& girderKey,const CBridgeDescription2* pBridgeDesc,std::map<CSegmentKey, mathLinFunc2d>* pFunctions) const
 {
    VALIDATE(BRIDGE);
 

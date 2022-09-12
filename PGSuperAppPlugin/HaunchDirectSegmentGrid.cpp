@@ -131,6 +131,7 @@ void CHaunchDirectSegmentGrid::BuildGridAndHeader()
    CBridgeDescription2* pBridge = GetBridgeDesc();
 
    SegmentIndexType nSegs = pBridge->GetGirderGroup(m_GroupIdx)->GetGirder(0)->GetSegmentCount();
+   GirderIndexType nGdrs = pBridge->GetGirderGroup(m_GroupIdx)->GetGirderCount();
 
    pgsTypes::HaunchInputDistributionType disttype = GetHaunchInputDistributionType();
 
