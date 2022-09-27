@@ -875,7 +875,7 @@ std::vector<IntervalIndexType> CIntervalManager::GetGirderTendonStressingInterva
    return intervals;
 }
 
-std::vector<IntervalIndexType> CIntervalManager::GetGeometryControlIntervals(pgsTypes::GeometryControlActivityType type)
+std::vector<IntervalIndexType> CIntervalManager::GetGeometryControlIntervals(pgsTypes::GeometryControlActivityType type) const
 {
    std::vector<IntervalIndexType> intervals;
    for (const auto& pair : m_vGeometryControlIntervals)
@@ -887,6 +887,23 @@ std::vector<IntervalIndexType> CIntervalManager::GetGeometryControlIntervals(pgs
    }
 
    return intervals;
+}
+
+IntervalIndexType CIntervalManager::GetGeometryControlEventInterval() const
+{
+   IntervalIndexType GceInterval = INVALID_INDEX;
+   for (const auto& pair : m_vGeometryControlIntervals)
+   {
+      if (pair.second == pgsTypes::gcaGeometryControlEvent)
+      {
+         GceInterval = pair.first;
+         break;
+      }
+   }
+
+   ATLASSERT(GceInterval != INVALID_INDEX);
+
+   return GceInterval;
 }
 
 IntervalIndexType CIntervalManager::GetTemporarySupportErectionInterval(SupportIndexType tsIdx) const

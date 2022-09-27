@@ -258,4 +258,7 @@ interface IIntervals : IUnknown
    // bridges, it could be the interval when longitudinal joints become composite or
    // when intermediate diaphragms are composite if there are no concrete elements composite with the girder
    virtual IntervalIndexType GetLastCompositeInterval() const = 0;
+
+   // Interval at Geometry Control Event (GCE)
+   virtual IntervalIndexType GetGeometryControlInterval() const = 0;
 };

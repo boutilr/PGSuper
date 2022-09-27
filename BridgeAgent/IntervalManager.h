@@ -204,7 +204,11 @@ public:
    std::vector<IntervalIndexType> GetGirderTendonStressingIntervals(const CGirderKey& girderKey) const;
 
    // returns intervals for geometry control activities.
-   std::vector<IntervalIndexType> GetGeometryControlIntervals(pgsTypes::GeometryControlActivityType type);
+   std::vector<IntervalIndexType> GetGeometryControlIntervals(pgsTypes::GeometryControlActivityType type) const;
+
+   // return the interval of THE Geometry Control Event
+   IntervalIndexType GetGeometryControlEventInterval() const;
+
 
 protected:
    IBroker* m_pBroker;

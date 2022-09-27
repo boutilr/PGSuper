@@ -131,11 +131,10 @@ void CHaunchDirectSegmentGrid::BuildGridAndHeader()
    CBridgeDescription2* pBridge = GetBridgeDesc();
 
    SegmentIndexType nSegs = pBridge->GetGirderGroup(m_GroupIdx)->GetGirder(0)->GetSegmentCount();
-   GirderIndexType nGdrs = pBridge->GetGirderGroup(m_GroupIdx)->GetGirderCount();
 
    pgsTypes::HaunchInputDistributionType disttype = GetHaunchInputDistributionType();
 
-   ROWCOL nRows = (ROWCOL)nGdrs;
+   ROWCOL nRows = (ROWCOL)2;
    ROWCOL nCols = (ROWCOL)(nSegs * disttype);
 
    SetRowCount(nRows);
@@ -209,7 +208,7 @@ void CHaunchDirectSegmentGrid::BuildGridAndHeader()
    }
 
    // top left corner
-   SetStyleRange(CGXRange(0,0,2,0),CGXStyle().SetMergeCell(GX_MERGE_VERTICAL | GX_MERGE_COMPVALUE).SetControl(GX_IDS_CTRL_HEADER).SetValue(_T("Girder")));
+   SetStyleRange(CGXRange(0,0,1,0),CGXStyle().SetMergeCell(GX_MERGE_VERTICAL | GX_MERGE_COMPVALUE).SetControl(GX_IDS_CTRL_HEADER).SetValue(_T("Girder")));
 
    // make text fit correctly
    ResizeRowHeightsToFit(CGXRange(0,0,GetRowCount(),GetColCount()));
@@ -232,7 +231,7 @@ void CHaunchDirectSegmentGrid::FillGrid()
    GetParam()->SetLockReadOnly(FALSE);
 
    ROWCOL nRows = GetRowCount();
-   if (m_nExtraHeaderRows + 1 < nRows)
+   if (m_nExtraHeaderRows < nRows)
    {
       RemoveRows(m_nExtraHeaderRows + 1,nRows);
    }

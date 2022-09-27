@@ -2449,30 +2449,43 @@ Uint32 CTimelineManager::Validate() const
       }
    }
 
-   // Geometry Control Event(s)
+   // Geometry Control Events (GCE)
    EventIndexType castDeckEventIdx = GetCastDeckEventIndex();
+   bool isDeck = INVALID_INDEX != castDeckEventIdx; // indirect way to determine
+   EventIndexType firstPossibleGCE; // event just before the earliest event when a GCE can occur
+   if (isDeck)
+   {
+      firstPossibleGCE = castDeckEventIdx;
+   }
+   else
+   {
+      firstPossibleGCE = GetLastSegmentErectionEventIndex();
+   }
 
    EventIndexType currEventIdx = 0;
    EventIndexType gceIndex = INVALID_INDEX;
    for (const auto pTimelineEvent : m_TimelineEvents)
    {
       pgsTypes::GeometryControlActivityType gcType = pTimelineEvent->GetGeometryControlActivity().GetGeometryControlEventType();
-      if (pgsTypes::gcaDisabled != gcType && currEventIdx <= castDeckEventIdx)
+      if (pgsTypes::gcaDisabled != gcType)
       {
-         // geometry control cannot take place before deck casting
-         error |= TLM_GEOM_EVENT_TIME_ERROR;
-         m_GeomEventTimeError.push_back(currEventIdx);
-      }
-      else if (pgsTypes::gcaGeometryControlEvent == gcType)
-      {
-         // look for duplicate event
-         if (gceIndex != INVALID_INDEX)
+         if (currEventIdx <= firstPossibleGCE)
          {
-            error |= TLM_GEOM_EVENT_DUPL_ERROR;
-            m_GeomEventDuplicateError.push_back(std::make_pair(currEventIdx,gceIndex));
+            // geometry control cannot take place before firstPossibleGCE
+            error |= TLM_GEOM_EVENT_TIME_ERROR;
+            m_GeomEventTimeError.push_back(currEventIdx);
          }
+         else if (pgsTypes::gcaGeometryControlEvent == gcType)
+         {
+            // look for duplicate event
+            if (gceIndex != INVALID_INDEX)
+            {
+               error |= TLM_GEOM_EVENT_DUPL_ERROR;
+               m_GeomEventDuplicateError.push_back(std::make_pair(currEventIdx,gceIndex));
+            }
 
-         gceIndex = currEventIdx;
+            gceIndex = currEventIdx;
+         }
       }
 
       currEventIdx++;
@@ -2483,7 +2496,6 @@ Uint32 CTimelineManager::Validate() const
       // Must have one GCE
       error |= TLM_GEOM_EVENT_MISSING_ERROR;
    }
-
 
    // Make sure railing system is installed after the deck, or if there is no
    // deck, after the last segment is erected
@@ -3298,15 +3310,24 @@ std::_tstring CTimelineManager::GetErrorMessage(Uint32 errorCode) const
 
    if (WBFL::System::Flags<Uint32>::IsSet(errorCode,TLM_GEOM_EVENT_TIME_ERROR))
    {
+      bool isDeck = INVALID_INDEX != GetCastDeckEventIndex(); // indirect way to determine
+
       for (auto event : m_GeomEventTimeError)
       {
-         os << _T("Roadway Geometry Control Events (GCE) must occur prior to deck casting. Please remove the GCE from event ") << LABEL_EVENT(event) <<  std::endl << std::endl;
+         if (isDeck)
+         {
+            os << _T("Roadway Geometry Control Events (GCE) must occur after deck placement. Please remove the GCE from event ") << LABEL_EVENT(event) << std::endl << std::endl;
+         }
+         else
+         {
+            os << _T("Roadway Geometry Control Events (GCE) must occur after last segment has been erected. Please remove the GCE from event ") << LABEL_EVENT(event) << std::endl << std::endl;
+         }
       }
    }
 
    if (WBFL::System::Flags<Uint32>::IsSet(errorCode,TLM_GEOM_EVENT_MISSING_ERROR))
    {
-      os << _T("There must be a Roadway Geometry Control Event (GCE) defined. Please add a GCE after deck casting") << std::endl << std::endl;
+      os << _T("There must be a Roadway Geometry Control Event (GCE) defined. Please add a GCE after placement of deck.") << std::endl << std::endl;
    }
 
    if (WBFL::System::Flags<Uint32>::IsSet(errorCode,TLM_GEOM_EVENT_DUPL_ERROR))
