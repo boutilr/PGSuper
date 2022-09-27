@@ -23,12 +23,14 @@
 #include "StdAfx.h"
 #include <Reporting\ADimChapterBuilder.h>
 #include <Reporting\ReportNotes.h>
+#include <Reporting\DeckElevationChapterBuilder.h>
 #include <IFace\Constructability.h>
 #include <IFace\Bridge.h>
 #include <IFace\Project.h>
 #include <IFace\AnalysisResults.h>
 #include <IFace\DocumentType.h>
 #include <IFace\Intervals.h>
+#include <IFace\Alignment.h>
 
 #include <PgsExt\BridgeDescription2.h>
 
@@ -56,7 +58,7 @@ CPGSuperChapterBuilder(bSelect)
 //======================== OPERATIONS =======================================
 LPCTSTR CADimChapterBuilder::GetName() const
 {
-   return TEXT("Haunch Details");
+   return TEXT("Finished Roadway and Haunch Details");
 }
 
 rptChapter* CADimChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
@@ -68,19 +70,15 @@ rptChapter* CADimChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporti
 
    rptChapter* pChapter = CPGSuperChapterBuilder::Build(pRptSpec,level);
 
-   GET_IFACE2(pBroker,ILibrary, pLib );
-   GET_IFACE2(pBroker,ISpecification, pSpec );
+   GET_IFACE2(pBroker,ILibrary,pLib);
+   GET_IFACE2(pBroker,ISpecification,pSpec);
    std::_tstring spec_name = pSpec->GetSpecification();
-   const SpecLibraryEntry* pSpecEntry = pLib->GetSpecEntry( spec_name.c_str() );
+   const SpecLibraryEntry* pSpecEntry = pLib->GetSpecEntry(spec_name.c_str());
 
-   GET_IFACE2(pBroker, IDocumentType, pDocType);
-   bool bIsSplicedGirder = (pDocType->IsPGSpliceDocument() ? true : false);
+   GET_IFACE2(pBroker,IBridge,pBridge);
+   pgsTypes::HaunchInputDepthType haunchInputType = pBridge->GetHaunchInputDepthType();
 
-   GET_IFACE2(pBroker, ILossParameters, pLossParams);
-   bool bTimeStepAnalysis = (pLossParams->GetLossMethod() == pgsTypes::TIME_STEP);
-
-   GET_IFACE2_NOCHECK(pBroker,IBridge,pBridge);
-   if ( !pSpecEntry->IsSlabOffsetCheckEnabled() )
+   if (!pSpecEntry->IsSlabOffsetCheckEnabled())
    {
       rptParagraph* pPara = new rptParagraph;
       *pChapter << pPara;
@@ -88,15 +86,35 @@ rptChapter* CADimChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporti
       *pPara << _T("Slab Offset check disabled in Project Criteria. No analysis performed.") << rptNewLine;
       return pChapter;
    }
-   else if ( pBridge->GetDeckType() == pgsTypes::sdtNone )
+   else if (pBridge->GetDeckType() == pgsTypes::sdtNone)
    {
-      rptParagraph* pPara = new rptParagraph;
-      *pChapter << pPara;
-
-      *pPara << _T("This bridge does not have a deck. No analysis performed.") << rptNewLine;
+      // Use deck elevations report
+      CDeckElevationChapterBuilder builder;
+      builder.BuildNoDeckElevationContent(pChapter,pRptSpec,level);
       return pChapter;
    }
+   else if (pgsTypes::hidACamber == haunchInputType)
+   {
+      BuildAdimContent(pChapter,pRptSpec,level,pBroker,girderKey,pSpecEntry);
+   }
+   else
+   {
+      ATLASSERT(pgsTypes::hidHaunchDirectly == haunchInputType || pgsTypes::hidHaunchPlusSlabDirectly == haunchInputType);
+      BuildDirectHaunchElevationContent(pChapter, pRptSpec, level);
+   }
 
+   return pChapter;
+}
+
+void CADimChapterBuilder::BuildAdimContent(rptChapter * pChapter,CReportSpecification * pRptSpec,Uint16 level,IBroker* pBroker,const CGirderKey& girderKey,const SpecLibraryEntry* pSpecEntry) const
+{
+   GET_IFACE2(pBroker,IDocumentType,pDocType);
+   bool bIsSplicedGirder = (pDocType->IsPGSpliceDocument() ? true : false);
+
+   GET_IFACE2(pBroker,ILossParameters,pLossParams);
+   bool bTimeStepAnalysis = (pLossParams->GetLossMethod() == pgsTypes::TIME_STEP);
+
+   GET_IFACE2(pBroker,IBridge,pBridge);
    bool bHasElevAdj = pBridge->HasTemporarySupportElevationAdjustments();
 
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
@@ -400,8 +418,179 @@ rptChapter* CADimChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporti
    *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("ProfileEffect.gif")) << rptNewLine;
    *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("GirderOrientationEffect.png"));
    *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("GirderOrientationEffectEquation.png"))  << rptNewLine;
+}
 
-   return pChapter;
+void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter,CReportSpecification* pRptSpec,Uint16 level) const
+{
+   CBrokerReportSpecification* pSpec = dynamic_cast<CBrokerReportSpecification*>(pRptSpec);
+   CComPtr<IBroker> pBroker;
+   pSpec->GetBroker(&pBroker);
+   GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
+
+   CGirderReportSpecification* pSGRptSpec = dynamic_cast<CGirderReportSpecification*>(pRptSpec);
+
+   CGirderKey girderKey;
+   if (pSGRptSpec)
+   {
+      girderKey = pSGRptSpec->GetGirderKey();
+   }
+
+   rptParagraph* pPara = new rptParagraph(rptStyleManager::GetHeadingStyle());
+   *pPara << _T("Design and Finished Elevations") << rptNewLine;
+   (*pChapter) << pPara;
+
+   pPara = new rptParagraph();
+   (*pChapter) << pPara;
+   *pPara << _T("Offsets are measured from and normal to the left edge, centerline, and right edge of girder at top of girder.") << rptNewLine;
+   *pPara << _T("Design elevations are the deck surface elevations defined by the alignment, profile, and superelevations.") << rptNewLine;
+   *pPara << _T("Finished elevations are the top of the finished girder, or overlay if applicable, including deflection effects.") << rptNewLine;
+
+   GET_IFACE2(pBroker,ILibrary,pLib);
+   GET_IFACE2(pBroker,ISpecification,pISpec);
+   const SpecLibraryEntry* pSpecEntry = pLib->GetSpecEntry(pISpec->GetSpecification().c_str());
+   Float64 tolerance = pSpecEntry->GetFinishedElevationTolerance();
+
+   INIT_UV_PROTOTYPE(rptLengthSectionValue,dim1,pDisplayUnits->GetSpanLengthUnit(),true);
+   INIT_UV_PROTOTYPE(rptLengthSectionValue,dim2,pDisplayUnits->GetComponentDimUnit(),true);
+   INIT_UV_PROTOTYPE(rptLengthSectionValue,dimH,pDisplayUnits->GetComponentDimUnit(),false);
+   *pPara << _T("Finished elevations in red text differ from the design elevation by more than ") << symbol(PLUS_MINUS) << dim1.SetValue(tolerance) << _T(" (") << symbol(PLUS_MINUS) << dim2.SetValue(tolerance) << _T(")") << rptNewLine;
+
+   GET_IFACE2(pBroker,IBridge,pBridge);
+   Float64 fillet = pBridge->GetFillet();
+   *pPara << _T("Haunch dimensions in red text are less than the fillet value of ") << dim2.SetValue(fillet) << rptNewLine;
+
+   GET_IFACE2(pBroker,IBridgeDescription,pIBridgeDesc);
+   const CDeckDescription2* pDeck = pIBridgeDesc->GetDeckDescription();
+   Float64 overlay = 0;
+   if (pDeck->WearingSurface == pgsTypes::wstOverlay)
+   {
+      overlay = pBridge->GetOverlayDepth();
+
+      if (pDeck->bInputAsDepthAndDensity == false)
+      {
+         INIT_UV_PROTOTYPE(rptLengthSectionValue,olay,pDisplayUnits->GetComponentDimUnit(),true);
+         *pPara << _T("Overlay is defined by weight. Overlay depth assumed to be ") << olay.SetValue(overlay) << _T(".") << rptNewLine;
+      }
+   }
+
+   INIT_UV_PROTOTYPE(rptLengthSectionValue,webDim,pDisplayUnits->GetSpanLengthUnit(),false);
+   INIT_UV_PROTOTYPE(rptLengthSectionValue,dist,pDisplayUnits->GetSpanLengthUnit(),false);
+   INIT_UV_PROTOTYPE(rptLengthSectionValue,cogoPoint,pDisplayUnits->GetAlignmentLengthUnit(),true);
+
+   GET_IFACE2(pBroker,IRoadway,pAlignment);
+   GET_IFACE2(pBroker,IPointOfInterest,pPoi);
+   GET_IFACE2(pBroker,IDeformedGirderGeometry,pDeformedGirderGeometry);
+   GET_IFACE2(pBroker,IIntervals,pIntervals);
+
+#pragma Reminder("Need to loop on all reporting intervals for haunch output")
+   IntervalIndexType interval = pIntervals->GetGeometryControlInterval();
+
+   SpanIndexType nSpans = pBridge->GetSpanCount();
+   GroupIndexType nGroups = pBridge->GetGirderGroupCount();
+
+   SpanIndexType startSpanIdx = (girderKey.groupIndex == ALL_GROUPS ? 0 : pBridge->GetGirderGroupStartSpan(girderKey.groupIndex));
+   SpanIndexType endSpanIdx = (girderKey.groupIndex == ALL_GROUPS ? nSpans - 1 : pBridge->GetGirderGroupEndSpan(girderKey.groupIndex));
+
+   for (SpanIndexType spanIdx = startSpanIdx; spanIdx <= endSpanIdx; spanIdx++)
+   {
+      GirderIndexType nGirders = pBridge->GetGirderCountBySpan(spanIdx);
+      GirderIndexType startGirderIdx = (girderKey.girderIndex == ALL_GIRDERS ? 0 : girderKey.girderIndex);
+      GirderIndexType endGirderIdx = (girderKey.girderIndex == ALL_GIRDERS ? nGirders - 1 : startGirderIdx);
+
+      for (GirderIndexType gdrIdx = startGirderIdx; gdrIdx <= endGirderIdx; gdrIdx++)
+      {
+         std::_tostringstream os;
+         os << _T("Span ") << LABEL_SPAN(spanIdx) << _T(", Girder ") << LABEL_GIRDER(gdrIdx) << std::endl;
+         rptRcTable* pTable = rptStyleManager::CreateDefaultTable(12, os.str().c_str());
+         (*pPara) << pTable << rptNewLine;
+
+         pTable->SetNumberOfHeaderRows(1);
+
+         ColumnIndexType col = 0;
+         for (col = 0; col < 3; col++)
+         {
+            pTable->SetColumnStyle(col,rptStyleManager::GetTableCellStyle(CB_NONE | CJ_LEFT));
+            pTable->SetStripeRowColumnStyle(col,rptStyleManager::GetTableStripeRowCellStyle(CB_NONE | CJ_LEFT));
+         }
+
+         col = 1;
+         (*pTable)(0,col++) << _T("CL Brg");
+         (*pTable)(0,col++) << Sub2(_T("0.1L"),_T("s"));
+         (*pTable)(0,col++) << Sub2(_T("0.2L"),_T("s"));
+         (*pTable)(0,col++) << Sub2(_T("0.3L"),_T("s"));
+         (*pTable)(0,col++) << Sub2(_T("0.4L"),_T("s"));
+         (*pTable)(0,col++) << Sub2(_T("0.5L"),_T("s"));
+         (*pTable)(0,col++) << Sub2(_T("0.6L"),_T("s"));
+         (*pTable)(0,col++) << Sub2(_T("0.7L"),_T("s"));
+         (*pTable)(0,col++) << Sub2(_T("0.8L"),_T("s"));
+         (*pTable)(0,col++) << Sub2(_T("0.9L"),_T("s"));
+         (*pTable)(0,col++) << _T("CL Brg");
+
+         RowIndexType row = pTable->GetNumberOfHeaderRows();
+
+         CSpanKey spanKey(spanIdx,gdrIdx);
+
+         PoiList vPoi;
+         pPoi->GetPointsOfInterest(spanKey,POI_SPAN | POI_TENTH_POINTS,&vPoi);
+         ATLASSERT(vPoi.size() == 11);
+
+         GroupIndexType grpIdx = pBridge->GetGirderGroupIndex(spanIdx);
+         CSegmentKey segmentKey(grpIdx,gdrIdx,0);
+
+         col = 0;
+
+         (*pTable)(row + 0,col) << Bold(_T("Station"));
+         (*pTable)(row + 1,col) << Bold(_T("Offset (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+         (*pTable)(row + 2,col) << Bold(_T("Design Elev (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+         (*pTable)(row + 3,col) << Bold(_T("Finished Elev (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+         (*pTable)(row + 4,col) << Bold(_T("Left Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+         (*pTable)(row + 5,col) << Bold(_T("CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+         (*pTable)(row + 6,col) << Bold(_T("Right Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+
+         col = 1;
+         for (const auto& poi : vPoi)
+         {
+            // get parameters for design elevation
+
+            // CL Girder location
+            CComPtr<IPoint2d> point_on_cl_girder;
+            pBridge->GetPoint(poi,pgsTypes::pcLocal,&point_on_cl_girder);
+
+            Float64 station,offset;
+            pAlignment->GetStationAndOffset(pgsTypes::pcLocal,point_on_cl_girder,&station,&offset);
+
+            // get parameters for finished elevation... for no deck, the finished elevation is the top of the girder
+            Float64 lftHaunch,ctrHaunch,rgtHaunch;
+            Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,interval,true /*include overlay depth*/,&lftHaunch,&ctrHaunch,&rgtHaunch);
+
+            Float64 design_elevation = pAlignment->GetElevation(station,offset);
+
+            (*pTable)(row + 0,col) << rptRcStation(station,&pDisplayUnits->GetStationFormat());
+            (*pTable)(row + 1,col) << RPT_OFFSET(offset,dist);
+            (*pTable)(row + 2,col) << dist.SetValue(design_elevation);
+
+            // if finished elevation differs from design_elevation by more than tolerance, use red text for the finished_elevation
+            rptRiStyle::FontColor color = IsEqual(design_elevation,finished_elevation,tolerance) ? rptRiStyle::Black : rptRiStyle::Red;
+            rptRcColor* pColor = new rptRcColor(color);
+            (*pTable)(row + 3,col) << pColor << dist.SetValue(finished_elevation) << color(Black);
+
+            // haunch depths
+            color = lftHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
+            pColor = new rptRcColor(color);
+            (*pTable)(row + 4,col) << pColor << dimH.SetValue(lftHaunch) << color(Black);
+
+            color = ctrHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
+            pColor = new rptRcColor(color);
+            (*pTable)(row + 5,col) << pColor << dimH.SetValue(ctrHaunch) << color(Black);
+
+            color = rgtHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
+            pColor = new rptRcColor(color);
+            (*pTable)(row + 6,col) << pColor << dimH.SetValue(rgtHaunch) << color(Black);
+
+            col++;
+         } // next poi
+      } // next girder
+   } // next span
 }
 
 std::unique_ptr<WBFL::Reporting::ChapterBuilder> CADimChapterBuilder::Clone() const

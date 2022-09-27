@@ -232,12 +232,20 @@ rptChapter* CDeckElevationChapterBuilder::BuildDeckOnGirder(const std::shared_pt
    return pChapter;
 }
 
-rptChapter* CDeckElevationChapterBuilder::BuildNoDeck(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec, Uint16 level) const
+rptChapter* CDeckElevationChapterBuilder::BuildNoDeck(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
+{
+   rptChapter* pChapter = CPGSuperChapterBuilder::Build(pRptSpec,level);
+
+   BuildNoDeckElevationContent(pChapter,pRptSpec,level);
+
+   return pChapter;
+}
+
+void CDeckElevationChapterBuilder::BuildNoDeckElevationContent(rptChapter * pChapter,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    auto pSpec = std::dynamic_pointer_cast<const CBrokerReportSpecification>(pRptSpec);
    CComPtr<IBroker> pBroker;
    pSpec->GetBroker(&pBroker);
-
    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
    rptChapter* pChapter = CPGSuperChapterBuilder::Build(pRptSpec, level);
@@ -296,6 +304,7 @@ rptChapter* CDeckElevationChapterBuilder::BuildNoDeck(const std::shared_ptr<cons
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    GET_IFACE2(pBroker, IGirder, pGirder);
    GET_IFACE2(pBroker, IGeometry, pGeometry);
+   GET_IFACE2(pBroker, IDeformedGirderGeometry, pDeformedGirderGeometry);
 
    RowIndexType row_step = 4; // number of rows used for each location (left,center,right)
 
@@ -442,8 +451,7 @@ rptChapter* CDeckElevationChapterBuilder::BuildNoDeck(const std::shared_ptr<cons
 
             // get parameters for finished elevation... for no deck, the finished elevation is the top of the girder
             std::array<Float64,3> finished_elevation;
-            pGirder->GetFinishedElevation(poi, direction, true /*include overlay depth*/, &finished_elevation[Left], &finished_elevation[Center], &finished_elevation[Right]);
-
+            pDeformedGirderGeometry->GetFinishedElevation(poi, direction, true /*include overlay depth*/, &finished_elevation[Left], &finished_elevation[Center], &finished_elevation[Right]);
 
             for (int i = 0; i < 3; i++) // left, center, right
             {
@@ -467,6 +475,4 @@ rptChapter* CDeckElevationChapterBuilder::BuildNoDeck(const std::shared_ptr<cons
          row += 3 * row_step;
       } // next girder
    } // next span
-
-   return pChapter;
 }

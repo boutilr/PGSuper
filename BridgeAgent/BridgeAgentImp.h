@@ -97,7 +97,8 @@ class ATL_NO_VTABLE CBridgeAgentImp :
    public IGirder,
    public IGirderTendonGeometry,
    public ISegmentTendonGeometry,
-   public IIntervals
+   public IIntervals,
+   public IDeformedGirderGeometry 
 {
    friend class CStrandMoverSwapper;
 public:
@@ -142,6 +143,7 @@ BEGIN_COM_MAP(CBridgeAgentImp)
    COM_INTERFACE_ENTRY(ITempSupport)
    COM_INTERFACE_ENTRY(IGirder)
    COM_INTERFACE_ENTRY(IGirderTendonGeometry)
+   COM_INTERFACE_ENTRY(IDeformedGirderGeometry)
    COM_INTERFACE_ENTRY(ISegmentTendonGeometry)
    COM_INTERFACE_ENTRY(IIntervals)
    COM_INTERFACE_ENTRY_IMPL(IConnectionPointContainer)
@@ -350,6 +352,7 @@ public:
    virtual Float64 GetStructuralSlabDepth(const pgsPointOfInterest& poi) const override;
    virtual Float64 GetCastSlabDepth(const pgsPointOfInterest& poi) const override;
    virtual Float64 GetPanelDepth(const pgsPointOfInterest& poi) const override;
+   virtual pgsTypes::HaunchInputDepthType GetHaunchInputDepthType() const override;
    virtual Float64 GetLeftSlabEdgeOffset(Float64 Xb) const override;
    virtual Float64 GetRightSlabEdgeOffset(Float64 Xb) const override;
    virtual Float64 GetLeftSlabOverhang(Float64 Xb) const override;
@@ -1135,9 +1138,6 @@ public:
    virtual Float64 GetProfileChordElevation(const pgsPointOfInterest& poi) const override;
    virtual Float64 GetTopGirderChordElevation(const pgsPointOfInterest& poi) const override;
    virtual Float64 GetTopGirderChordElevation(const pgsPointOfInterest& poi, Float64 Astart, Float64 Aend) const override;
-   virtual Float64 GetTopGirderElevation(const pgsPointOfInterest& poi,MatingSurfaceIndexType matingSurfaceIdx,const GDRCONFIG* pConfig=nullptr) const override;
-   virtual void GetTopGirderElevation(const pgsPointOfInterest& poi, IDirection* pDirection, Float64* pLeft, Float64* pCenter, Float64* pRight) const override;
-   virtual void GetFinishedElevation(const pgsPointOfInterest& poi, IDirection* pDirection, bool bIncludeOverlay, Float64* pLeft, Float64* pCenter, Float64* pRight) const override;
    virtual Float64 GetSplittingZoneHeight(const pgsPointOfInterest& poi) const override;
    virtual pgsTypes::SplittingDirection GetSplittingDirection(const CGirderKey& girderKey) const override;
    virtual bool CanPrecamber(const CSegmentKey& segmentKey) const override;
@@ -1171,6 +1171,13 @@ public:
    virtual const WBFL::Stability::HaulingStabilityProblem* GetSegmentHaulingStabilityProblem(const CSegmentKey& segmentKey) const override;
    virtual const WBFL::Stability::HaulingStabilityProblem* GetSegmentHaulingStabilityProblem(const CSegmentKey& segmentKey,const HANDLINGCONFIG& handlingConfig,ISegmentHaulingDesignPointsOfInterest* pPOId) const override;
    virtual std::vector<std::tuple<Float64, Float64, std::_tstring>> GetWebSections(const pgsPointOfInterest& poi) const override;
+
+// IDeformedGirderGeometry
+   virtual Float64 GetTopGirderElevation(const pgsPointOfInterest& poi,const GDRCONFIG* pConfig = nullptr) const override;
+   virtual void GetTopGirderElevation(const pgsPointOfInterest& poi,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const override;
+   virtual void GetTopGirderElevationEx(const pgsPointOfInterest& poi,IntervalIndexType interval,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const override;
+   virtual void GetFinishedElevation(const pgsPointOfInterest& poi,IDirection* pDirection,bool bIncludeOverlay,Float64* pLeft,Float64* pCenter,Float64* pRight) const override;
+   virtual Float64 GetFinishedElevation(const pgsPointOfInterest& poi,IntervalIndexType interval,bool bIncludeOverlay,Float64* pLftHaunch,Float64* pCtrHaunch,Float64* pRgtHaunch) const override;
 
 // IGirderTendonGeometry
 public:
@@ -1311,6 +1318,8 @@ public:
    virtual IntervalIndexType GetCompositeUserLoadInterval() const override;
    virtual IntervalIndexType GetLastNoncompositeInterval() const override;
    virtual IntervalIndexType GetLastCompositeInterval() const override;
+   virtual IntervalIndexType GetGeometryControlInterval() const override;
+
 
 private:
    DECLARE_EAF_AGENT_DATA;
@@ -1738,6 +1747,11 @@ private:
    void ValidateGirderTopChordElevationADimInput(const CGirderKey& girderKey,const CBridgeDescription2* pBridgeDesc,std::map<CSegmentKey,WBFL::Math::LinearFunction>* pFunctions) const;
    void ValidateGirderTopChordElevationDirectHaunchInput(const CGirderKey& girderKey,const CBridgeDescription2* pBridgeDesc,std::map<CSegmentKey,WBFL::Math::LinearFunction>* pFunctions) const;
    mutable std::map<CSegmentKey,WBFL::Math::LinearFunction> m_GirderTopChordElevationFunctions; // linear functions that represent the top girder chord elevations
+
+   // Girder elevations for A dimension haunch input, and for direct haunch input are computed differently
+   void GetTopGirderElevation4ADim(const pgsPointOfInterest& poi,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const;
+   void GetTopGirderElevationEx4DirectHaunch(const pgsPointOfInterest& poi,IntervalIndexType interval,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const;
+   Float64 GetTopCLGirderElevationEx4DirectHaunch(const pgsPointOfInterest& poi,IntervalIndexType interval) const;
 
    // Common function to return bearing elevation details at bearings or at girder edges
    enum BearingElevLocType { batBearings, batGirderEdges };

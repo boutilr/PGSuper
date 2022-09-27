@@ -446,7 +446,8 @@ void pgsDesigner2::GetSlabOffsetDetails(const CSegmentKey& segmentKey,const GDRC
    GET_IFACE(IIntervals, pIntervals);
    IntervalIndexType erectionIntervalIdx = pIntervals->GetErectSegmentInterval(segmentKey);
 
-
+   GET_IFACE(IDeformedGirderGeometry,pDeformedGirderGeometry);
+   
    // determine the minumum and maximum difference in elevation between the
    // roadway surface and the top of the segment.... measured directly above 
    // the top of the segment
@@ -471,7 +472,7 @@ void pgsDesigner2::GetSlabOffsetDetails(const CSegmentKey& segmentKey,const GDRC
       Float64 top_width = pGdr->GetTopWidth(poi);
 
       // top of girder elevation, including camber effects
-      Float64 elev_top_girder = pGdr->GetTopGirderElevation(poi,INVALID_INDEX/*CL Segment rather than a particular mating surface*/,pConfig);
+      Float64 elev_top_girder = pDeformedGirderGeometry->GetTopGirderElevation(poi,pConfig);
 
       // get station and normal offset for this poi
       Float64 station, offset;
@@ -5372,6 +5373,7 @@ void pgsDesigner2::CheckConstructability(const CGirderKey& girderKey,pgsConstruc
          GET_IFACE(IPointOfInterest, pPoi);
          GET_IFACE(IRoadway, pAlignment);
          GET_IFACE(IGirder, pIGirder);
+         GET_IFACE(IDeformedGirderGeometry,pDeformedGirderGeometry);
 
          PoiList vPoi;
          pPoi->GetPointsOfInterest(segmentKey, POI_ERECTED_SEGMENT | POI_TENTH_POINTS, &vPoi);
@@ -5385,7 +5387,7 @@ void pgsDesigner2::CheckConstructability(const CGirderKey& girderKey,pgsConstruc
             Float64 elev = pAlignment->GetElevation(station, offset);
 
             std::array<Float64, 3> finished_elevation;
-            pIGirder->GetFinishedElevation(poi, nullptr, true /*include overlay depth*/, &finished_elevation[Left], &finished_elevation[Center], &finished_elevation[Right]);
+            pDeformedGirderGeometry->GetFinishedElevation(poi, nullptr, true /*include overlay depth*/, &finished_elevation[Left], &finished_elevation[Center], &finished_elevation[Right]);
 
             Float64 diff = fabs(finished_elevation[Center] - elev);
 

@@ -188,6 +188,10 @@ void CHaunchDirectSameAsGrid::BuildGridAndHeader()
                col++;
             }
          }
+         else
+         {
+            col++;
+         }
       } // next segment
    }
    else

@@ -492,6 +492,8 @@ interface IBridge : IUnknown
    virtual Float64 GetStructuralSlabDepth(const pgsPointOfInterest& poi) const = 0;
    virtual Float64 GetCastSlabDepth(const pgsPointOfInterest& poi) const = 0;
    virtual Float64 GetPanelDepth(const pgsPointOfInterest& poi) const = 0;
+   virtual pgsTypes::HaunchInputDepthType GetHaunchInputDepthType() const = 0;
+
 
    // Returns distance from the left exterior girder to the edge of slab, measured normal to the alignment
    // Xb is measured in Bridge Line Coordinates and can be easily determined by station
@@ -1788,22 +1790,6 @@ interface IGirder : public IUnknown
    // Returns the elevation along the top of girder chord defined by the provided "A" dimension values (straight line along the top of the girder)
    virtual Float64 GetTopGirderChordElevation(const pgsPointOfInterest& poi, Float64 Astart, Float64 Aend) const = 0;
 
-   // Returns the top of girder elevation at the centerline of the specified mating surface. If pConfig is nullptr, the slab offset and excess camber from the
-   // bridge model are used, otherwise the slab offset from the config is used and the excess camber is computed using the supplied configuration
-   virtual Float64 GetTopGirderElevation(const pgsPointOfInterest& poi,MatingSurfaceIndexType matingSurfaceIdx,const GDRCONFIG* pConfig=nullptr) const = 0;
-
-   // Returns the top of girder elevation for the left, center, and right edges of the girder at the specified poi. The elevation takes into
-   // account slab offsets and excess camber. Direction defines a tranverse line passing through poi. Left and Right elevations are computed
-   // where the transverse line intersects the edges of the girder. If pDirection is nullptr, the transverse line is taken to be normal to the girder
-   virtual void GetTopGirderElevation(const pgsPointOfInterest& poi, IDirection* pDirection,Float64* pLeft, Float64* pCenter, Float64* pRight) const = 0;
-
-   // Returns the finished top of girder elevation for the left, center, and right edges of the girder at the specified poi. The elevation takes into
-   // account slab offsets and excess camber. Direction defines a tranverse line passing through poi. Left and Right elevations are computed
-   // where the transverse line intersects the edges of the girder. If pDirection is nullptr, the transverse line is taken to be normal to the girder.
-   // if bIncludeOverlay is true, the depth of the overlay is included (future overlays are not included), otherwise this method is the same
-   // as GetTopGirderElevation
-   virtual void GetFinishedElevation(const pgsPointOfInterest& poi, IDirection* pDirection, bool bIncludeOverlay, Float64* pLeft, Float64* pCenter, Float64* pRight) const = 0;
-
    // Returns the height of the splitting zone 
    virtual Float64 GetSplittingZoneHeight(const pgsPointOfInterest& poi) const = 0;
 
@@ -1884,6 +1870,47 @@ interface IGirder : public IUnknown
    // Returns the elevation of web-flange intersections that are included in principal web shear checks
    // The key is the elevation in girder section coordinates and the value is descriptive text
    virtual std::vector<std::tuple<Float64, Float64, std::_tstring>> GetWebSections(const pgsPointOfInterest& poi) const = 0;
+};
+
+
+/*****************************************************************************
+INTERFACE
+   IDeformedGirderGeometry
+
+DESCRIPTION
+   Interface for obtaining information about spliced girder ducts and tendons
+*****************************************************************************/
+// {CB6DDE05-1618-468E-AE8B-30031F938D71}
+DEFINE_GUID(IID_IDeformedGirderGeometry,
+0xcb6dde05,0x1618,0x468e,0xae,0x8b,0x30,0x3,0x1f,0x93,0x8d,0x71);
+interface IDeformedGirderGeometry : public IUnknown
+{
+   // Functions to get elevations of the deformed structure
+   // 
+   // Returns the top of girder elevation at the centerline girder FOR DESIGN FOR PGSUPER MODELS WITH ADIM INPUT ONLY. 
+   // If pConfig is nullptr, the slab offset and excess camber from thebridge model are used, otherwise the slab offset from the config
+   // is used and the excess camber is computed using the supplied configuration. 
+   virtual Float64 GetTopGirderElevation(const pgsPointOfInterest& poi,const GDRCONFIG* pConfig = nullptr) const = 0;
+
+   // Returns the top of girder elevation for the left, center, and right edges of the girder at the specified poi. The elevation takes into
+   // account slab offsets and excess camber. Direction defines a tranverse line passing through poi. Left and Right elevations are computed
+   // where the transverse line intersects the edges of the girder. If pDirection is nullptr, the transverse line is taken to be normal to the girder
+   virtual void GetTopGirderElevation(const pgsPointOfInterest& poi,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const = 0;
+
+   // Function below is only valid for direct haunch input. 
+   virtual void GetTopGirderElevationEx(const pgsPointOfInterest& poi,IntervalIndexType interval,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const = 0;
+
+   // Finished elevation for no-deck girders
+   // Returns the finished top of girder elevation for the left, center, and right edges of the girder at the specified poi. The elevation takes into
+   // account elevation adjustments and excess camber. Direction defines a tranverse line passing through poi. Left and Right elevations are computed
+   // where the transverse line intersects the edges of the girder. If pDirection is nullptr, the transverse line is taken to be normal to the girder.
+   // if bIncludeOverlay is true, the depth of the overlay is included (future overlays are not included), otherwise this method is the same
+   // as GetTopGirderElevation
+   virtual void GetFinishedElevation(const pgsPointOfInterest& poi,IDirection* pDirection,bool bIncludeOverlay,Float64* pLeft,Float64* pCenter,Float64* pRight) const = 0;
+
+   // Finished elevation for direct haunch input. Elevation can only be checked at CL girder because this is a hard point where the haunch depth is input. 
+   // Haunch is pliable at left & right locations, so we return haunch depth at left/center/right to be checked against fillet dimension.
+   virtual Float64 GetFinishedElevation(const pgsPointOfInterest& poi,IntervalIndexType interval,bool bIncludeOverlay,Float64* pLftHaunch,Float64* pCtrHaunch,Float64* pRgtHaunch) const = 0;
 };
 
 /*****************************************************************************

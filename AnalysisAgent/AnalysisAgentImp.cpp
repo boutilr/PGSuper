@@ -1146,7 +1146,7 @@ STDMETHODIMP CAnalysisAgentImp::RegInterfaces()
    pBrokerInit->RegInterface( IID_IExternalLoading,          this );
    pBrokerInit->RegInterface( IID_IPretensionStresses,       this );
    pBrokerInit->RegInterface( IID_ICamber,                   this );
-   pBrokerInit->RegInterface( IID_IContraflexurePoints,      this );
+   pBrokerInit->RegInterface(IID_IContraflexurePoints,       this);
    pBrokerInit->RegInterface( IID_IContinuity,               this );
    pBrokerInit->RegInterface( IID_IBearingDesign,            this );
    pBrokerInit->RegInterface( IID_IPrecompressedTensileZone, this );

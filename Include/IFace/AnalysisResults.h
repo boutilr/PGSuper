@@ -866,7 +866,6 @@ interface IContraflexurePoints : IUnknown
    virtual void GetContraflexurePoints(const CSpanKey& spanKey,Float64* cfPoints,IndexType* nPoints) const = 0;
 };
 
-
 /*****************************************************************************
 INTERFACE
    IContinuity
