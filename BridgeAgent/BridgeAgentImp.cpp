@@ -58,7 +58,7 @@
 
 #include <MathEx.h>
 #include <Math\MathUtils.h>
-#include <Math\PwLinearFunction2dUsingPoints.h>
+#include <Math\PiecewiseFunction.h>
 #include <System\Flags.h>
 #include <Materials/Materials.h>
 
@@ -3355,7 +3355,7 @@ void CBridgeAgentImp::GetHaunchDepth4BySpanInput(const CPrecastSegmentData* pSeg
    else
    {
       // Use linear interpolation of piecewise linear span locations to determine haunch values across segments
-      mathPwLinearFunction2dUsingPoints pwLinearFunction;
+      WBFL::Math::PiecewiseFunction pwLinearFunction;
       Float64 segmentLength = GetSegmentLength(segmentKey);
 
       // Build layout along segments. Use girder line coord's as basis
@@ -36593,7 +36593,7 @@ void CBridgeAgentImp::ValidateGirderTopChordElevationADimInput(const CGirderKey&
       Float64 startLoc = GetSegmentStartEndDistance(segmentKey);
       Float64 endLoc = segLength - GetSegmentEndEndDistance(segmentKey);
 
-      mathLinFunc2d tmpf = GenerateLineFunc2dFromPoints(startLoc, startProfileElevation-slab_offset[pgsTypes::metStart], endLoc, endProfileElevation-slab_offset[pgsTypes::metEnd]);
+      WBFL::Math::LinearFunction tmpf = GenerateLineFunc2dFromPoints(startLoc, startProfileElevation-slab_offset[pgsTypes::metStart], endLoc, endProfileElevation-slab_offset[pgsTypes::metEnd]);
       std::array<Float64,2> unadj_elev_ends;
       unadj_elev_ends[pgsTypes::metStart] = tmpf.Evaluate(0.0);
       unadj_elev_ends[pgsTypes::metEnd] = tmpf.Evaluate(segLength);
@@ -36618,13 +36618,13 @@ void CBridgeAgentImp::ValidateGirderTopChordElevationADimInput(const CGirderKey&
       Float64 m = (elevEnd - elevStart) / segLength;
       // y = mx+b
       // x = 0 is at start pier CL Brg. so b = elevStart
-      mathLinFunc2d fnBasic(m, elevStart);
+      WBFL::Math::LinearFunction fnBasic(m, elevStart);
 
       pFunctions->insert(std::make_pair(segmentKey, fnBasic));
    }
 }
 
-void CBridgeAgentImp::ValidateGirderTopChordElevationDirectHaunchInput(const CGirderKey& girderKey,const CBridgeDescription2* pBridgeDesc,std::map<CSegmentKey,mathLinFunc2d>* pFunctions) const
+void CBridgeAgentImp::ValidateGirderTopChordElevationDirectHaunchInput(const CGirderKey& girderKey,const CBridgeDescription2* pBridgeDesc,std::map<CSegmentKey,WBFL::Math::LinearFunction>* pFunctions) const
 {
    VALIDATE(BRIDGE);
 
@@ -36699,7 +36699,7 @@ void CBridgeAgentImp::ValidateGirderTopChordElevationDirectHaunchInput(const CGi
       // The function object we are building needs its basis at segment ends, so fix that if not so.
       if (bAtStartBrg || bAtEndBrg)
       {
-         mathLinFunc2d tmpf = GenerateLineFunc2dFromPoints(startLoc,haunchStart,endLoc,haunchEnd);
+         WBFL::Math::LinearFunction tmpf = GenerateLineFunc2dFromPoints(startLoc,haunchStart,endLoc,haunchEnd);
          haunchStart = tmpf.Evaluate(0.0);
          haunchEnd   = tmpf.Evaluate(segLength);
       }

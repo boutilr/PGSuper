@@ -61,7 +61,7 @@ LPCTSTR CADimChapterBuilder::GetName() const
    return TEXT("Finished Roadway and Haunch Details");
 }
 
-rptChapter* CADimChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
+rptChapter* CADimChapterBuilder::Build(std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    auto pGirderRptSpec = std::dynamic_pointer_cast<const CGirderReportSpecification>(pRptSpec);
    CComPtr<IBroker> pBroker;
@@ -106,7 +106,7 @@ rptChapter* CADimChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporti
    return pChapter;
 }
 
-void CADimChapterBuilder::BuildAdimContent(rptChapter * pChapter,CReportSpecification * pRptSpec,Uint16 level,IBroker* pBroker,const CGirderKey& girderKey,const SpecLibraryEntry* pSpecEntry) const
+void CADimChapterBuilder::BuildAdimContent(rptChapter * pChapter,std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level,IBroker* pBroker,const CGirderKey& girderKey,const SpecLibraryEntry* pSpecEntry) const
 {
    GET_IFACE2(pBroker,IDocumentType,pDocType);
    bool bIsSplicedGirder = (pDocType->IsPGSpliceDocument() ? true : false);
@@ -420,14 +420,14 @@ void CADimChapterBuilder::BuildAdimContent(rptChapter * pChapter,CReportSpecific
    *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("GirderOrientationEffectEquation.png"))  << rptNewLine;
 }
 
-void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter,CReportSpecification* pRptSpec,Uint16 level) const
+void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter,std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
 {
-   CBrokerReportSpecification* pSpec = dynamic_cast<CBrokerReportSpecification*>(pRptSpec);
+   const CBrokerReportSpecification* pSpec = dynamic_cast<const CBrokerReportSpecification*>(pRptSpec.get());
    CComPtr<IBroker> pBroker;
    pSpec->GetBroker(&pBroker);
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
-   CGirderReportSpecification* pSGRptSpec = dynamic_cast<CGirderReportSpecification*>(pRptSpec);
+   const CGirderReportSpecification* pSGRptSpec = dynamic_cast<const CGirderReportSpecification*>(pRptSpec.get());
 
    CGirderKey girderKey;
    if (pSGRptSpec)

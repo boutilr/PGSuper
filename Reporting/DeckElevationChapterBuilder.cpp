@@ -241,14 +241,12 @@ rptChapter* CDeckElevationChapterBuilder::BuildNoDeck(const std::shared_ptr<cons
    return pChapter;
 }
 
-void CDeckElevationChapterBuilder::BuildNoDeckElevationContent(rptChapter * pChapter,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
+void CDeckElevationChapterBuilder::BuildNoDeckElevationContent(rptChapter* pChapter,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    auto pSpec = std::dynamic_pointer_cast<const CBrokerReportSpecification>(pRptSpec);
    CComPtr<IBroker> pBroker;
    pSpec->GetBroker(&pBroker);
    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
-
-   rptChapter* pChapter = CPGSuperChapterBuilder::Build(pRptSpec, level);
 
    auto pSGRptSpec = std::dynamic_pointer_cast<const CGirderReportSpecification>(pRptSpec);
 
