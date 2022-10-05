@@ -72,8 +72,8 @@ protected:
    // GROUP: LIFECYCLE
    // GROUP: OPERATORS
    // GROUP: OPERATIONS
-   void BuildAdimContent(rptChapter* pChapter, CReportSpecification* pRptSpec,Uint16 level, IBroker* pBroker,const CGirderKey& girderKey,const SpecLibraryEntry* pSpecEntry) const;
-   void BuildDirectHaunchElevationContent(rptChapter* pChapter,CReportSpecification* pRptSpec,Uint16 level) const;
+   void BuildAdimContent(rptChapter* pChapter,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level, IBroker* pBroker,const CGirderKey& girderKey,const SpecLibraryEntry* pSpecEntry) const;
+   void BuildDirectHaunchElevationContent(rptChapter* pChapter,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec, Uint16 level) const;
 
    // GROUP: ACCESS
    // GROUP: INQUIRY

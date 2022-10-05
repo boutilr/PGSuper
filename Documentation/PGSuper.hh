@@ -34,7 +34,8 @@
 #define IDH_GIRDER_PROPERTIES                   108
 #define IDH_CONCRETE_PROPERTIES                 109
 #define IDH_DEFLECTION_HISTORY                  110
-#define IDH_LIBRARY_VIEW            111
+#define IDH_LIBRARY_VIEW                        111
+#define IDH_FINISHED_ELEVATION_VIEW             112
 
 #define IDH_ALIGNMENT_HORIZONTAL		 200
 #define IDH_ALIGNMENT_PROFILE			 201

@@ -81,12 +81,14 @@ void CEditHaunchDlg::DoDataExchange(CDataExchange* pDX)
 
    if (pDX->m_bSaveAndValidate)
    {
+      m_BridgeDesc.SetHaunchInputDepthType(m_HaunchInputDepthType);
+
       // Haunch shape
       m_BridgeDesc.GetDeckDescription()->HaunchShape = m_HaunchShape;
       m_BridgeDesc.SetFillet(m_Fillet);
 
       // PDX->Fails from lower level dialogs will not keep the dialog open. The code below will.
-      if (GetHaunchInputDepthType() == pgsTypes::hidACamber)
+      if (m_HaunchInputDepthType == pgsTypes::hidACamber)
       {
          if (FALSE == m_EditHaunchACamberDlg.UpdateData(pDX->m_bSaveAndValidate))
          {

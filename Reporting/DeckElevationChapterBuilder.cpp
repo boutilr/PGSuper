@@ -264,9 +264,9 @@ void CDeckElevationChapterBuilder::BuildNoDeckElevationContent(rptChapter * pCha
 
    pPara = new rptParagraph();
    (*pChapter) << pPara;
-   *pPara << _T("Offsets are measured from and normal to the left edge, centerline, and right edge of girder at top of girder.") << rptNewLine;
-   *pPara << _T("Design elevations are the deck surface elevations defined by the alignment, profile, and superelevations.") << rptNewLine;
-   *pPara << _T("Finished elevations are the top of the finished girder, or overlay if applicable, including the effects of camber.") << rptNewLine;
+   *pPara << _T("Offsets are measured from and normal to the left edge, centerline (CL), and right edge of girder at top of girder.") << rptNewLine;
+   *pPara << _T("Design elevations are the deck surface elevations along CL girder defined by the alignment, profile, and superelevations.") << rptNewLine;
+   *pPara << _T("Finished elevations are the top CL of the finished girder, or overlay if applicable, including the effects of camber.") << rptNewLine;
 
    GET_IFACE2(pBroker,ILibrary, pLib);
    GET_IFACE2(pBroker, ISpecification, pISpec);
