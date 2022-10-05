@@ -59,7 +59,7 @@ public:
    
 
    //------------------------------------------------------------------------
-   virtual rptChapter* Build(std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const;
+   virtual rptChapter* Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const override;
 
    //------------------------------------------------------------------------
    virtual std::unique_ptr<WBFL::Reporting::ChapterBuilder> Clone() const override;
@@ -72,8 +72,8 @@ protected:
    // GROUP: LIFECYCLE
    // GROUP: OPERATORS
    // GROUP: OPERATIONS
-   void BuildAdimContent(rptChapter* pChapter,std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level, IBroker* pBroker,const CGirderKey& girderKey,const SpecLibraryEntry* pSpecEntry) const;
-   void BuildDirectHaunchElevationContent(rptChapter* pChapter, std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec, Uint16 level) const;
+   void BuildAdimContent(rptChapter* pChapter,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level, IBroker* pBroker,const CGirderKey& girderKey,const SpecLibraryEntry* pSpecEntry) const;
+   void BuildDirectHaunchElevationContent(rptChapter* pChapter,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec, Uint16 level) const;
 
    // GROUP: ACCESS
    // GROUP: INQUIRY

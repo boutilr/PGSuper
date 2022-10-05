@@ -61,7 +61,7 @@ LPCTSTR CADimChapterBuilder::GetName() const
    return TEXT("Finished Roadway and Haunch Details");
 }
 
-rptChapter* CADimChapterBuilder::Build(std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
+rptChapter* CADimChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    auto pGirderRptSpec = std::dynamic_pointer_cast<const CGirderReportSpecification>(pRptSpec);
    CComPtr<IBroker> pBroker;
@@ -106,7 +106,7 @@ rptChapter* CADimChapterBuilder::Build(std::shared_ptr<const WBFL::Reporting::Re
    return pChapter;
 }
 
-void CADimChapterBuilder::BuildAdimContent(rptChapter * pChapter,std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level,IBroker* pBroker,const CGirderKey& girderKey,const SpecLibraryEntry* pSpecEntry) const
+void CADimChapterBuilder::BuildAdimContent(rptChapter * pChapter,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level,IBroker* pBroker,const CGirderKey& girderKey,const SpecLibraryEntry* pSpecEntry) const
 {
    GET_IFACE2(pBroker,IDocumentType,pDocType);
    bool bIsSplicedGirder = (pDocType->IsPGSpliceDocument() ? true : false);
@@ -420,7 +420,7 @@ void CADimChapterBuilder::BuildAdimContent(rptChapter * pChapter,std::shared_ptr
    *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("GirderOrientationEffectEquation.png"))  << rptNewLine;
 }
 
-void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter,std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
+void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    const CBrokerReportSpecification* pSpec = dynamic_cast<const CBrokerReportSpecification*>(pRptSpec.get());
    CComPtr<IBroker> pBroker;
@@ -543,10 +543,13 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
          (*pTable)(row + 1,col) << Bold(_T("Offset (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
          (*pTable)(row + 2,col) << Bold(_T("Design Elev (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
          (*pTable)(row + 3,col) << Bold(_T("Finished Elev (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-         (*pTable)(row + 4,col) << Bold(_T("Left Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-         (*pTable)(row + 5,col) << Bold(_T("CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-         (*pTable)(row + 6,col) << Bold(_T("Right Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+         (*pTable)(row + 4,col) << Bold(_T("Elev Difference (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+         (*pTable)(row + 5,col) << Bold(_T("Left Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+         (*pTable)(row + 6,col) << Bold(_T("CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+         (*pTable)(row + 7,col) << Bold(_T("Right Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+         (*pTable)(row + 8,col) << Bold(_T("Req'd CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
 
+         bool bNegDemand = false;
          col = 1;
          for (const auto& poi : vPoi)
          {
@@ -560,8 +563,8 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
             pAlignment->GetStationAndOffset(pgsTypes::pcLocal,point_on_cl_girder,&station,&offset);
 
             // get parameters for finished elevation... for no deck, the finished elevation is the top of the girder
-            Float64 lftHaunch,ctrHaunch,rgtHaunch;
-            Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,interval,true /*include overlay depth*/,&lftHaunch,&ctrHaunch,&rgtHaunch);
+            Float64 lftHaunch,clHaunch,rgtHaunch;
+            Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,interval,true /*include overlay depth*/,&lftHaunch,&clHaunch,&rgtHaunch);
 
             Float64 design_elevation = pAlignment->GetElevation(station,offset);
 
@@ -574,21 +577,52 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
             rptRcColor* pColor = new rptRcColor(color);
             (*pTable)(row + 3,col) << pColor << dist.SetValue(finished_elevation) << color(Black);
 
+            pColor = new rptRcColor(color);
+            (*pTable)(row + 4,col) << pColor << dimH.SetValue(finished_elevation-design_elevation) << color(Black);
+
             // haunch depths
             color = lftHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
             pColor = new rptRcColor(color);
-            (*pTable)(row + 4,col) << pColor << dimH.SetValue(lftHaunch) << color(Black);
+            (*pTable)(row + 5,col) << pColor << dimH.SetValue(lftHaunch) << color(Black);
 
-            color = ctrHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
+            color = clHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
             pColor = new rptRcColor(color);
-            (*pTable)(row + 5,col) << pColor << dimH.SetValue(ctrHaunch) << color(Black);
+            (*pTable)(row + 6,col) << pColor << Bold(dimH.SetValue(clHaunch)) << color(Black);
 
             color = rgtHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
             pColor = new rptRcColor(color);
-            (*pTable)(row + 6,col) << pColor << dimH.SetValue(rgtHaunch) << color(Black);
+            (*pTable)(row + 7,col) << pColor << dimH.SetValue(rgtHaunch) << color(Black);
+
+            // Required haunch must clear fillet at edges and make roadway at CL. Demand is how much we must add to clHaunch to meet requirements
+            Float64 edgeDemand = max(fillet-lftHaunch, fillet-rgtHaunch);
+            Float64 clDemand = design_elevation - finished_elevation;
+
+            Float64 demand;
+            if (edgeDemand > 0.0)
+            {
+               demand = max(clDemand,edgeDemand);
+            }
+            else
+            {
+               demand = clDemand;
+            }
+
+            Float64 haunchReqd = demand + clHaunch;
+
+            color = haunchReqd >= TOLERANCE ? rptRiStyle::Black : rptRiStyle::Red;
+            pColor = new rptRcColor(color);
+            (*pTable)(row + 8,col) << pColor << dimH.SetValue(haunchReqd) << color(Black);
+
+            bNegDemand |= haunchReqd < 0.0;
 
             col++;
          } // next poi
+
+         if (bNegDemand)
+         {
+            *pPara << _T("Negative haunch demand indicates that the girder is set too low. Increase haunch at supports to resolve this problem.") << rptNewLine;
+         }
+
       } // next girder
    } // next span
 }

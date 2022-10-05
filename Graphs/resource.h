@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by Graphing.rc
+// Used by Graphs.rc
 //
 #define IDOK2                           3
 #define IDCANCEL2                       4
@@ -15,6 +15,7 @@
 #define IDD_ANALYSISRESULTS_GRAPH_CONTROLLER2 202
 #define IDD_INITIALSTRAIN_GRAPH_CONTROLLER 203
 #define IDD_SEGMENT_ANALYSISRESULTS_GRAPH_CONTROLLER 204
+#define IDD_FINISHED_ELEVATION_GRAPH_CONTROLLER 205
 #define IDC_EVENT                       1096
 #define IDC_SIMPLE                      1478
 #define IDC_SIMPLE2                     1479
@@ -32,14 +33,22 @@
 #define IDC_CLOSURE2                    3016
 #define IDC_DECK_CASTING_REGION         3016
 #define IDC_GRAPH_TYPE                  3017
+#define IDC_PLOT_AT                     3018
 #define IDC_ACTION                      3020
 #define IDC_GRID                        3021
 #define IDC_DUCT                        3022
+#define IDC_PGL                         3022
 #define IDC_POI                         3023
+#define IDC_FINISHED_DECK2              3023
+#define IDC_FINISHED_DECK               3023
 #define IDC_TOPDECK                     3024
+#define IDC_FINISHED_DECK_BOTTOM        3024
 #define IDC_BOTTOMDECK                  3025
+#define IDC_FINISHED_GIRDER_TOP         3025
 #define IDC_TOPGIRDER                   3026
+#define IDC_FINISHED_GIRDER_BOTTOM      3026
 #define IDC_BOTTOMGIRDER                3027
+#define IDC_GIRDER_CHORD                3027
 #define IDC_PROPERTY                    3030
 #define IDC_BEAM                        3031
 #define IDC_TRANSFORMED                 3032
@@ -83,7 +92,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        214
+#define _APS_NEXT_RESOURCE_VALUE        215
 #define _APS_NEXT_COMMAND_VALUE         32774
 #define _APS_NEXT_CONTROL_VALUE         3073
 #define _APS_NEXT_SYMED_VALUE           3000
