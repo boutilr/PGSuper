@@ -1892,15 +1892,16 @@ interface IDeformedGirderGeometry : public IUnknown
    // is used and the excess camber is computed using the supplied configuration. 
    virtual Float64 GetTopGirderElevation(const pgsPointOfInterest& poi,const GDRCONFIG* pConfig = nullptr) const = 0;
 
-   // Returns the top of girder elevation for the left, center, and right edges of the girder at the specified poi. The elevation takes into
-   // account slab offsets and excess camber. Direction defines a tranverse line passing through poi. Left and Right elevations are computed
-   // where the transverse line intersects the edges of the girder. If pDirection is nullptr, the transverse line is taken to be normal to the girder
+   // Returns the top of girder elevation for the left, center, and right edges of the girder at the specified poi at the time of GCE
+   //  The elevation takes into account slab offsets and excess camber. Direction defines a tranverse line passing through poi. 
+   // Left and Right elevations are computed where the transverse line intersects the edges of the girder. 
+   // If pDirection is nullptr, the transverse line is taken to be normal to the girder
    virtual void GetTopGirderElevation(const pgsPointOfInterest& poi,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const = 0;
 
    // Function below is only valid for direct haunch input. 
    virtual void GetTopGirderElevationEx(const pgsPointOfInterest& poi,IntervalIndexType interval,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const = 0;
 
-   // Finished elevation for no-deck girders
+   // Finished elevation for no-deck girders at time of GCE
    // Returns the finished top of girder elevation for the left, center, and right edges of the girder at the specified poi. The elevation takes into
    // account elevation adjustments and excess camber. Direction defines a tranverse line passing through poi. Left and Right elevations are computed
    // where the transverse line intersects the edges of the girder. If pDirection is nullptr, the transverse line is taken to be normal to the girder.

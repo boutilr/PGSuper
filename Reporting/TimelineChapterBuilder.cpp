@@ -400,7 +400,7 @@ rptChapter* CTimelineChapterBuilder::Build(const std::shared_ptr<const WBFL::Rep
          }
          else if (type == pgsTypes::gcaSpecCheckEvent)
          {
-            name = _T("Roadway Geometry Control Spec Check");
+            name = _T("Roadway Geometry Control Spec Check Only");
          }
          else if (type == pgsTypes::gcaGeometryReportingEvent)
          {

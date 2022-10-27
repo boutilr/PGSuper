@@ -83,7 +83,7 @@ rptChapter* CADimChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporti
       rptParagraph* pPara = new rptParagraph;
       *pChapter << pPara;
 
-      *pPara << _T("Slab Offset check disabled in Project Criteria. No analysis performed.") << rptNewLine;
+      *pPara << _T("Finished Elevation and Haunch check disabled in Project Criteria. No analysis performed.") << rptNewLine;
       return pChapter;
    }
    else if (pBridge->GetDeckType() == pgsTypes::sdtNone)
@@ -482,149 +482,143 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
    GET_IFACE2(pBroker,IDeformedGirderGeometry,pDeformedGirderGeometry);
    GET_IFACE2(pBroker,IIntervals,pIntervals);
 
-#pragma Reminder("Need to loop on all reporting intervals for haunch output")
-   IntervalIndexType interval = pIntervals->GetGeometryControlInterval();
-
    SpanIndexType nSpans = pBridge->GetSpanCount();
    GroupIndexType nGroups = pBridge->GetGirderGroupCount();
 
    SpanIndexType startSpanIdx = (girderKey.groupIndex == ALL_GROUPS ? 0 : pBridge->GetGirderGroupStartSpan(girderKey.groupIndex));
    SpanIndexType endSpanIdx = (girderKey.groupIndex == ALL_GROUPS ? nSpans - 1 : pBridge->GetGirderGroupEndSpan(girderKey.groupIndex));
 
-   for (SpanIndexType spanIdx = startSpanIdx; spanIdx <= endSpanIdx; spanIdx++)
+   // loop over all reporting intervals
+   IntervalIndexType gce_interval = pIntervals->GetGeometryControlInterval();
+   std::vector<IntervalIndexType> vIntervals = pIntervals->GetReportingGeometryControlIntervals();
+   for (auto interval : vIntervals)
    {
-      GirderIndexType nGirders = pBridge->GetGirderCountBySpan(spanIdx);
-      GirderIndexType startGirderIdx = (girderKey.girderIndex == ALL_GIRDERS ? 0 : girderKey.girderIndex);
-      GirderIndexType endGirderIdx = (girderKey.girderIndex == ALL_GIRDERS ? nGirders - 1 : startGirderIdx);
 
-      for (GirderIndexType gdrIdx = startGirderIdx; gdrIdx <= endGirderIdx; gdrIdx++)
+      for (SpanIndexType spanIdx = startSpanIdx; spanIdx <= endSpanIdx; spanIdx++)
       {
-         std::_tostringstream os;
-         os << _T("Span ") << LABEL_SPAN(spanIdx) << _T(", Girder ") << LABEL_GIRDER(gdrIdx) << std::endl;
-         rptRcTable* pTable = rptStyleManager::CreateDefaultTable(12, os.str().c_str());
-         (*pPara) << pTable << rptNewLine;
+         GirderIndexType nGirders = pBridge->GetGirderCountBySpan(spanIdx);
+         GirderIndexType startGirderIdx = (girderKey.girderIndex == ALL_GIRDERS ? 0 : girderKey.girderIndex);
+         GirderIndexType endGirderIdx = (girderKey.girderIndex == ALL_GIRDERS ? nGirders - 1 : startGirderIdx);
 
-         pTable->SetNumberOfHeaderRows(1);
-
-         ColumnIndexType col = 0;
-         for (col = 0; col < 3; col++)
+         for (GirderIndexType gdrIdx = startGirderIdx; gdrIdx <= endGirderIdx; gdrIdx++)
          {
-            pTable->SetColumnStyle(col,rptStyleManager::GetTableCellStyle(CB_NONE | CJ_LEFT));
-            pTable->SetStripeRowColumnStyle(col,rptStyleManager::GetTableStripeRowCellStyle(CB_NONE | CJ_LEFT));
-         }
+            CSpanKey spanKey(spanIdx,gdrIdx);
+            PoiList vPoi;
+            pPoi->GetPointsOfInterest(spanKey,POI_SPAN | POI_TENTH_POINTS,&vPoi);
+            pPoi->GetPointsOfInterest(spanKey,POI_START_FACE | POI_END_FACE,&vPoi,POIFIND_OR);
+            pPoi->SortPoiList(&vPoi); // sorts and removes duplicates
 
-         col = 1;
-         (*pTable)(0,col++) << _T("CL Brg");
-         (*pTable)(0,col++) << Sub2(_T("0.1L"),_T("s"));
-         (*pTable)(0,col++) << Sub2(_T("0.2L"),_T("s"));
-         (*pTable)(0,col++) << Sub2(_T("0.3L"),_T("s"));
-         (*pTable)(0,col++) << Sub2(_T("0.4L"),_T("s"));
-         (*pTable)(0,col++) << Sub2(_T("0.5L"),_T("s"));
-         (*pTable)(0,col++) << Sub2(_T("0.6L"),_T("s"));
-         (*pTable)(0,col++) << Sub2(_T("0.7L"),_T("s"));
-         (*pTable)(0,col++) << Sub2(_T("0.8L"),_T("s"));
-         (*pTable)(0,col++) << Sub2(_T("0.9L"),_T("s"));
-         (*pTable)(0,col++) << _T("CL Brg");
+            std::_tostringstream os;
+            os << _T("Span ") << LABEL_SPAN(spanIdx) << _T(", Girder ") << LABEL_GIRDER(gdrIdx) << _T(" - Interval ")<< LABEL_INTERVAL(interval) << _T(": ") << pIntervals->GetDescription(interval) << std::endl;
+            rptRcTable* pTable = rptStyleManager::CreateDefaultTable(vPoi.size() + 1,os.str().c_str());
+            (*pPara) << pTable << rptNewLine;
 
-         RowIndexType row = pTable->GetNumberOfHeaderRows();
+            pTable->SetNumberOfHeaderRows(1);
 
-         CSpanKey spanKey(spanIdx,gdrIdx);
-
-         PoiList vPoi;
-         pPoi->GetPointsOfInterest(spanKey,POI_SPAN | POI_TENTH_POINTS,&vPoi);
-         ATLASSERT(vPoi.size() == 11);
-
-         GroupIndexType grpIdx = pBridge->GetGirderGroupIndex(spanIdx);
-         CSegmentKey segmentKey(grpIdx,gdrIdx,0);
-
-         col = 0;
-
-         (*pTable)(row + 0,col) << Bold(_T("Station"));
-         (*pTable)(row + 1,col) << Bold(_T("Offset (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-         (*pTable)(row + 2,col) << Bold(_T("Design Elev (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-         (*pTable)(row + 3,col) << Bold(_T("Finished Elev (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-         (*pTable)(row + 4,col) << Bold(_T("Elev Difference (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-         (*pTable)(row + 5,col) << Bold(_T("Left Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-         (*pTable)(row + 6,col) << Bold(_T("CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-         (*pTable)(row + 7,col) << Bold(_T("Right Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-         (*pTable)(row + 8,col) << Bold(_T("Req'd CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-
-         bool bNegDemand = false;
-         col = 1;
-         for (const auto& poi : vPoi)
-         {
-            // get parameters for design elevation
-
-            // CL Girder location
-            CComPtr<IPoint2d> point_on_cl_girder;
-            pBridge->GetPoint(poi,pgsTypes::pcLocal,&point_on_cl_girder);
-
-            Float64 station,offset;
-            pAlignment->GetStationAndOffset(pgsTypes::pcLocal,point_on_cl_girder,&station,&offset);
-
-            // get parameters for finished elevation... for no deck, the finished elevation is the top of the girder
-            Float64 lftHaunch,clHaunch,rgtHaunch;
-            Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,interval,true /*include overlay depth*/,&lftHaunch,&clHaunch,&rgtHaunch);
-
-            Float64 design_elevation = pAlignment->GetElevation(station,offset);
-
-            (*pTable)(row + 0,col) << rptRcStation(station,&pDisplayUnits->GetStationFormat());
-            (*pTable)(row + 1,col) << RPT_OFFSET(offset,dist);
-            (*pTable)(row + 2,col) << dist.SetValue(design_elevation);
-
-            // if finished elevation differs from design_elevation by more than tolerance, use red text for the finished_elevation
-            rptRiStyle::FontColor color = IsEqual(design_elevation,finished_elevation,tolerance) ? rptRiStyle::Black : rptRiStyle::Red;
-            rptRcColor* pColor = new rptRcColor(color);
-            (*pTable)(row + 3,col) << pColor << dist.SetValue(finished_elevation) << color(Black);
-
-            pColor = new rptRcColor(color);
-            (*pTable)(row + 4,col) << pColor << dimH.SetValue(finished_elevation-design_elevation) << color(Black);
-
-            // haunch depths
-            color = lftHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
-            pColor = new rptRcColor(color);
-            (*pTable)(row + 5,col) << pColor << dimH.SetValue(lftHaunch) << color(Black);
-
-            color = clHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
-            pColor = new rptRcColor(color);
-            (*pTable)(row + 6,col) << pColor << Bold(dimH.SetValue(clHaunch)) << color(Black);
-
-            color = rgtHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
-            pColor = new rptRcColor(color);
-            (*pTable)(row + 7,col) << pColor << dimH.SetValue(rgtHaunch) << color(Black);
-
-            // Required haunch must clear fillet at edges and make roadway at CL. Demand is how much we must add to clHaunch to meet requirements
-            Float64 edgeDemand = max(fillet-lftHaunch, fillet-rgtHaunch);
-            Float64 clDemand = design_elevation - finished_elevation;
-
-            Float64 demand;
-            if (edgeDemand > 0.0)
+            ColumnIndexType col = 0;
+            for (col = 0; col < 3; col++)
             {
-               demand = max(clDemand,edgeDemand);
-            }
-            else
-            {
-               demand = clDemand;
+               pTable->SetColumnStyle(col,rptStyleManager::GetTableCellStyle(CB_NONE | CJ_LEFT));
+               pTable->SetStripeRowColumnStyle(col,rptStyleManager::GetTableStripeRowCellStyle(CB_NONE | CJ_LEFT));
             }
 
-            Float64 haunchReqd = demand + clHaunch;
+            col = 1;
 
-            color = haunchReqd >= TOLERANCE ? rptRiStyle::Black : rptRiStyle::Red;
-            pColor = new rptRcColor(color);
-            (*pTable)(row + 8,col) << pColor << dimH.SetValue(haunchReqd) << color(Black);
+            for (const auto& poi : vPoi)
+            {
+               (*pTable)(0,col++) << poi.get().GetAttributes(POI_SPAN,false);
+            }
 
-            bNegDemand |= haunchReqd < 0.0;
+            RowIndexType row = pTable->GetNumberOfHeaderRows();
+            col = 0;
 
-            col++;
-         } // next poi
+            (*pTable)(row + 0,col) << Bold(_T("Station"));
+            (*pTable)(row + 1,col) << Bold(_T("Offset (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 2,col) << Bold(_T("Design Elev (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 3,col) << Bold(_T("Finished Elev (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 4,col) << Bold(_T("Elev Difference (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 5,col) << Bold(_T("Left Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 6,col) << Bold(_T("CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 7,col) << Bold(_T("Right Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 8,col) << Bold(_T("Req'd CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
 
-         if (bNegDemand)
-         {
-            *pPara << _T("Negative haunch demand indicates that the girder is set too low. Increase haunch at supports to resolve this problem.") << rptNewLine;
-         }
+            bool bNegDemand = false;
+            col = 1;
+            for (const auto& poi : vPoi)
+            {
+               // get parameters for design elevation
 
-      } // next girder
-   } // next span
+               // CL Girder location
+               CComPtr<IPoint2d> point_on_cl_girder;
+               pBridge->GetPoint(poi,pgsTypes::pcLocal,&point_on_cl_girder);
+
+               Float64 station,offset;
+               pAlignment->GetStationAndOffset(pgsTypes::pcLocal,point_on_cl_girder,&station,&offset);
+
+               // get parameters for finished elevation... for no deck, the finished elevation is the top of the girder
+               Float64 lftHaunch,clHaunch,rgtHaunch;
+               Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,interval,true /*include overlay depth*/,&lftHaunch,&clHaunch,&rgtHaunch);
+
+               Float64 design_elevation = pAlignment->GetElevation(station,offset);
+
+               (*pTable)(row + 0,col) << rptRcStation(station,&pDisplayUnits->GetStationFormat());
+               (*pTable)(row + 1,col) << RPT_OFFSET(offset,dist);
+               (*pTable)(row + 2,col) << dist.SetValue(design_elevation);
+
+               // if finished elevation differs from design_elevation by more than tolerance, use red text for the finished_elevation
+               rptRiStyle::FontColor color = IsEqual(design_elevation,finished_elevation,tolerance) ? rptRiStyle::Black : rptRiStyle::Red;
+               rptRcColor* pColor = new rptRcColor(color);
+               (*pTable)(row + 3,col) << pColor << dist.SetValue(finished_elevation) << color(Black);
+
+               pColor = new rptRcColor(color);
+               (*pTable)(row + 4,col) << pColor << dimH.SetValue(finished_elevation - design_elevation) << color(Black);
+
+               // haunch depths
+               color = lftHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
+               pColor = new rptRcColor(color);
+               (*pTable)(row + 5,col) << pColor << dimH.SetValue(lftHaunch) << color(Black);
+
+               color = clHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
+               pColor = new rptRcColor(color);
+               (*pTable)(row + 6,col) << pColor << Bold(dimH.SetValue(clHaunch)) << color(Black);
+
+               color = rgtHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
+               pColor = new rptRcColor(color);
+               (*pTable)(row + 7,col) << pColor << dimH.SetValue(rgtHaunch) << color(Black);
+
+               // Required haunch must clear fillet at edges and make roadway at CL. Demand is how much we must add to clHaunch to meet requirements
+               Float64 edgeDemand = max(fillet - lftHaunch,fillet - rgtHaunch);
+               Float64 clDemand = design_elevation - finished_elevation;
+
+               Float64 demand;
+               if (edgeDemand > 0.0)
+               {
+                  demand = max(clDemand,edgeDemand);
+               }
+               else
+               {
+                  demand = clDemand;
+               }
+
+               Float64 haunchReqd = demand + clHaunch;
+
+               color = haunchReqd >= TOLERANCE ? rptRiStyle::Black : rptRiStyle::Red;
+               pColor = new rptRcColor(color);
+               (*pTable)(row + 8,col) << pColor << dimH.SetValue(haunchReqd) << color(Black);
+
+               bNegDemand |= haunchReqd < 0.0;
+
+               col++;
+            } // next poi
+
+            if (bNegDemand)
+            {
+               *pPara << _T("Negative haunch demand indicates that the girder is set too low. Increase haunch at supports to resolve this problem.") << rptNewLine;
+            }
+
+         } // next girder
+      } // next span
+   } // next interval
 }
 
 std::unique_ptr<WBFL::Reporting::ChapterBuilder> CADimChapterBuilder::Clone() const

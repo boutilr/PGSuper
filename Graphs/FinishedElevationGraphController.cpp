@@ -72,6 +72,10 @@ BOOL CFinishedElevationGraphController::OnInitDialog()
 {
    CMultiIntervalGirderGraphControllerBase::OnInitDialog();
 
+   GET_IFACE(IBridge,pBridge);
+   pgsTypes::SupportedDeckType deckType = pBridge->GetDeckType();
+   pgsTypes::HaunchInputDepthType haunchInputDepthType = pBridge->GetHaunchInputDepthType();
+
    CButton* pBut = (CButton*)GetDlgItem(IDC_PGL);
    BOOL show = ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowPGL();
    pBut->SetCheck(show == FALSE ? BST_UNCHECKED : BST_CHECKED);
@@ -81,16 +85,40 @@ BOOL CFinishedElevationGraphController::OnInitDialog()
    pBut->SetCheck(show==FALSE ? BST_UNCHECKED: BST_CHECKED);
 
    pBut = (CButton*)GetDlgItem(IDC_FINISHED_DECK_BOTTOM);
-   show = ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedDeckBottom();
-   pBut->SetCheck(show == FALSE ? BST_UNCHECKED : BST_CHECKED);
+   if (pgsTypes::sdtNone == deckType)
+   {
+      pBut->SetCheck(BST_UNCHECKED);
+      pBut->EnableWindow(FALSE);
+   }
+   else
+   {
+      show = ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedDeckBottom();
+      pBut->SetCheck(show == FALSE ? BST_UNCHECKED : BST_CHECKED);
+   }
 
    pBut = (CButton*)GetDlgItem(IDC_FINISHED_GIRDER_BOTTOM);
-   show = ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderBottom();
-   pBut->SetCheck(show == FALSE ? BST_UNCHECKED : BST_CHECKED);
+   if (pgsTypes::sdtNone == deckType)
+   {
+      pBut->SetCheck(BST_UNCHECKED);
+      pBut->EnableWindow(FALSE);
+   }
+   else
+   {
+      show = ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderBottom();
+      pBut->SetCheck(show == FALSE ? BST_UNCHECKED : BST_CHECKED);
+   }
 
    pBut = (CButton*)GetDlgItem(IDC_FINISHED_GIRDER_TOP);
-   show = ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderTop();
-   pBut->SetCheck(show == FALSE ? BST_UNCHECKED : BST_CHECKED);
+   if (pgsTypes::sdtNone == deckType)
+   {
+      pBut->SetCheck(BST_UNCHECKED);
+      pBut->EnableWindow(FALSE);
+   }
+   else
+   {
+      show = ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderTop();
+      pBut->SetCheck(show == FALSE ? BST_UNCHECKED : BST_CHECKED);
+   }
 
    pBut = (CButton*)GetDlgItem(IDC_GIRDER_CHORD);
    show = ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowGirderChord();
@@ -197,8 +225,25 @@ void CFinishedElevationGraphController::OnGraphTypeChanged()
 void CFinishedElevationGraphController::OnGraphSideChanged()
 {
    CComboBox* pBox = (CComboBox*)GetDlgItem(IDC_PLOT_AT);
-   int gs = pBox->GetCurSel();
-   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->SetGraphSide((CFinishedElevationGraphBuilder::GraphSide)gs);
+   CFinishedElevationGraphBuilder::GraphSide gs = (CFinishedElevationGraphBuilder::GraphSide)pBox->GetCurSel();
+   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->SetGraphSide(gs);
+
+   CButton* pBotBut = (CButton*)GetDlgItem(IDC_FINISHED_GIRDER_BOTTOM);
+   CButton* pChordBut = (CButton*)GetDlgItem(IDC_GIRDER_CHORD);
+   if (CFinishedElevationGraphBuilder::gsCenterLine != gs)
+   {
+      pBotBut->EnableWindow(FALSE);
+      pBotBut->SetCheck(0);
+      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderBottom(FALSE);
+      pChordBut->EnableWindow(FALSE);
+      pChordBut->SetCheck(0);
+      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowGirderChord(FALSE);
+   }
+   else
+   {
+      pBotBut->EnableWindow(TRUE);
+      pChordBut->EnableWindow(TRUE);
+   }
 }
 
 void CFinishedElevationGraphController::OnGroupChanged()

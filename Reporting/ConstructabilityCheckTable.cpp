@@ -630,7 +630,7 @@ void CConstructabilityCheckTable::BuildMinimumFilletCheck(rptChapter* pChapter,I
 
    rptParagraph* pTitle = new rptParagraph( rptStyleManager::GetHeadingStyle() );
    *pChapter << pTitle;
-   *pTitle << _T("Minimum Fillet Depth");
+   *pTitle << _T("Minimum Provided Fillet Depth");
    rptParagraph* pBody = new rptParagraph;
    *pChapter << pBody;
    *pBody << _T("This table compares the provided Fillet dimension to the minimum Fillet dimension specified in the girder library. A failed status indicates that the Fillet dimension is too small.") << rptNewLine;
@@ -695,7 +695,7 @@ void CConstructabilityCheckTable::BuildMinimumFilletCheck(rptChapter* pChapter,I
          (*pTable)(row, col++) << dim.SetValue(artifact.GetProvidedFillet());
          (*pTable)(row, col++) << dim.SetValue(artifact.GetRequiredMinimumFillet());
 
-         if (!artifact.IsSlabOffsetApplicable())
+         if (!artifact.IsSlabOffsetApplicable() && !artifact.GetFinishedElevationApplicability())
          {
             (*pTable)(row, col++) << RPT_NA;
          }
@@ -1275,10 +1275,6 @@ void CConstructabilityCheckTable::BuildFinishedElevationCheck(rptChapter* pChapt
    // Only add table if it has content
    if (0 < row)
    {
-      rptParagraph* pTitle = new rptParagraph(rptStyleManager::GetHeadingStyle());
-      *pChapter << pTitle;
-      *pTitle << _T("Finished Elevation");
-
       rptParagraph* pBody = new rptParagraph;
       *pChapter << pBody;
 
@@ -1292,8 +1288,104 @@ void CConstructabilityCheckTable::BuildFinishedElevationCheck(rptChapter* pChapt
       *pBody << _T("Tolerance: ") << symbol(PLUS_MINUS) << dim1.SetValue(tolerance) << _T(" (") << symbol(PLUS_MINUS) << dim2.SetValue(tolerance) << _T(")") << rptNewLine;
       *pBody << _T("Design Elevation = elevation defined by the alignment, profile, and superelevations") << rptNewLine;
       *pBody << _T("Finished Elevation = top of finished girder, or overlay if applicable, including the effects of camber") << rptNewLine;
-      *pBody << _T("Difference = greated difference between Design Elevation and Finished Elevation which occurs at Station and Offset.") << rptNewLine;
+      *pBody << _T("Difference = greatest difference between Design Elevation and Finished Elevation which occurs at Station and Offset.") << rptNewLine;
       
+      *pBody << pTable;
+   }
+   else
+   {
+      delete pTable;
+   }
+}
+
+void CConstructabilityCheckTable::BuildMinimumHaunchCheck(rptChapter* pChapter,IBroker* pBroker,const std::vector<CGirderKey>& girderList,IEAFDisplayUnits* pDisplayUnits) const
+{
+   GET_IFACE2(pBroker,IArtifact,pIArtifact);
+   GET_IFACE2_NOCHECK(pBroker,IBridge,pBridge);
+
+   // if there is only one span/girder, don't need to print span info
+   bool needSpanCols = true; // ConstrNeedSpanCols(girderList, pBridge);
+
+   // Create table - delete it later if we don't need it
+   ColumnIndexType nCols = needSpanCols ? 6 : 4; // put span/girder in table if multi girder
+   rptRcTable* pTable = rptStyleManager::CreateDefaultTable(nCols,_T(""));
+
+   INIT_UV_PROTOTYPE(rptLengthUnitValue,dim,pDisplayUnits->GetSpanLengthUnit(),false);
+   INIT_UV_PROTOTYPE(rptLengthUnitValue,cmpdim,pDisplayUnits->GetComponentDimUnit(),false);
+
+   pTable->SetColumnStyle(nCols - 1,rptStyleManager::GetTableCellStyle(CB_NONE | CJ_LEFT));
+   pTable->SetStripeRowColumnStyle(nCols - 1,rptStyleManager::GetTableStripeRowCellStyle(CB_NONE | CJ_LEFT));
+
+   ColumnIndexType col = 0;
+   if (needSpanCols)
+   {
+      (*pTable)(0,col++) << _T("Span");
+      (*pTable)(0,col++) << _T("Girder");
+   }
+
+   (*pTable)(0,col++) << COLHDR(_T("Station"),rptLengthUnitTag,pDisplayUnits->GetSpanLengthUnit());
+   (*pTable)(0,col++) << COLHDR(_T("Offset"),rptLengthUnitTag,pDisplayUnits->GetSpanLengthUnit());
+   (*pTable)(0,col++) << COLHDR(_T("Minimum Haunch Depth"),rptLengthUnitTag,pDisplayUnits->GetComponentDimUnit());
+   (*pTable)(0,col++) << _T("Status");
+
+   RowIndexType row = 0;
+   for (const auto& girderKey : girderList)
+   {
+      const pgsGirderArtifact* pGdrArtifact = pIArtifact->GetGirderArtifact(girderKey);
+      const pgsConstructabilityArtifact* pConstrArtifact = pGdrArtifact->GetConstructabilityArtifact();
+
+      SegmentIndexType nSegments = pBridge->GetSegmentCount(girderKey);
+      for (SegmentIndexType segIdx = 0; segIdx < nSegments; segIdx++)
+      {
+         const auto& artifact = pConstrArtifact->GetSegmentArtifact(segIdx);
+
+         if (artifact.GetFinishedElevationApplicability())
+         {
+            row++;
+            col = 0;
+
+            if (needSpanCols)
+            {
+               GroupIndexType group = girderKey.groupIndex;
+               GirderIndexType girder = girderKey.girderIndex;
+               (*pTable)(row,col++) << LABEL_SPAN(group);
+               (*pTable)(row,col++) << LABEL_GIRDER(girder);
+            }
+
+            Float64 station,offset,minHaunch;
+            pgsPointOfInterest poi;
+            artifact.GetMinimumHaunchDepth(&station,&offset,&poi,&minHaunch);
+
+            (*pTable)(row,col++) << rptRcStation(station,&pDisplayUnits->GetStationFormat());
+            (*pTable)(row,col++) << RPT_OFFSET(offset,dim);
+            (*pTable)(row,col++) << cmpdim.SetValue(minHaunch);
+
+            if (artifact.MinimumHaunchDepthPassed())
+            {
+               (*pTable)(row,col++) << RPT_PASS;
+            }
+            else
+            {
+               (*pTable)(row,col++) << RPT_FAIL;
+            }
+         }
+      }
+   }
+
+   // Only add table if it has content
+   if (0 < row)
+   {
+      rptParagraph* pTitle = new rptParagraph(rptStyleManager::GetHeadingStyle());
+      *pChapter << pTitle;
+      *pTitle << _T("Minimum Haunch Depth Check");
+
+      rptParagraph* pBody = new rptParagraph;
+      *pChapter << pBody;
+
+      Float64 fillet = pBridge->GetFillet();
+
+      INIT_UV_PROTOTYPE(rptLengthSectionValue,dimc,pDisplayUnits->GetComponentDimUnit(),true);
+      *pBody << _T("Minimum haunch depth is taken along entire girder length and is compared with a fillet value of ") << dimc.SetValue(fillet) << rptNewLine;
       *pBody << pTable;
    }
    else

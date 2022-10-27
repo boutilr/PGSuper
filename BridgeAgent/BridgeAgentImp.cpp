@@ -26053,7 +26053,7 @@ Float64 CBridgeAgentImp::GetTopGirderElevation(const pgsPointOfInterest& poi,con
    Float64 tft_poi = GetTopFlangeThickening(poi);
    Float64 tft_adjustment = tft_clbrg - tft_poi;
 
-   Float64 top_girder_chord_elevation = GetTopGirderChordElevation(poiCLBrg);// accounts for elevation changes at temporary supports
+   Float64 top_girder_chord_elevation = GetTopGirderChordElevation(poi);// accounts for elevation changes at temporary supports
 
    // get the camber
    GET_IFACE(ICamber,pCamber);
@@ -26091,7 +26091,7 @@ void CBridgeAgentImp::GetTopGirderElevationEx(const pgsPointOfInterest& poi,Inte
    GET_IFACE(IBridgeDescription,pIBridgeDesc);
    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
    pgsTypes::HaunchInputDepthType haunchInputDepthType = pBridgeDesc->GetHaunchInputDepthType();
-   if (pgsTypes::hidACamber == haunchInputDepthType)
+   if (pgsTypes::hidACamber != haunchInputDepthType)
    {
       GetTopGirderElevationEx4DirectHaunch(poi,interval,pDirection,pLeft,pCenter,pRight);
    }
@@ -26190,7 +26190,7 @@ Float64 CBridgeAgentImp::GetTopCLGirderElevationEx4DirectHaunch(const pgsPointOf
    Float64 gceDeflElevation = girderChordElevation + tftCenter + gceDeflMin;
 
    // Use different delta factor based on whether going backward or forward in time
-   Float64 deltafac = interval > gceInterval ? 1.0 : -1.0;
+   Float64 deltafac = interval > gceInterval ? 1.0 : 1.0;
 
    Float64 deflElevation = gceDeflElevation;
    if (interval != gceInterval)
@@ -26199,7 +26199,7 @@ Float64 CBridgeAgentImp::GetTopCLGirderElevationEx4DirectHaunch(const pgsPointOf
       Float64 itvDeflMin,itvDeflMax;
       pLimitStateForces->GetDeflection(interval,pgsTypes::ServiceI,poi,bat,true,false,false,true,true,&itvDeflMin,&itvDeflMax);
 
-      Float64 deltaDefl = gceDeflMin + deltafac * itvDeflMin;
+      Float64 deltaDefl = itvDeflMin - gceDeflMin;
 
       deflElevation += deltaDefl;
    }
@@ -31156,6 +31156,18 @@ IntervalIndexType CBridgeAgentImp::GetGeometryControlInterval() const
 {
    VALIDATE(BRIDGE);
    return m_IntervalManager.GetGeometryControlEventInterval();
+}
+
+std::vector<IntervalIndexType> CBridgeAgentImp::GetReportingGeometryControlIntervals() const
+{
+   VALIDATE(BRIDGE);
+   return m_IntervalManager.GetGeometryControlIntervals(pgsTypes::gcaGeometryReportingEvent);
+}
+
+std::vector<IntervalIndexType> CBridgeAgentImp::GetSpecCheckGeometryControlIntervals() const
+{
+   VALIDATE(BRIDGE);
+   return m_IntervalManager.GetGeometryControlIntervals(pgsTypes::gcaSpecCheckEvent);
 }
 
 ////////////////////////////////////

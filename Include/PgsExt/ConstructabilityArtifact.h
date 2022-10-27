@@ -174,7 +174,7 @@ public:
    bool HaunchGeometryPassed() const;
 
    // Finished Elevation Check
-   // (used only for no-deck bridges)
+   // (used only for no-deck bridges, and direct haunch input)
    void SetFinishedElevationApplicability(bool bSet);
    bool GetFinishedElevationApplicability() const;
    void SetFinishedElevationTolerance(Float64 tol);
@@ -182,6 +182,16 @@ public:
    void SetMaxFinishedElevation(Float64 station, Float64 offset, const pgsPointOfInterest& poi, Float64 designElevation, Float64 finishedElevation);
    void GetMaxFinishedElevation(Float64* pStation, Float64* pOffset, pgsPointOfInterest* pPoi, Float64* pDesignElevation, Float64* pFinishedElevation) const;
    bool FinishedElevationPassed() const;
+
+   // Min haunch depth along girder vs fillet check.
+   // (only for direct haunch input)
+   void SetMinimumHaunchDepthApplicability(bool bSet);
+   bool GetMinimumHaunchDepthApplicability() const;
+   void SetMinimumAllowableHaunchDepth(Float64 haunchDepth);
+   Float64 GetMinimumAllowableHaunchDepth() const;
+   void SetMinimumHaunchDepth(Float64 station,Float64 offset,const pgsPointOfInterest& poi,Float64 MinimumHaunchDepth);
+   void GetMinimumHaunchDepth(Float64* pStation,Float64* pOffset,pgsPointOfInterest* pPoi,Float64* pMinimumHaunchDepth) const;
+   bool MinimumHaunchDepthPassed() const;
 
    bool Passed() const;
 
@@ -235,11 +245,19 @@ private:
    // Finished elevation check data
    bool m_bIsFinishedElevationApplicable;
    Float64 m_FinishedElevationTolerance;
-   Float64 m_Station;
-   Float64 m_Offset;
-   pgsPointOfInterest m_Poi;
+   Float64 m_FinishedElevationStation;
+   Float64 m_FinishedElevationOffset;
+   pgsPointOfInterest m_FinishedElevationPoi;
    Float64 m_DesignElevation; // this is the elevation determined by the profile
    Float64 m_FinishedElevation; // this is the top of girder elevation 
+
+   // Minimum haunch depth vs fillet check (direct haunch input only)
+   bool m_bIsMinimumHaunchCheckApplicable;
+   pgsPointOfInterest m_MinimumHaunchPoi;
+   Float64 m_MinimumAllowableHaunchDepth;
+   Float64 m_MinimumHaunchStation;
+   Float64 m_MinimumHaunchOffset;
+   Float64 m_MinimumHaunchDepth; // minimum haunch depth along girder 
 
    // GROUP: LIFECYCLE
    // GROUP: OPERATORS
@@ -299,6 +317,7 @@ public:
    bool IsFinishedElevationApplicable() const;
    bool FinishedElevationPassed() const;
 
+   bool MinimumHaunchDepthPassed() const;
 
    bool Passed() const;
 

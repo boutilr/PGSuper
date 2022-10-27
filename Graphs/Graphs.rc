@@ -321,9 +321,9 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,298,133,10
     CONTROL         "Show top of deflected girder",IDC_FINISHED_GIRDER_TOP,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,308,133,10
-    CONTROL         "Show bottom of deflected girder",IDC_FINISHED_GIRDER_BOTTOM,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,318,133,10
-    CONTROL         "Show girder top chord (CL always)",IDC_GIRDER_CHORD,
+    CONTROL         "Show bottom of deflected girder (CL only)",IDC_FINISHED_GIRDER_BOTTOM,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,318,149,10
+    CONTROL         "Show girder top chord (CL only)",IDC_GIRDER_CHORD,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,328,133,10
 END
 
