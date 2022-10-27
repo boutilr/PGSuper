@@ -6468,7 +6468,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
          ATLASSERT(0); // problema grande
       }
 
-      CString strMsg(_T("Definition of haunch depths using the slab offset method is no longer supported in PGSplice. Haunch input data has been converted to the direct input method. It is very likely that this will change haunch loads and thus dead load responses. Please review haunch dead loads accordingly."));
+      CString strMsg(_T("Definition of haunch depths using the slab offset method is no longer supported in PGSplice. Haunch input data has been converted to the direct input method. It is very likely that this has changed haunch loads, and thus dead load responses. Please review haunch dead loads and responses accordingly."));
       GET_IFACE(IEAFStatusCenter,pStatusCenter);
       pgsInformationalStatusItem* pStatusItem = new pgsInformationalStatusItem(m_StatusGroupID,m_scidLoadDescriptionWarning,strMsg);
       pStatusCenter->Add(pStatusItem);

@@ -222,6 +222,7 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
    // Most graphs will want the PGL, so just store it
    GET_IFACE(IRoadway,pRoadway);
    std::vector<Float64> PglElevations;
+   PglElevations.reserve(vPoi.size());
    for (auto poi : vPoi)
    {
       Float64 station,offset;
@@ -271,7 +272,7 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
          if (gtElevationDifferential == m_GraphType)
          {
             Float64 pglElev = *pglIter++;
-            AddGraphPoint(dataGcSeries,X,pglElev-girder_chord_elevation);
+            AddGraphPoint(dataGcSeries,X,girder_chord_elevation-pglElev);
          }
          else
          {
@@ -285,46 +286,43 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
    {
       std::vector<IntervalIndexType> vIntervals = ((CMultiIntervalGirderGraphControllerBase*)m_pGraphController)->GetSelectedIntervals();
 
+      pgsTypes::SupportedDeckType deckType = pBridge->GetDeckType();
+
       GET_IFACE_NOCHECK(IDeformedGirderGeometry,pDeformedGirderGeometry);
       pgsTypes::HaunchInputDepthType haunchInputType = pBridge->GetHaunchInputDepthType();
-      if (haunchInputType == pgsTypes::hidACamber)
+      if (deckType == pgsTypes::sdtNone)
       {
-      }
-      else
-      {
-         // Direct haunch input
+         // No deck
          for (auto intervalIdx : vIntervals)
          {
             // Need this data for all possible graphs
             std::vector<Float64> finishedDeckElevations;
-            std::vector<Float64> haunchDepths;
-
+            finishedDeckElevations.reserve(vPoi.size());
             for (const auto& poi : vPoi)
             {
-               Float64 lftHaunch,clHaunch,rgtHaunch;
-               Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,intervalIdx,true /*include overlay depth*/,&lftHaunch,&clHaunch,&rgtHaunch);
-               finishedDeckElevations.push_back(finished_elevation);
+               Float64 lftElev,clElev,rgtElev;
+               pDeformedGirderGeometry->GetFinishedElevation(poi,nullptr,true/*bIncludeOverlay*/,&lftElev,&clElev,&rgtElev);
 
                if (m_GraphSide == gsCenterLine)
                {
-                  haunchDepths.push_back(clHaunch);
+                  finishedDeckElevations.push_back(clElev);
                }
                else if (m_GraphSide == gsLeftEdge)
                {
-                  haunchDepths.push_back(lftHaunch);
+                  finishedDeckElevations.push_back(lftElev);
                }
                else
                {
-                  haunchDepths.push_back(rgtHaunch);
+                  finishedDeckElevations.push_back(rgtElev);
                }
             }
 
             if (m_bShowFinishedDeck)
             {
-               COLORREF color = graphColor.GetColor(intervalIdx);
+               COLORREF color = graphColor.GetColor(intervalIdx+50);
 
                CString strLabel;
-               strLabel.Format(_T("Finished Deck - Interval %d"), LABEL_INTERVAL(intervalIdx));
+               strLabel.Format(_T("Finished Deck - Interval %d"),LABEL_INTERVAL(intervalIdx));
                IndexType fdDataSeries = m_Graph.CreateDataSeries(strLabel,PS_SOLID,PenWeight,color);
 
                auto iter(finishedDeckElevations.begin());
@@ -338,7 +336,88 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
                   if (gtElevationDifferential == m_GraphType)
                   {
                      Float64 pglElev = *pglIter++;
-                     AddGraphPoint(fdDataSeries,x, elev - pglElev);
+                     AddGraphPoint(fdDataSeries,x,elev - pglElev);
+                  }
+                  else
+                  {
+                     AddGraphPoint(fdDataSeries,x,elev);
+                  }
+               }
+            }
+
+            if (m_bShowFinishedDeckBottom)
+            {
+               ATLASSERT(0); // there is no deck
+            }
+
+            if (m_bShowFinishedGirderTop)
+            {
+               ATLASSERT(0); // there is no deck
+            }
+
+            if (m_bShowFinishedGirderBottom)
+            {
+               COLORREF color = graphColor.GetColor(intervalIdx + 150);
+
+               CString strLabel;
+               strLabel.Format(_T("Bottom of Girder - Interval %d"),LABEL_INTERVAL(intervalIdx));
+               IndexType fdbDataSeries = m_Graph.CreateDataSeries(strLabel,PS_SOLID,PenWeight,color);
+
+               auto iter(vPoi.begin());
+               auto end(vPoi.end());
+               auto xIter(xVals.begin());
+               auto fditer(finishedDeckElevations.begin());
+               auto pglIter(PglElevations.begin());
+               for (; iter != end; iter++,xIter++,fditer++)
+               {
+                  const pgsPointOfInterest& poi = *iter;
+                  Float64 x = *xIter;
+                  Float64 fdelev = *fditer;
+                  Float64 gdrDepth = pGirder->GetHeight(poi);
+                  Float64 elev = fdelev - gdrDepth;
+
+                  if (gtElevationDifferential == m_GraphType)
+                  {
+                     Float64 pglElev = *pglIter++;
+                     AddGraphPoint(fdbDataSeries,x,elev - pglElev);
+                  }
+                  else
+                  {
+                     AddGraphPoint(fdbDataSeries,x,elev);
+                  }
+               }
+            }
+         } // next interval
+      }
+      else if (haunchInputType == pgsTypes::hidACamber)
+      {
+         // Haunch defined using "A"
+         // For this case, the haunch depth floats between the PGL and the A's at the ends of the girder
+         for (auto intervalIdx : vIntervals)
+         {
+            // Finished deck elevations "are" the PGL for this case
+            std::vector<Float64> finishedDeckElevations = PglElevations;
+
+            if (m_bShowFinishedDeck)
+            {
+               COLORREF color = graphColor.GetColor(intervalIdx);
+
+               CString strLabel;
+               strLabel.Format(_T("Finished Deck - Interval %d"),LABEL_INTERVAL(intervalIdx));
+               IndexType fdDataSeries = m_Graph.CreateDataSeries(strLabel,PS_SOLID,PenWeight,color);
+
+               auto iter(finishedDeckElevations.begin());
+               auto end(finishedDeckElevations.end());
+               auto xIter(xVals.begin());
+               auto pglIter(PglElevations.begin());
+               for (; iter != end; iter++,xIter++)
+               {
+                  Float64 x = *xIter;
+                  Float64 elev = *iter;
+                  if (gtElevationDifferential == m_GraphType)
+                  {
+                     Float64 pglElev = *pglIter++;
+                     AddGraphPoint(fdDataSeries,x,elev - pglElev);
                   }
                   else
                   {
@@ -352,30 +431,213 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
                COLORREF color = graphColor.GetColor(intervalIdx+50);
 
                CString strLabel;
-               strLabel.Format(_T("Finished Deck Bottom - Interval %d"),LABEL_INTERVAL(intervalIdx));
-               IndexType fdbDataSeries = m_Graph.CreateDataSeries(strLabel,PS_SOLID,PenWeight,color);
+               strLabel.Format(_T("Bottom of Finished Deck - Interval %d"),LABEL_INTERVAL(intervalIdx));
+               IndexType fdDataSeries = m_Graph.CreateDataSeries(strLabel,PS_SOLID,PenWeight,color);
 
-               auto iter(vPoi.begin());
-               auto end(vPoi.end());
+               auto iterp(vPoi.begin());
+               auto endp(vPoi.end());
+               auto iter(finishedDeckElevations.begin());
+               auto end(finishedDeckElevations.end());
                auto xIter(xVals.begin());
-               auto fditer(finishedDeckElevations.begin());
                auto pglIter(PglElevations.begin());
-               for (; iter != end; iter++,xIter++,fditer++)
+               for (; iter != end; iter++,xIter++,iterp++)
                {
-                  const pgsPointOfInterest& poi = *iter;
-                  Float64 x = *xIter;
-                  Float64 fdelev = *fditer;
-                  Float64 deckDepth = pBridge->GetGrossSlabDepth(poi);
-                  Float64 elev = fdelev - deckDepth;
+                  const pgsPointOfInterest& poi = *iterp;
+                  Float64 tDeck = pBridge->GetGrossSlabDepth(poi);
 
+                  Float64 x = *xIter;
+                  Float64 elev = *iter - tDeck;
                   if (gtElevationDifferential == m_GraphType)
                   {
                      Float64 pglElev = *pglIter++;
-                     AddGraphPoint(fdbDataSeries,x,pglElev-elev);
+                     AddGraphPoint(fdDataSeries,x,elev - pglElev);
                   }
                   else
                   {
+                     AddGraphPoint(fdDataSeries,x,elev);
+                  }
+               }
+            }
+
+            if (m_bShowFinishedGirderTop || m_bShowFinishedGirderBottom)
+            {
+               // Top and bottom of girder are defined by "A" and girder deflections
+               std::vector<Float64> TopGirderElevations;
+               TopGirderElevations.reserve(vPoi.size());
+               for (const auto& poi : vPoi)
+               {
+                  Float64 eLeft,eCenter,eRight;
+                  pDeformedGirderGeometry->GetTopGirderElevation(poi,nullptr,&eLeft,&eCenter,&eRight);
+                  if (m_GraphSide == gsCenterLine)
+                  {
+                     TopGirderElevations.push_back(eCenter);
+                  }
+                  else if (m_GraphSide == gsLeftEdge)
+                  {
+                     TopGirderElevations.push_back(eLeft);
+                  }
+                  else
+                  {
+                     TopGirderElevations.push_back(eRight);
+                  }
+               }
+
+               if (m_bShowFinishedGirderTop)
+               {
+                  COLORREF color = graphColor.GetColor(intervalIdx + 100);
+
+                  CString strLabel;
+                  strLabel.Format(_T("Top of Girder - Interval %d"),LABEL_INTERVAL(intervalIdx));
+                  IndexType fdbDataSeries = m_Graph.CreateDataSeries(strLabel,PS_SOLID,PenWeight,color);
+
+                  auto iter(TopGirderElevations.begin());
+                  auto end(TopGirderElevations.end());
+                  auto xIter(xVals.begin());
+                  for (; iter != end; iter++,xIter++)
+                  {
+                     Float64 x = *xIter;
+                     Float64 elev = *iter;
                      AddGraphPoint(fdbDataSeries,x,elev);
+                  }
+               }
+
+               if (m_bShowFinishedGirderBottom)
+               {
+                  COLORREF color = graphColor.GetColor(intervalIdx + 150);
+
+                  CString strLabel;
+                  strLabel.Format(_T("Bottom of Girder - Interval %d"),LABEL_INTERVAL(intervalIdx));
+                  IndexType fdbDataSeries = m_Graph.CreateDataSeries(strLabel,PS_SOLID,PenWeight,color);
+
+                  auto iter(vPoi.begin());
+                  auto end(vPoi.end());
+                  auto xIter(xVals.begin());
+                  auto tgiter(TopGirderElevations.begin());
+                  auto pglIter(PglElevations.begin());
+                  for (; iter != end; iter++,xIter++,tgiter++)
+                  {
+                     const pgsPointOfInterest& poi = *iter;
+                     Float64 x = *xIter;
+                     Float64 tgelev = *tgiter;
+
+                     Float64 gdrDepth = pGirder->GetHeight(poi);
+                     Float64 elev = tgelev - gdrDepth;
+
+                     if (gtElevationDifferential == m_GraphType)
+                     {
+                        Float64 pglElev = *pglIter++;
+                        AddGraphPoint(fdbDataSeries,x,elev - pglElev);
+                     }
+                     else
+                     {
+                        AddGraphPoint(fdbDataSeries,x,elev);
+                     }
+                  }
+               }
+            }
+         } // next interval
+      }
+      else
+      {
+         // Direct haunch input. For this case, we build elevations from top of girder up/down
+         for (auto intervalIdx : vIntervals)
+         {
+            // Need this data for all possible graphs
+            std::vector<Float64> topGirderElevations;
+            topGirderElevations.reserve(vPoi.size());
+            std::vector<Float64> haunchDepths;
+            haunchDepths.reserve(vPoi.size());
+            for (const auto& poi : vPoi)
+            {
+               Float64 lftHaunch,clHaunch,rgtHaunch;
+               Float64 finished_elevation_cl = pDeformedGirderGeometry->GetFinishedElevation(poi,intervalIdx,true /*include overlay depth*/,&lftHaunch,&clHaunch,&rgtHaunch);
+
+               Float64 tgLeft,tgCL,tgRight;
+               pDeformedGirderGeometry->GetTopGirderElevationEx(poi,intervalIdx,nullptr,&tgLeft,&tgCL,&tgRight);
+
+               if (m_GraphSide == gsCenterLine)
+               {
+                  topGirderElevations.push_back(tgCL);
+                  haunchDepths.push_back(clHaunch);
+               }
+               else if (m_GraphSide == gsLeftEdge)
+               {
+                  topGirderElevations.push_back(tgLeft);
+                  haunchDepths.push_back(lftHaunch);
+               }
+               else
+               {
+                  topGirderElevations.push_back(tgRight);
+                  haunchDepths.push_back(rgtHaunch);
+               }
+            }
+
+            if (m_bShowFinishedDeck || m_bShowFinishedDeckBottom)
+            {
+               if (m_bShowFinishedDeck) // top
+               {
+                  COLORREF color = graphColor.GetColor(intervalIdx);
+
+                  CString strLabel;
+                  strLabel.Format(_T("Finished Deck - Interval %d"),LABEL_INTERVAL(intervalIdx));
+                  IndexType fdDataSeries = m_Graph.CreateDataSeries(strLabel,PS_SOLID,PenWeight,color);
+
+                  auto iter(topGirderElevations.begin());
+                  auto end(topGirderElevations.end());
+                  auto poiIter(vPoi.begin());
+                  auto xIter(xVals.begin());
+                  auto hdIter(haunchDepths.begin());
+                  auto pglIter(PglElevations.begin());
+                  for (; iter != end; iter++,poiIter++,xIter++,hdIter++)
+                  {
+                     Float64 x = *xIter;
+                     Float64 tgelev = *iter;
+                     Float64 haunchDepth = *hdIter;
+                     const auto& poi = *poiIter;
+                     Float64 deckDepth = pBridge->GetGrossSlabDepth(poi);
+                     Float64 elev = tgelev + haunchDepth + deckDepth;
+                     if (gtElevationDifferential == m_GraphType)
+                     {
+                        Float64 pglElev = *pglIter++;
+                        AddGraphPoint(fdDataSeries,x,elev - pglElev);
+                     }
+                     else
+                     {
+                        AddGraphPoint(fdDataSeries,x,elev);
+                     }
+                  }
+               }
+
+               if (m_bShowFinishedDeckBottom)
+               {
+                  COLORREF color = graphColor.GetColor(intervalIdx + 50);
+
+                  CString strLabel;
+                  strLabel.Format(_T("Finished Deck Bottom - Interval %d"),LABEL_INTERVAL(intervalIdx));
+                  IndexType fdbDataSeries = m_Graph.CreateDataSeries(strLabel,PS_SOLID,PenWeight,color);
+
+                  auto iter(topGirderElevations.begin());
+                  auto end(topGirderElevations.end());
+                  auto poiIter(vPoi.begin());
+                  auto xIter(xVals.begin());
+                  auto hdIter(haunchDepths.begin());
+                  auto pglIter(PglElevations.begin());
+                  for (; iter != end; iter++,poiIter++,xIter++,hdIter++)
+                  {
+                     Float64 x = *xIter;
+                     Float64 tgelev = *iter;
+                     Float64 haunchDepth = *hdIter;
+                     const auto& poi = *poiIter;
+                     Float64 elev = tgelev + haunchDepth;
+                     if (gtElevationDifferential == m_GraphType)
+                     {
+                        Float64 pglElev = *pglIter++;
+                        AddGraphPoint(fdbDataSeries,x,elev - pglElev);
+                     }
+                     else
+                     {
+                        AddGraphPoint(fdbDataSeries,x,elev);
+                     }
                   }
                }
             }
@@ -388,20 +650,14 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
                strLabel.Format(_T("Top of Girder - Interval %d"),LABEL_INTERVAL(intervalIdx));
                IndexType fdbDataSeries = m_Graph.CreateDataSeries(strLabel,PS_SOLID,PenWeight,color);
 
-               auto iter(vPoi.begin());
-               auto end(vPoi.end());
+               auto iter(topGirderElevations.begin());
+               auto end(topGirderElevations.end());
                auto xIter(xVals.begin());
-               auto haunchIter(haunchDepths.begin());
-               auto fditer(finishedDeckElevations.begin());
                auto pglIter(PglElevations.begin());
-               for (; iter != end; iter++,xIter++,fditer++,haunchIter++)
+               for (; iter != end; iter++,xIter++)
                {
-                  const pgsPointOfInterest& poi = *iter;
+                  Float64 elev = *iter;
                   Float64 x = *xIter;
-                  Float64 fdelev = *fditer;
-                  Float64 deckDepth = pBridge->GetGrossSlabDepth(poi);
-                  Float64 haunchDepth = *haunchIter;
-                  Float64 elev = fdelev - deckDepth - haunchDepth;
 
                   if (gtElevationDifferential == m_GraphType)
                   {
@@ -426,18 +682,15 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
                auto iter(vPoi.begin());
                auto end(vPoi.end());
                auto xIter(xVals.begin());
-               auto haunchIter(haunchDepths.begin());
-               auto fditer(finishedDeckElevations.begin());
+               auto tgiter(topGirderElevations.begin());
                auto pglIter(PglElevations.begin());
-               for (; iter != end; iter++,xIter++,fditer++,haunchIter++)
+               for (; iter != end; iter++,xIter++,tgiter++)
                {
                   const pgsPointOfInterest& poi = *iter;
                   Float64 x = *xIter;
-                  Float64 fdelev = *fditer;
-                  Float64 deckDepth = pBridge->GetGrossSlabDepth(poi);
-                  Float64 haunchDepth = *haunchIter;
+                  Float64 tgelev = *tgiter;
                   Float64 gdrDepth = pGirder->GetHeight(poi);
-                  Float64 elev = fdelev - deckDepth - haunchDepth - gdrDepth;
+                  Float64 elev = tgelev - gdrDepth;
 
                   if (gtElevationDifferential == m_GraphType)
                   {
@@ -450,7 +703,6 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
                   }
                }
             }
-
          } // next interval
       }
    }

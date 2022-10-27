@@ -1319,6 +1319,8 @@ public:
    virtual IntervalIndexType GetLastNoncompositeInterval() const override;
    virtual IntervalIndexType GetLastCompositeInterval() const override;
    virtual IntervalIndexType GetGeometryControlInterval() const override;
+   virtual std::vector<IntervalIndexType> GetReportingGeometryControlIntervals() const override;
+   virtual std::vector<IntervalIndexType> GetSpecCheckGeometryControlIntervals() const override;
 
 
 private:
