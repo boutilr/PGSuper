@@ -15322,8 +15322,9 @@ void CGirderModelManager::GetMainSpanSlabLoadEx(const CSegmentKey& segmentKey, b
    GET_IFACE(IGirder, pGirder);
    GET_IFACE(IMaterials,pMaterial);
    GET_IFACE(IPointOfInterest,pPoi);
-   GET_IFACE(ISpecification, pSpec );
+   GET_IFACE_NOCHECK(ISpecification, pSpec );
    GET_IFACE(IRoadway, pAlignment);
+   GET_IFACE(ISectionProperties,pSectProps);
 
    IndexType deckCastingRegionIdx = 0; // assume region zero to get properties that are common to all castings
    GET_IFACE(IIntervals,pIntervals);
@@ -15362,15 +15363,23 @@ void CGirderModelManager::GetMainSpanSlabLoadEx(const CSegmentKey& segmentKey, b
    const pgsPointOfInterest& poi_mid(vSupPoi[1]);
    const pgsPointOfInterest& poi_right_brg(vSupPoi.back());
 
-   std::unique_ptr<WBFL::Math::Function> imposedShape;
    // precamber and top flange thickening is measured using the ends of the girder as the datum
+   std::unique_ptr<WBFL::Math::Function> imposedShape;
    vPoi2.clear();
    pPoi->GetPointsOfInterest(segmentKey, POI_START_FACE | POI_END_FACE, &vPoi2);
    ATLASSERT(vPoi2.size() == 2);
    const pgsPointOfInterest& poi_left(vPoi2.front());
    const pgsPointOfInterest& poi_right(vPoi2.back());
 
-   if (pSpec->IsAssumedExcessCamberForLoad())
+   pgsTypes::HaunchInputDepthType haunchInputType = pBridge->GetHaunchInputDepthType();
+   bool isHaunchDirect = haunchInputType == pgsTypes::hidHaunchDirectly || haunchInputType == pgsTypes::hidHaunchPlusSlabDirectly;
+   if (isHaunchDirect)
+   {
+      // With direct haunch input we don't need to compute camber or flange thickening. 
+      camberShape = std::make_unique<WBFL::Math::ZeroFunction>();
+      imposedShape = std::make_unique<WBFL::Math::ZeroFunction>();
+   }
+   else if (pSpec->IsAssumedExcessCamberForLoad())
    {
 #pragma Reminder("UPDATE: assuming precast girder bridge - Note that time-dependent analyses only use the zero camber approach below")
       // Shape of girder is assumed to follow the fillet dimension. Assume parabolic shape with zero at supports and
@@ -15639,11 +15648,18 @@ void CGirderModelManager::GetMainSpanSlabLoadEx(const CSegmentKey& segmentKey, b
       camber += imposed_shape_adj;
 
       // height of pad for slab pad load
-      Float64 real_pad_hgt = top_girder_to_top_slab - cast_depth - camber;
+      Float64 real_pad_hgt;
+      if (isHaunchDirect)
+      {
+         real_pad_hgt = pSectProps->GetStructuralHaunchDepth(poi,pgsTypes::hspDetailedDescription);
+      }
+      else
+      {
+         real_pad_hgt = top_girder_to_top_slab - cast_depth - camber;
+      }
 
       // Don't use negative haunch depth for loading
       Float64 pad_hgt = 0.0 < real_pad_hgt ? real_pad_hgt : 0.0;
-
       // mating surface
       Float64 mating_surface_width = 0;
       MatingSurfaceIndexType nMatingSurfaces = pGirder->GetMatingSurfaceCount(segmentKey);

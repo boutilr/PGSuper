@@ -2975,7 +2975,7 @@ void write_ps_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* 
          (*pTable)(row,1) << pGirder->GetGirderName();
          row++;
 
-         if (pBridgeDesc->GetDeckDescription()->GetDeckType() != pgsTypes::sdtNone)
+         if (pBridgeDesc->GetDeckDescription()->GetDeckType() != pgsTypes::sdtNone && pBridge->GetHaunchInputDepthType() == pgsTypes::hidACamber)
          {
             for (int i = 0; i < 2; i++)
             {

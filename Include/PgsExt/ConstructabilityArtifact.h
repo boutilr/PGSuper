@@ -177,6 +177,8 @@ public:
    // (used only for no-deck bridges, and direct haunch input)
    void SetFinishedElevationApplicability(bool bSet);
    bool GetFinishedElevationApplicability() const;
+   void SetFinishedElevationControllingInterval(IntervalIndexType interval);
+   IntervalIndexType GetFinishedElevationControllingInterval() const;
    void SetFinishedElevationTolerance(Float64 tol);
    Float64 GetFinishedElevationTolerance() const;
    void SetMaxFinishedElevation(Float64 station, Float64 offset, const pgsPointOfInterest& poi, Float64 designElevation, Float64 finishedElevation);
@@ -187,6 +189,8 @@ public:
    // (only for direct haunch input)
    void SetMinimumHaunchDepthApplicability(bool bSet);
    bool GetMinimumHaunchDepthApplicability() const;
+   void SetMinimumHaunchDepthControllingInterval(IntervalIndexType interval);
+   IntervalIndexType GetMinimumHaunchDepthControllingInterval() const;
    void SetMinimumAllowableHaunchDepth(Float64 haunchDepth);
    Float64 GetMinimumAllowableHaunchDepth() const;
    void SetMinimumHaunchDepth(Float64 station,Float64 offset,const pgsPointOfInterest& poi,Float64 MinimumHaunchDepth);
@@ -244,6 +248,7 @@ private:
 
    // Finished elevation check data
    bool m_bIsFinishedElevationApplicable;
+   IntervalIndexType m_FinishedElevationControllingInterval;
    Float64 m_FinishedElevationTolerance;
    Float64 m_FinishedElevationStation;
    Float64 m_FinishedElevationOffset;
@@ -253,6 +258,7 @@ private:
 
    // Minimum haunch depth vs fillet check (direct haunch input only)
    bool m_bIsMinimumHaunchCheckApplicable;
+   IntervalIndexType m_MinimumHaunchCheckControllingInterval;
    pgsPointOfInterest m_MinimumHaunchPoi;
    Float64 m_MinimumAllowableHaunchDepth;
    Float64 m_MinimumHaunchStation;

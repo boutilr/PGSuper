@@ -10170,11 +10170,17 @@ GDRCONFIG CBridgeAgentImp::GetSegmentConfiguration(const CSegmentKey& segmentKey
    config.bUserEc  = pMaterial->Concrete.bUserEc;
 
    // Slab offset
-   PierIndexType startPierIdx, endPierIdx;
-   GetGirderGroupPiers(segmentKey.groupIndex, &startPierIdx, &endPierIdx);
-   GetSlabOffset(segmentKey, &config.SlabOffset[pgsTypes::metStart], &config.SlabOffset[pgsTypes::metEnd]);
-
-   config.AssumedExcessCamber = GetAssumedExcessCamber(segmentKey.groupIndex,segmentKey.girderIndex);
+   if (this->GetHaunchInputDepthType() == pgsTypes::hidACamber)
+   {
+      GetSlabOffset(segmentKey,&config.SlabOffset[pgsTypes::metStart],&config.SlabOffset[pgsTypes::metEnd]);
+      config.AssumedExcessCamber = GetAssumedExcessCamber(segmentKey.groupIndex,segmentKey.girderIndex);
+   }
+   else
+   {
+      // haunch is defined by direct input - slab offsets are not used - make garbage
+      config.SlabOffset[pgsTypes::metStart] = config.SlabOffset[pgsTypes::metEnd] = Float64_Inf;
+      config.AssumedExcessCamber = Float64_Inf;
+   }
 
    // Stirrup data
 	const CShearData2* pShearData = GetShearData(segmentKey);
@@ -16358,6 +16364,7 @@ Float64 CBridgeAgentImp::GetSuperstructureDepth(PierIndexType pierIdx) const
    if ( pPier->IsBoundaryPier() || (pPier->IsInteriorPier() && !::IsSegmentContinuousOverPier(pPier->GetSegmentConnectionType())))
    {
       ATLASSERT(pPier->HasSlabOffset());
+      bool isHaunchDirectInput = pBridgeDesc->GetHaunchInputDepthType() != pgsTypes::hidACamber;
 
       // There are segments on each side of the pier (unless the pier is an abutment)
       const CGirderGroupData* pBackGroup  = pPier->GetGirderGroup(pgsTypes::Back);
@@ -16384,8 +16391,18 @@ Float64 CBridgeAgentImp::GetSuperstructureDepth(PierIndexType pierIdx) const
             IntervalIndexType releaseIntervalIdx = GetPrestressReleaseInterval(segmentKey);
             Float64 Hg = GetHg(releaseIntervalIdx, segmentEndPoi);
 
-            SegmentIndexType nSegments = pBackGroup->GetGirder(gdrIdx)->GetSegmentCount();
-            Float64 slabOffset = pBackGroup->GetGirder(gdrIdx)->GetSegment(nSegments-1)->GetSlabOffset(pgsTypes::metEnd);
+            Float64 slabOffset;
+            if (isHaunchDirectInput)
+            {
+               Float64 deckDepth = GetGrossSlabDepth(segmentEndPoi);
+               Float64 haunchDepth = GetStructuralHaunchDepth(segmentEndPoi,pgsTypes::hspDetailedDescription); // Detailed description in this call will get direct input
+               slabOffset = deckDepth + haunchDepth;
+            }
+            else
+            {
+               SegmentIndexType nSegments = pBackGroup->GetGirder(gdrIdx)->GetSegmentCount();
+               slabOffset = pBackGroup->GetGirder(gdrIdx)->GetSegment(nSegments - 1)->GetSlabOffset(pgsTypes::metEnd);
+            }
 
             Dmax = Max(Dmax,Hg+slabOffset);
          }
@@ -16415,7 +16432,17 @@ Float64 CBridgeAgentImp::GetSuperstructureDepth(PierIndexType pierIdx) const
             IntervalIndexType releaseIntervalIdx = GetPrestressReleaseInterval(segmentKey);
             Float64 Hg = GetHg(releaseIntervalIdx, segmentEndPoi);
 
-            Float64 slabOffset = pAheadGroup->GetGirder(gdrIdx)->GetSegment(0)->GetSlabOffset(pgsTypes::metStart);
+            Float64 slabOffset;
+            if (isHaunchDirectInput)
+            {
+               Float64 deckDepth = GetGrossSlabDepth(segmentEndPoi);
+               Float64 haunchDepth = GetStructuralHaunchDepth(segmentEndPoi,pgsTypes::hspDetailedDescription); // Detailed description in this call will get direct input
+               slabOffset = deckDepth + haunchDepth;
+            }
+            else
+            {
+               slabOffset = pAheadGroup->GetGirder(gdrIdx)->GetSegment(0)->GetSlabOffset(pgsTypes::metStart);
+            }
 
             Dmax = Max(Dmax,Hg+slabOffset);
          }
@@ -21561,19 +21588,10 @@ pgsTypes::SectionPropertyMode CBridgeAgentImp::GetSectionPropertiesMode() const
 
 pgsTypes::HaunchAnalysisSectionPropertiesType CBridgeAgentImp::GetHaunchAnalysisSectionPropertiesType()const 
 {
-   GET_IFACE(IDocumentType, pDocType);
-   bool bIsSplicedGirder = (pDocType->IsPGSpliceDocument() ? true : false);
-   if (bIsSplicedGirder)
-   {
-      return pgsTypes::hspZeroHaunch; // spliced girders don't do haunch props
-   }
-   else
-   {
-      GET_IFACE(ILibrary, pLib);
-      GET_IFACE(ISpecification, pSpec);
-      const SpecLibraryEntry* pSpecEntry = pLib->GetSpecEntry(pSpec->GetSpecification().c_str());
-      return pSpecEntry->GetHaunchAnalysisSectionPropertiesType();
-   }
+   GET_IFACE(ILibrary, pLib);
+   GET_IFACE(ISpecification, pSpec);
+   const SpecLibraryEntry* pSpecEntry = pLib->GetSpecEntry(pSpec->GetSpecification().c_str());
+   return pSpecEntry->GetHaunchAnalysisSectionPropertiesType();
 }
 
 std::vector<WBFL::Geometry::Point2d> CBridgeAgentImp::GetStressPoints(IntervalIndexType intervalIdx, const pgsPointOfInterest& poi, pgsTypes::StressLocation location, const GDRCONFIG* pConfig) const

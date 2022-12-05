@@ -6407,31 +6407,6 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
       {
          m_BridgeDescription.SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
          m_BridgeDescription.SetHaunchInputLocationType(pgsTypes::hilSame4AllGirders);
-         m_BridgeDescription.SetHaunchLayoutType(pgsTypes::hltAlongSpans);
-         m_BridgeDescription.SetHaunchInputDistributionType(pgsTypes::hidAtEnds); // linear along spans
-
-         PierIndexType nPiers = m_BridgeDescription.GetPierCount();
-         for (PierIndexType iStartIdx = 0; iStartIdx < nPiers - 1; iStartIdx++)
-         {
-            CPierData2* pStartPier = m_BridgeDescription.GetPier(iStartIdx);
-            CPierData2* pEndPier = m_BridgeDescription.GetPier(iStartIdx+1);
-
-            Float64 startHaunch = pStartPier->GetSlabOffset(pgsTypes::Ahead) - slabDepth;
-            Float64 endHaunch = pEndPier->GetSlabOffset(pgsTypes::Back) - slabDepth;
-
-            ATLASSERT(startHaunch >= 0.0 && endHaunch >= 0.0);
-            startHaunch = startHaunch < 0.0 ? 0.0 : startHaunch;
-            endHaunch = endHaunch < 0.0 ? 0.0 : endHaunch;
-
-            CSpanData2* pSpan = m_BridgeDescription.GetSpan(iStartIdx);
-            std::vector<Float64> haunchVals{startHaunch, endHaunch};
-            pSpan->SetDirectHaunchDepth(haunchVals);
-         }
-      }
-      else if (soType == pgsTypes::sotSegment)
-      {
-         m_BridgeDescription.SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
-         m_BridgeDescription.SetHaunchInputLocationType(pgsTypes::hilPerEach);
          m_BridgeDescription.SetHaunchLayoutType(pgsTypes::hltAlongSegments);
          m_BridgeDescription.SetHaunchInputDistributionType(pgsTypes::hidAtEnds); // linear along segments
 
@@ -6439,6 +6414,8 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
          for (GroupIndexType iGrp = 0; iGrp < nGrps; iGrp++)
          {
             auto pGroup = m_BridgeDescription.GetGirderGroup(iGrp);
+
+            // Using data for girder 0 only for this case, but just fill all girders anyway
             GirderIndexType nGirders = pGroup->GetGirderCount();
             for (GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++)
             {
@@ -6463,15 +6440,73 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
             }
          }
       }
+      else if (soType == pgsTypes::sotSegment)
+      {
+         m_BridgeDescription.SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
+         m_BridgeDescription.SetHaunchInputLocationType(pgsTypes::hilPerEach);
+         m_BridgeDescription.SetHaunchLayoutType(pgsTypes::hltAlongSegments);
+         m_BridgeDescription.SetHaunchInputDistributionType(pgsTypes::hidAtEnds); // linear along segments
+
+         GroupIndexType nGrps = m_BridgeDescription.GetGirderGroupCount();
+         for (GroupIndexType iGrp = 0; iGrp < nGrps; iGrp++)
+         {
+            auto pGroup = m_BridgeDescription.GetGirderGroup(iGrp);
+            GirderIndexType nGirders = pGroup->GetGirderCount();
+            for (GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++)
+            {
+               CSplicedGirderData* pGirder = pGroup->GetGirder(gdrIdx);
+               SegmentIndexType nSegments = pGirder->GetSegmentCount();
+               for (SegmentIndexType segIdx = 0; segIdx < nSegments; segIdx++)
+               {
+                  const CPrecastSegmentData* pSegment = pGirder->GetSegment(segIdx);
+                  Float64 start,end;
+                  pSegment->GetSlabOffset(&start,&end,true);
+                  start -= slabDepth; // convert to haunch depth
+                  end -= slabDepth;
+
+                  // don't allow bad data
+                  ATLASSERT(start >= 0.0 && end >= 0.0);
+                  start = start < 0.0 ? 0.0 : start;
+                  end = end < 0.0 ? 0.0 : end;
+
+                  std::vector<Float64> haunchVals{ start, end };
+                  pGirder->SetDirectHaunchDepth(segIdx,haunchVals);
+               }
+            }
+         }
+      }
       else
       {
          ATLASSERT(0); // problema grande
       }
 
-      CString strMsg(_T("Definition of haunch depths using the slab offset method is no longer supported in PGSplice. Haunch input data has been converted to the direct input method. It is very likely that this has changed haunch loads, and thus dead load responses. Please review haunch dead loads and responses accordingly."));
+      CString strMsg(_T("Definition of haunch depths using the slab offset method is no longer supported in PGSplice. Haunch input data has been converted to the direct input method. It is very likely that this has changed haunch loads slightly, and thus dead load responses. Please review haunch dead loads and responses accordingly."));
       GET_IFACE(IEAFStatusCenter,pStatusCenter);
       pgsInformationalStatusItem* pStatusItem = new pgsInformationalStatusItem(m_StatusGroupID,m_scidLoadDescriptionWarning,strMsg);
       pStatusCenter->Add(pStatusItem);
+
+      // Another change made in version 8 was to have the option to use hanch depths when computing composite section properties. This was
+      // only allowed in PGSuper prior to this. Look at the setting in the spec entry and alert the user if haunch is now used in section props.
+      pgsTypes::HaunchAnalysisSectionPropertiesType haunchAnalysisSectionPropertiesType = m_pSpecEntry->GetHaunchAnalysisSectionPropertiesType();
+      if (pgsTypes::hspZeroHaunch  != haunchAnalysisSectionPropertiesType)
+      {
+         CString msg;
+         if (pgsTypes::hspConstFilletDepth == haunchAnalysisSectionPropertiesType)
+         {
+            msg = _T("a constant haunch depth equal to the fillet value. ");
+         }
+         else if (pgsTypes::hspDetailedDescription == haunchAnalysisSectionPropertiesType)
+         {
+            msg = _T(" haunch depths that are input directly on the Haunch Description dialog. ");
+         }
+
+         CString strMsg(_T("Previous versions of PGSplice always assumed a zero haunch depth when computing composite structural section properties regardless of settings in the project criteria. The project criteria setting is now considered and will now compute properties based "));
+         strMsg += msg;
+         strMsg += CString(_T("This will likely change analysis results compared to the prior version.  Please review composite section properties and responses accordingly. "));
+         strMsg += CString(_T("\nIf desired, you can change back to the original setting by editing the Project Criteria and selecting the Ignore Haunch option."));
+         pgsInformationalStatusItem* pPcStatusItem = new pgsInformationalStatusItem(m_StatusGroupID,m_scidLoadDescriptionWarning,strMsg);
+         pStatusCenter->Add(pPcStatusItem);
+      }
    }
 
    // The UI was allowing some invalid pier connection geometry. The code that follows checks for the invalid geometry and fixes it.

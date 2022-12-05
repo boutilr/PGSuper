@@ -169,6 +169,8 @@ void CIntervalManager::BuildIntervals(const CTimelineManager* pTimelineMgr)
 
    m_GirderTendonStressingIntervals.clear();
 
+   m_vGeometryControlIntervals.clear();
+
    const CBridgeDescription2* pBridgeDesc = pTimelineMgr->GetBridgeDescription();
 
    // work through all the events in the timeline and build analysis intervals
@@ -880,7 +882,7 @@ std::vector<IntervalIndexType> CIntervalManager::GetGeometryControlIntervals(pgs
    std::vector<IntervalIndexType> intervals;
    for (const auto& pair : m_vGeometryControlIntervals)
    {
-      if ((int)pair.second | (int)type) // GeometryControlActivityType vals are set up to be or'd
+      if (pair.second >= type)
       {
          intervals.push_back(pair.first);
       }
@@ -2075,7 +2077,7 @@ void CIntervalManager::ProcessStep4(EventIndexType eventIdx, const CTimelineEven
       if (pgsTypes::gcaGeometryControlEvent == geomType)
       {
 #pragma Reminder("Add code below after regression testing haunch stuff - rdp")
-         strDescriptions.push_back(_T("Roadway Geometry Control"));
+//         strDescriptions.push_back(_T("Roadway Geometry Control"));
       }
    }
 
