@@ -1199,9 +1199,18 @@ void CConstructabilityCheckTable::BuildFinishedElevationCheck(rptChapter* pChapt
 
    // if there is only one span/girder, don't need to print span info
    bool needSpanCols = true; // ConstrNeedSpanCols(girderList, pBridge);
-
-                             // Create table - delete it later if we don't need it
    ColumnIndexType nCols = needSpanCols ? 8 : 6; // put span/girder in table if multi girder
+
+   // Only need to present controlling interval if more than one spec check interval is defined
+   GET_IFACE2(pBroker,IIntervals,pIntervals);
+   std::vector<IntervalIndexType> checkIntervals = pIntervals->GetSpecCheckGeometryControlIntervals();
+   bool bPrintInterval = checkIntervals.size() > 1;
+   if (bPrintInterval)
+   {
+      nCols += 1;
+   }
+
+   // Create table - delete it later if we don't need it
    rptRcTable* pTable = rptStyleManager::CreateDefaultTable(nCols, _T(""));
 
    INIT_UV_PROTOTYPE(rptLengthUnitValue, dim, pDisplayUnits->GetSpanLengthUnit(), false);
@@ -1219,6 +1228,11 @@ void CConstructabilityCheckTable::BuildFinishedElevationCheck(rptChapter* pChapt
 
    (*pTable)(0, col++) << COLHDR(_T("Station"), rptLengthUnitTag, pDisplayUnits->GetSpanLengthUnit());
    (*pTable)(0, col++) << COLHDR(_T("Offset"), rptLengthUnitTag, pDisplayUnits->GetSpanLengthUnit());
+   if (bPrintInterval)
+   {
+      (*pTable)(0,col++) << _T("Controlling") << rptNewLine << _T("Interval");
+   }
+
    (*pTable)(0, col++) << COLHDR(_T("Design Elevation"), rptLengthUnitTag, pDisplayUnits->GetSpanLengthUnit());
    (*pTable)(0, col++) << COLHDR(_T("Finished Elevation"), rptLengthUnitTag, pDisplayUnits->GetSpanLengthUnit());
    (*pTable)(0, col++) << COLHDR(_T("Difference"), rptLengthUnitTag, pDisplayUnits->GetSpanLengthUnit());
@@ -1256,6 +1270,12 @@ void CConstructabilityCheckTable::BuildFinishedElevationCheck(rptChapter* pChapt
 
             (*pTable)(row, col++) << rptRcStation(station, &pDisplayUnits->GetStationFormat());
             (*pTable)(row, col++) << RPT_OFFSET(offset,dim);
+            if (bPrintInterval)
+            {
+               IntervalIndexType ctrlInterval = artifact.GetFinishedElevationControllingInterval();
+               (*pTable)(row,col++) << LABEL_INTERVAL(ctrlInterval);
+            }
+
             (*pTable)(row, col++) << dim.SetValue(designElev);
             (*pTable)(row, col++) << dim.SetValue(finishedElev);
             (*pTable)(row, col++) << dim.SetValue(diff);
@@ -1306,8 +1326,18 @@ void CConstructabilityCheckTable::BuildMinimumHaunchCheck(rptChapter* pChapter,I
    // if there is only one span/girder, don't need to print span info
    bool needSpanCols = true; // ConstrNeedSpanCols(girderList, pBridge);
 
-   // Create table - delete it later if we don't need it
    ColumnIndexType nCols = needSpanCols ? 6 : 4; // put span/girder in table if multi girder
+
+   // Only need to present controlling interval if more than one spec check interval is defined
+   GET_IFACE2(pBroker,IIntervals,pIntervals);
+   std::vector<IntervalIndexType> checkIntervals = pIntervals->GetSpecCheckGeometryControlIntervals();
+   bool bPrintInterval = checkIntervals.size() > 1;
+   if (bPrintInterval)
+   {
+      nCols += 1;
+   }
+
+   // Create table - delete it later if we don't need it
    rptRcTable* pTable = rptStyleManager::CreateDefaultTable(nCols,_T(""));
 
    INIT_UV_PROTOTYPE(rptLengthUnitValue,dim,pDisplayUnits->GetSpanLengthUnit(),false);
@@ -1325,6 +1355,11 @@ void CConstructabilityCheckTable::BuildMinimumHaunchCheck(rptChapter* pChapter,I
 
    (*pTable)(0,col++) << COLHDR(_T("Station"),rptLengthUnitTag,pDisplayUnits->GetSpanLengthUnit());
    (*pTable)(0,col++) << COLHDR(_T("Offset"),rptLengthUnitTag,pDisplayUnits->GetSpanLengthUnit());
+   if (bPrintInterval)
+   {
+      (*pTable)(0,col++) << _T("Controlling") << rptNewLine << _T("Interval");
+   }
+
    (*pTable)(0,col++) << COLHDR(_T("Minimum Haunch Depth"),rptLengthUnitTag,pDisplayUnits->GetComponentDimUnit());
    (*pTable)(0,col++) << _T("Status");
 
@@ -1358,6 +1393,12 @@ void CConstructabilityCheckTable::BuildMinimumHaunchCheck(rptChapter* pChapter,I
 
             (*pTable)(row,col++) << rptRcStation(station,&pDisplayUnits->GetStationFormat());
             (*pTable)(row,col++) << RPT_OFFSET(offset,dim);
+            if (bPrintInterval)
+            {
+               IntervalIndexType ctrlInterval = artifact.GetMinimumHaunchDepthControllingInterval();
+               (*pTable)(row,col++) << LABEL_INTERVAL(ctrlInterval);
+            }
+
             (*pTable)(row,col++) << cmpdim.SetValue(minHaunch);
 
             if (artifact.MinimumHaunchDepthPassed())

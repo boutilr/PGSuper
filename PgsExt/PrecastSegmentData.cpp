@@ -727,6 +727,8 @@ Float64 CPrecastSegmentData::GetSlabOffset(pgsTypes::MemberEndType end,bool bRaw
    else
    {
       const CBridgeDescription2* pBridge = m_pGirder->GetGirderGroup()->GetBridgeDescription();
+      ATLASSERT(pBridge->GetHaunchInputDepthType() == pgsTypes::hidACamber); // Should be asking if this is not the case
+
       switch (pBridge->GetSlabOffsetType())
       {
          case pgsTypes::sotBridge:

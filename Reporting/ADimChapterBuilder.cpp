@@ -481,6 +481,15 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
    GET_IFACE2(pBroker,IPointOfInterest,pPoi);
    GET_IFACE2(pBroker,IDeformedGirderGeometry,pDeformedGirderGeometry);
    GET_IFACE2(pBroker,IIntervals,pIntervals);
+   IntervalIndexType gce_interval = pIntervals->GetGeometryControlInterval();
+   std::vector<IntervalIndexType> vSpecIntervals = pIntervals->GetSpecCheckGeometryControlIntervals();
+   std::vector<IntervalIndexType>::iterator iti = vSpecIntervals.begin();
+   *pPara << _T("The Geometry Control Event interval is interval ") << LABEL_INTERVAL(gce_interval) << _T(". Finished Roadway Spec checks are performed for interval(s): ") <<  LABEL_INTERVAL(*iti++);
+   while(iti != vSpecIntervals.end())
+   {
+      *pPara << _T(", ") << LABEL_INTERVAL(*iti++);
+   }
+   *pPara << rptNewLine;
 
    SpanIndexType nSpans = pBridge->GetSpanCount();
    GroupIndexType nGroups = pBridge->GetGirderGroupCount();
@@ -489,7 +498,6 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
    SpanIndexType endSpanIdx = (girderKey.groupIndex == ALL_GROUPS ? nSpans - 1 : pBridge->GetGirderGroupEndSpan(girderKey.groupIndex));
 
    // loop over all reporting intervals
-   IntervalIndexType gce_interval = pIntervals->GetGeometryControlInterval();
    std::vector<IntervalIndexType> vIntervals = pIntervals->GetReportingGeometryControlIntervals();
    for (auto interval : vIntervals)
    {
@@ -536,11 +544,12 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
             (*pTable)(row + 1,col) << Bold(_T("Offset (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
             (*pTable)(row + 2,col) << Bold(_T("Design Elev (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
             (*pTable)(row + 3,col) << Bold(_T("Finished Elev (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-            (*pTable)(row + 4,col) << Bold(_T("Elev Difference (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-            (*pTable)(row + 5,col) << Bold(_T("Left Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-            (*pTable)(row + 6,col) << Bold(_T("CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-            (*pTable)(row + 7,col) << Bold(_T("Right Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-            (*pTable)(row + 8,col) << Bold(_T("Req'd CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 4,col) << Bold(_T("Elev Difference (")) << Bold(pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 5,col) << Bold(_T("Elev Difference (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 6,col) << Bold(_T("Left Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 7,col) << Bold(_T("CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 8,col) << Bold(_T("Right Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 9,col) << Bold(_T("Req'd CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
 
             bool bNegDemand = false;
             col = 1;
@@ -571,20 +580,23 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
                (*pTable)(row + 3,col) << pColor << dist.SetValue(finished_elevation) << color(Black);
 
                pColor = new rptRcColor(color);
-               (*pTable)(row + 4,col) << pColor << dimH.SetValue(finished_elevation - design_elevation) << color(Black);
+               (*pTable)(row + 4,col) << pColor << dist.SetValue(finished_elevation - design_elevation) << color(Black);
+
+               pColor = new rptRcColor(color);
+               (*pTable)(row + 5,col) << pColor << dimH.SetValue(finished_elevation - design_elevation) << color(Black);
 
                // haunch depths
                color = lftHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
                pColor = new rptRcColor(color);
-               (*pTable)(row + 5,col) << pColor << dimH.SetValue(lftHaunch) << color(Black);
+               (*pTable)(row + 6,col) << pColor << dimH.SetValue(lftHaunch) << color(Black);
 
                color = clHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
                pColor = new rptRcColor(color);
-               (*pTable)(row + 6,col) << pColor << Bold(dimH.SetValue(clHaunch)) << color(Black);
+               (*pTable)(row + 7,col) << pColor << Bold(dimH.SetValue(clHaunch)) << color(Black);
 
                color = rgtHaunch >= fillet ? rptRiStyle::Black : rptRiStyle::Red;
                pColor = new rptRcColor(color);
-               (*pTable)(row + 7,col) << pColor << dimH.SetValue(rgtHaunch) << color(Black);
+               (*pTable)(row + 8,col) << pColor << dimH.SetValue(rgtHaunch) << color(Black);
 
                // Required haunch must clear fillet at edges and make roadway at CL. Demand is how much we must add to clHaunch to meet requirements
                Float64 edgeDemand = max(fillet - lftHaunch,fillet - rgtHaunch);
@@ -604,7 +616,7 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
 
                color = haunchReqd >= TOLERANCE ? rptRiStyle::Black : rptRiStyle::Red;
                pColor = new rptRcColor(color);
-               (*pTable)(row + 8,col) << pColor << dimH.SetValue(haunchReqd) << color(Black);
+               (*pTable)(row + 9,col) << pColor << dimH.SetValue(haunchReqd) << color(Black);
 
                bNegDemand |= haunchReqd < 0.0;
 

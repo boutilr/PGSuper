@@ -5375,6 +5375,11 @@ void pgsDesigner2::CheckConstructability(const CGirderKey& girderKey,pgsConstruc
             artifact.SetSlabOffsetApplicability(false);
             artifact.SetFinishedElevationApplicability(true);
 
+            // For no-deck bridges, check only at geometry control interval. This will need to be redefined when no-deck girders are added to pgsplice
+            GET_IFACE(IIntervals,pIntervals);
+            IntervalIndexType geomCtrlInterval = pIntervals->GetGeometryControlInterval();
+            artifact.SetFinishedElevationControllingInterval(geomCtrlInterval);
+
             Float64 tolerance = pSpecEntry->GetFinishedElevationTolerance();
             artifact.SetFinishedElevationTolerance(tolerance);
 
@@ -5438,10 +5443,10 @@ void pgsDesigner2::CheckConstructability(const CGirderKey& girderKey,pgsConstruc
             artifact.SetProvidedFillet(fillet);
 
             // Finished elevation and minimum haunch depth checs
-            // check at geometry control interval
-            IntervalIndexType geomCtrlInterval = pIntervals->GetGeometryControlInterval();
-
             artifact.SetMinimumAllowableHaunchDepth(fillet);
+
+            // check at geometry control interval and user-specified intervals
+            std::vector<IntervalIndexType> checkIntervals = pIntervals->GetSpecCheckGeometryControlIntervals();
 
             PoiList vPoi;
             pPoi->GetPointsOfInterest(segmentKey,POI_ERECTED_SEGMENT | POI_TENTH_POINTS,&vPoi);
@@ -5449,29 +5454,35 @@ void pgsDesigner2::CheckConstructability(const CGirderKey& girderKey,pgsConstruc
 
             Float64 maxElevDiff = 0;
             Float64 minHaunchDepth = Float32_Max;
-            for (const pgsPointOfInterest& poi : vPoi)
+
+            for (auto interval : checkIntervals)
             {
-               Float64 station,offset;
-               pBridge->GetStationAndOffset(poi,&station,&offset);
-               Float64 elev = pAlignment->GetElevation(station,offset);
-
-               Float64 lftHaunch,ctrHaunch,rgtHaunch;
-               Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,geomCtrlInterval,true /*include overlay depth*/,&lftHaunch,&ctrHaunch,&rgtHaunch);
-
-               Float64 diff = fabs(finished_elevation - elev);
-
-               if (maxElevDiff < diff)
+               for (const pgsPointOfInterest& poi : vPoi)
                {
-                  artifact.SetMaxFinishedElevation(station,offset,poi,elev,finished_elevation);
-                  maxElevDiff = diff;
-               }
+                  Float64 station,offset;
+                  pBridge->GetStationAndOffset(poi,&station,&offset);
+                  Float64 elev = pAlignment->GetElevation(station,offset);
 
-               // Check min haunch depth at edges of top flange against fillet requirements
-               Float64 minDepth = min(lftHaunch,rgtHaunch);
-               if (minDepth < minHaunchDepth)
-               {
-                  artifact.SetMinimumHaunchDepth(station,offset,poi,minDepth);
-                  minHaunchDepth = minDepth;
+                  Float64 lftHaunch,ctrHaunch,rgtHaunch;
+                  Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,interval,true /*include overlay depth*/,&lftHaunch,&ctrHaunch,&rgtHaunch);
+
+                  Float64 diff = fabs(finished_elevation - elev);
+
+                  if (maxElevDiff < diff)
+                  {
+                     artifact.SetMaxFinishedElevation(station,offset,poi,elev,finished_elevation);
+                     artifact.SetFinishedElevationControllingInterval(interval);
+                     maxElevDiff = diff;
+                  }
+
+                  // Check min haunch depth at edges of top flange against fillet requirements
+                  Float64 minDepth = min(lftHaunch,rgtHaunch);
+                  if (minDepth < minHaunchDepth)
+                  {
+                     artifact.SetMinimumHaunchDepth(station,offset,poi,minDepth);
+                     artifact.SetMinimumHaunchDepthControllingInterval(interval);
+                     minHaunchDepth = minDepth;
+                  }
                }
             }
          }

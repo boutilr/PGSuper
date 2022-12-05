@@ -71,6 +71,7 @@ m_bIsSlabOffsetApplicable(false)
 
 
    m_bIsFinishedElevationApplicable = false;
+   m_FinishedElevationControllingInterval = INVALID_INDEX;
    m_FinishedElevationTolerance = 0;
    m_FinishedElevationStation = 0;
    m_FinishedElevationOffset = 0;
@@ -78,6 +79,7 @@ m_bIsSlabOffsetApplicable(false)
    m_FinishedElevation = 0;
 
    m_bIsMinimumHaunchCheckApplicable = false;
+   m_MinimumHaunchCheckControllingInterval = INVALID_INDEX;
    m_MinimumAllowableHaunchDepth = 0;
    m_MinimumHaunchStation = 0;
    m_MinimumHaunchOffset = 0;
@@ -529,6 +531,16 @@ bool pgsSegmentConstructabilityArtifact::GetFinishedElevationApplicability() con
    return m_bIsFinishedElevationApplicable;
 }
 
+void pgsSegmentConstructabilityArtifact::SetFinishedElevationControllingInterval(IntervalIndexType interval)
+{
+   m_FinishedElevationControllingInterval = interval;
+}
+
+IntervalIndexType pgsSegmentConstructabilityArtifact::GetFinishedElevationControllingInterval() const
+{
+   return m_FinishedElevationControllingInterval;
+}
+
 void pgsSegmentConstructabilityArtifact::SetFinishedElevationTolerance(Float64 tol)
 {
    m_FinishedElevationTolerance = tol;
@@ -572,6 +584,16 @@ void pgsSegmentConstructabilityArtifact::SetMinimumHaunchDepthApplicability(bool
 bool pgsSegmentConstructabilityArtifact::GetMinimumHaunchDepthApplicability() const
 {
    return m_bIsMinimumHaunchCheckApplicable;
+}
+
+void pgsSegmentConstructabilityArtifact::SetMinimumHaunchDepthControllingInterval(IntervalIndexType interval)
+{
+   m_MinimumHaunchCheckControllingInterval = interval;
+}
+
+IntervalIndexType pgsSegmentConstructabilityArtifact::GetMinimumHaunchDepthControllingInterval() const
+{
+   return m_MinimumHaunchCheckControllingInterval;
 }
 
 void pgsSegmentConstructabilityArtifact::SetMinimumAllowableHaunchDepth(Float64 haunchDepth)
@@ -651,6 +673,7 @@ void pgsSegmentConstructabilityArtifact::MakeCopy(const pgsSegmentConstructabili
    m_AssumedMinimumHaunchDepth = rOther.m_AssumedMinimumHaunchDepth;
 
    m_bIsFinishedElevationApplicable = rOther.m_bIsFinishedElevationApplicable;
+   m_FinishedElevationControllingInterval = rOther.m_FinishedElevationControllingInterval;
    m_FinishedElevationTolerance = rOther.m_FinishedElevationTolerance;
    m_FinishedElevationStation = rOther.m_FinishedElevationStation;
    m_FinishedElevationOffset = rOther.m_FinishedElevationOffset;
@@ -659,6 +682,7 @@ void pgsSegmentConstructabilityArtifact::MakeCopy(const pgsSegmentConstructabili
    m_FinishedElevation = rOther.m_FinishedElevation;
 
    m_bIsMinimumHaunchCheckApplicable = rOther.m_bIsMinimumHaunchCheckApplicable;
+   m_MinimumHaunchCheckControllingInterval = rOther.m_MinimumHaunchCheckControllingInterval;
    m_MinimumHaunchStation = rOther.m_MinimumHaunchStation;
    m_MinimumHaunchOffset = rOther.m_MinimumHaunchOffset;
    m_MinimumHaunchPoi = rOther.m_MinimumHaunchPoi;

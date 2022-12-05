@@ -343,7 +343,7 @@ void CHaunchSegmentGrid::FillGrid()
             auto* pSegment = pGirder->GetSegment(segIdx);
 
             std::array<Float64, 2> slabOffset;
-            pSegment->GetSlabOffset(&slabOffset[pgsTypes::metStart], &slabOffset[pgsTypes::metEnd]);
+            pSegment->GetSlabOffset(&slabOffset[pgsTypes::metStart], &slabOffset[pgsTypes::metEnd], true);
 
             SetStyleRange(CGXRange(row, col), CGXStyle()
                .SetReadOnly(FALSE)
