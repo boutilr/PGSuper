@@ -219,8 +219,8 @@ void txnEditGirder::SetGirderData(const CGirderKey& girderKey,const txnEditGirde
       PierIndexType endPierIdx   = pGroup->GetPier(pgsTypes::metEnd)->GetIndex();
       ATLASSERT(startPierIdx == endPierIdx - 1);
 
-      pIBridgeDesc->SetSlabOffset(pgsTypes::stPier, startPierIdx, pgsTypes::Ahead, gdrData.m_SlabOffset[pgsTypes::metStart]);
-      pIBridgeDesc->SetSlabOffset(pgsTypes::stPier, endPierIdx,   pgsTypes::Back,  gdrData.m_SlabOffset[pgsTypes::metEnd]);
+      pIBridgeDesc->SetSlabOffset(startPierIdx, pgsTypes::Ahead, gdrData.m_SlabOffset[pgsTypes::metStart]);
+      pIBridgeDesc->SetSlabOffset(endPierIdx,   pgsTypes::Back,  gdrData.m_SlabOffset[pgsTypes::metEnd]);
    }
    else
    {

@@ -250,37 +250,9 @@ void CHaunchBearingGrid::FillGrid()
                .SetEnabled(TRUE)
                .SetValue(FormatDimension(slabOffset[pgsTypes::Ahead], *m_pUnit, false)).SetItemDataPtr((void*)pgsTypes::Ahead));
          }
-      }
-      else
-      {
-         auto* pTS = support.second;
-         auto tsIdx = pTS->GetIndex();
-         std::array<Float64, 2> slabOffset;
-         pTS->GetSlabOffset(&slabOffset[pgsTypes::Back], &slabOffset[pgsTypes::Ahead], pBridge->GetSlabOffsetType() == pgsTypes::sotSegment ? true : false);
-
-         InsertRows(row, 2);
-         SetRowStyle(row);
-         CString strSupport;
-         strSupport.Format(_T("TS %d (%s)"), LABEL_TEMPORARY_SUPPORT(tsIdx), pTS->GetSupportType() == pgsTypes::ErectionTower ? _T("ET") : _T("SB"));
-
-         SetStyleRange(CGXRange(row, _STARTCOL, row + 1, _STARTCOL), CGXStyle().SetMergeCell(GX_MERGE_VERTICAL | GX_MERGE_COMPVALUE).SetValue(strSupport).SetItemDataPtr((void*)TS));
-
-         SetStyleRange(CGXRange(row, _STARTCOL + 1), CGXStyle().SetValue(_T("Back")).SetItemDataPtr((void*)tsIdx));
-         SetStyleRange(CGXRange(row, _STARTCOL + 2), CGXStyle()
-            .SetReadOnly(FALSE)
-            .SetEnabled(TRUE)
-            .SetValue(FormatDimension(slabOffset[pgsTypes::Back], *m_pUnit, false)).SetItemDataPtr((void*)pgsTypes::Back));
 
          row++;
-         SetRowStyle(row);
-
-         SetStyleRange(CGXRange(row, _STARTCOL + 1), CGXStyle().SetValue(_T("Ahead")).SetItemDataPtr((void*)tsIdx));
-         SetStyleRange(CGXRange(row, _STARTCOL + 2), CGXStyle()
-            .SetReadOnly(FALSE)
-            .SetEnabled(TRUE)
-            .SetValue(FormatDimension(slabOffset[pgsTypes::Ahead], *m_pUnit, false)).SetItemDataPtr((void*)pgsTypes::Ahead));
       }
-      row++;
    } // next support
    
    ResizeRowHeightsToFit(CGXRange(0,0,GetRowCount(),GetColCount()));
@@ -298,7 +270,7 @@ void CHaunchBearingGrid::GetGridData(CDataExchange* pDX)
 
    Float64 minSlabOffset = pBridge->GetMinSlabOffset();
    CString strMinValError;
-   strMinValError.Format(_T("Slab Offset must be greater or equal to slab depth (%s)"), FormatDimension(minSlabOffset, *m_pUnit));
+   strMinValError.Format(_T("Slab Offset must be greater or equal to slab depth + fillet (%s)"), FormatDimension(minSlabOffset, *m_pUnit));
 
    ROWCOL nRows = GetRowCount();
    for (ROWCOL row = 1; row <= nRows; row++)
@@ -336,11 +308,6 @@ void CHaunchBearingGrid::GetGridData(CDataExchange* pDX)
          {
             auto* pPier = pBridge->GetPier(idx);
             pPier->SetSlabOffset(face, slabOffset);
-         }
-         else
-         {
-            auto* pTS = pBridge->GetTemporarySupport(idx);
-            pTS->SetSlabOffset(face, slabOffset);
          }
       }
    }

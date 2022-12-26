@@ -261,7 +261,7 @@ void CHaunchDirectSegmentGrid::FillGrid()
       auto nSegments = pGirder->GetSegmentCount();
       for (auto segIdx = 0; segIdx < nSegments; segIdx++)
       {
-         std::vector<Float64> haunchDepths = pGirder->GetDirectHaunchDepth(segIdx);
+         std::vector<Float64> haunchDepths = pGirder->GetDirectHaunchDepths(segIdx);
 
          // Resize if no match for current settings
          CEditHaunchByHaunchDlg::NormalizeHaunchDepths(haunchDepths,disttype,pBridge);
@@ -295,7 +295,7 @@ void CHaunchDirectSegmentGrid::GetGridData(CDataExchange* pDX)
    pgsTypes::HaunchInputDistributionType disttype = GetHaunchInputDistributionType();
    CBridgeDescription2* pBridge = GetBridgeDesc();
 
-   pBridge->SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
+   ATLASSERT(pBridge->GetHaunchInputDepthType()==pgsTypes::hidHaunchDirectly || pBridge->GetHaunchInputDepthType() == pgsTypes::hidHaunchPlusSlabDirectly);
    pBridge->SetHaunchInputLocationType(pgsTypes::hilPerEach);
    pBridge->SetHaunchInputDistributionType(disttype);
    pBridge->SetHaunchLayoutType(pgsTypes::hltAlongSegments);
@@ -321,7 +321,7 @@ void CHaunchDirectSegmentGrid::GetGridData(CDataExchange* pDX)
             col++;
          }
 
-         pGirder->SetDirectHaunchDepth(segIdx,haunches);
+         pGirder->SetDirectHaunchDepths(segIdx,haunches);
       } // next segment
 
       row++;

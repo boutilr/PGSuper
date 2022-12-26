@@ -121,12 +121,12 @@ public:
    // and HaunchInputLocationType==hilSame4AllGirders or hilPerEach
    // =================================================================================
    // Set the Haunch at a span (same for all girders)
-   void SetDirectHaunchDepth(const std::vector<Float64>& haunchDepths);
+   void SetDirectHaunchDepths(const std::vector<Float64>& haunchDepths);
 
    // Set/Get the Haunch Depth at a span for a specific girder
    // Use when hilSame4AllGirders
-   void SetDirectHaunchDepth(GirderIndexType gdrIdx, const std::vector<Float64>& HaunchDepth);
-   std::vector<Float64> GetDirectHaunchDepth(GirderIndexType gdrIdx,bool bGetRawValue = false) const;
+   void SetDirectHaunchDepths(GirderIndexType gdrIdx, const std::vector<Float64>& HaunchDepth);
+   std::vector<Float64> GetDirectHaunchDepths(GirderIndexType gdrIdx,bool bGetRawValue = false) const;
 
    // Copies girder-by-girder Haunch Depth data from one girder to another
    void CopyHaunchDepth(GirderIndexType sourceGdrIdx,GirderIndexType targetGdrIdx);

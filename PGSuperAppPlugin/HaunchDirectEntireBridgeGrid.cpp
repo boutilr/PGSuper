@@ -207,7 +207,7 @@ void CHaunchDirectEntireBridgeGrid::FillGrid()
    CBridgeDescription2* pBridgeDesc = GetBridgeDesc();
 
    // Get haunch depths from bridge and resize if no match for current settings
-   std::vector<Float64> haunchDepths = pBridgeDesc->GetHaunchDepths();
+   std::vector<Float64> haunchDepths = pBridgeDesc->GetDirectHaunchDepths();
    CEditHaunchByHaunchDlg::NormalizeHaunchDepths(haunchDepths,disttype,pBridgeDesc);
 
    GetParam()->EnableUndo(FALSE);
@@ -281,11 +281,11 @@ void CHaunchDirectEntireBridgeGrid::GetGridData(CDataExchange* pDX)
       haunches.push_back(value);
    }
 
-   pBridge->SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
+   ATLASSERT(pBridge->GetHaunchInputDepthType() == pgsTypes::hidHaunchDirectly || pBridge->GetHaunchInputDepthType() == pgsTypes::hidHaunchPlusSlabDirectly);
    pBridge->SetHaunchInputLocationType(pgsTypes::hilSame4Bridge);
    pBridge->SetHaunchInputDistributionType(disttype);
    pBridge->SetHaunchLayoutType(layoutType);
-   pBridge->SetHaunchDepths(haunches);
+   pBridge->SetDirectHaunchDepths(haunches);
 
    // Call below is necessary whenever changes are made and hilSame4Bridge is used
    pBridge->CopyDown(false,false,false,false,false,true,false);

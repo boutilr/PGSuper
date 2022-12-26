@@ -72,7 +72,7 @@ void CHaunchByBridgeDlg::DoDataExchange(CDataExchange* pDX)
       if (::IsLT(slabOffset, minSlabOffset))
       {
          CString strMinValError;
-         strMinValError.Format(_T("Slab Offset must be greater or equal to slab depth (%s)"), FormatDimension(minSlabOffset, pDisplayUnits->GetComponentDimUnit()));
+         strMinValError.Format(_T("Slab Offset must be greater or equal to slab depth + fillet (%s)"), FormatDimension(minSlabOffset, pDisplayUnits->GetComponentDimUnit()));
          AfxMessageBox(strMinValError, MB_ICONERROR | MB_OK);
          pDX->PrepareEditCtrl(IDC_SLAB_OFFSET);
          pDX->Fail();

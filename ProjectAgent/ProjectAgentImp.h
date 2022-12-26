@@ -277,10 +277,10 @@ public:
    virtual void SetSlabOffsetType(pgsTypes::SlabOffsetType offsetType) override;
    virtual void SetSlabOffset(Float64 slabOffset) override;
    virtual pgsTypes::SlabOffsetType GetSlabOffsetType() const override;
-   virtual void SetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, pgsTypes::PierFaceType face, Float64 offset) override;
-   virtual void SetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, Float64 backSlabOffset, Float64 aheadSlabOffset) override;
-   virtual Float64 GetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, pgsTypes::PierFaceType face) const override;
-   virtual void GetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, Float64* pBackSlabOffset, Float64* pAheadSlabOffset) const override;
+   virtual void SetSlabOffset(SupportIndexType supportIdx, pgsTypes::PierFaceType face, Float64 offset) override;
+   virtual void SetSlabOffset(SupportIndexType supportIdx, Float64 backSlabOffset, Float64 aheadSlabOffset) override;
+   virtual Float64 GetSlabOffset(SupportIndexType supportIdx, pgsTypes::PierFaceType face) const override;
+   virtual void GetSlabOffset(SupportIndexType supportIdx, Float64* pBackSlabOffset, Float64* pAheadSlabOffset) const override;
    virtual void SetSlabOffset(const CSegmentKey& segmentKey, pgsTypes::MemberEndType end, Float64 offset) override;
    virtual void SetSlabOffset(const CSegmentKey& segmentKey, Float64 startSlabOffset, Float64 endSlabOffset) override;
    virtual Float64 GetSlabOffset(const CSegmentKey& segmentKey,pgsTypes::MemberEndType end) const override;

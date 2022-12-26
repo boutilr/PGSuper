@@ -169,8 +169,8 @@ public:
 
    // Set haunch depth as same for all segments or spans on entire bridge. Has no effect unless SetHaunchInputLocationType==hilSame4Bridge
    // Size of vector must match HaunchInputDistributionType enum val.
-   void SetHaunchDepths(std::vector<Float64> depths);
-   std::vector<Float64> GetHaunchDepths() const;
+   void SetDirectHaunchDepths(std::vector<Float64> depths);
+   std::vector<Float64> GetDirectHaunchDepths() const;
 
    // =================================================================================
    // Spans and Girder Groups
@@ -415,6 +415,10 @@ public:
    void CopyDown(bool bGirderCount,bool bGirderType,bool bSpacing,bool bSlabOffset,bool bAssumedExcessCamber, bool bDirectHaunchDepths, bool bBearingData); 
                     // takes all the data defined at the bridge level and copies
                     // it down to the spans and girders (only for this parameters set to true)
+
+   // This function is meant to copy haunch data between COMPATIBLE copies of this data structure. 
+   // Haunch data is complex and rooted throughout the bridge heirarchy. Results are unpredictable if copy is between highly different data (e.g., rOther has different number of spans).
+   void CopyHaunchSettings(const CBridgeDescription2& rOther);
 
    // Returns a vector of the valid connection types for a pier. 
    std::vector<pgsTypes::BoundaryConditionType> GetBoundaryConditionTypes(PierIndexType pierIdx) const;

@@ -1098,11 +1098,11 @@ interface IBridgeDescription : IUnknown
    virtual void SetSlabOffsetType(pgsTypes::SlabOffsetType offsetType) = 0;
    virtual void SetSlabOffset( Float64 slabOffset) = 0;
    virtual pgsTypes::SlabOffsetType GetSlabOffsetType() const = 0;
-   // changes slab offset type to sotBearingLine
-   virtual void SetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, pgsTypes::PierFaceType face, Float64 offset) = 0;
-   virtual void SetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, Float64 backSlabOffset,Float64 aheadSlabOffset) = 0;
-   virtual Float64 GetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, pgsTypes::PierFaceType face) const = 0;
-   virtual void GetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, Float64* pBackSlabOffset, Float64* pAheadSlabOffset) const = 0;
+   // changes slab offset type to sotBearingLine at permanent piers.
+   virtual void SetSlabOffset(SupportIndexType supportIdx, pgsTypes::PierFaceType face, Float64 offset) = 0;
+   virtual void SetSlabOffset(SupportIndexType supportIdx, Float64 backSlabOffset,Float64 aheadSlabOffset) = 0;
+   virtual Float64 GetSlabOffset(SupportIndexType supportIdx, pgsTypes::PierFaceType face) const = 0;
+   virtual void GetSlabOffset(SupportIndexType supportIdx, Float64* pBackSlabOffset, Float64* pAheadSlabOffset) const = 0;
    // sets slab offset per girder ... sets the slab offset type to sotSegment
    virtual void SetSlabOffset(const CSegmentKey& segmentKey, pgsTypes::MemberEndType end, Float64 offset) = 0;
    virtual void SetSlabOffset(const CSegmentKey& segmentKey, Float64 startSlabOffset,Float64 endSlabOffset) = 0;

@@ -310,7 +310,7 @@ void CHaunchDirectSameAsGrid::FillGrid()
       {
          const CSpanData2* pSpan = pBridge->GetSpan(ispan);
 
-         std::vector<Float64> haunches = pSpan->GetDirectHaunchDepth(0); // depth is same for all girders
+         std::vector<Float64> haunches = pSpan->GetDirectHaunchDepths(0); // depth is same for all girders
 
          // Resize if no match for current settings
          CEditHaunchByHaunchDlg::NormalizeHaunchDepths(haunches, disttype, pBridge);
@@ -338,7 +338,7 @@ void CHaunchDirectSameAsGrid::FillGrid()
       auto nSegments = pGirder->GetSegmentCount();
       for (SegmentIndexType iseg = 0; iseg < nSegs; iseg++)
       {
-         std::vector<Float64> haunches = pGirder->GetDirectHaunchDepth(iseg);
+         std::vector<Float64> haunches = pGirder->GetDirectHaunchDepths(iseg);
          // Resize if no match for current settings
          CEditHaunchByHaunchDlg::NormalizeHaunchDepths(haunches,disttype,pBridge);
 
@@ -371,7 +371,7 @@ void CHaunchDirectSameAsGrid::GetGridData(CDataExchange* pDX)
 
    if (m_DoSpans)
    {
-      pBridge->SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
+      ATLASSERT(pBridge->GetHaunchInputDepthType() == pgsTypes::hidHaunchDirectly || pBridge->GetHaunchInputDepthType() == pgsTypes::hidHaunchPlusSlabDirectly);
       pBridge->SetHaunchInputLocationType(pgsTypes::hilSame4AllGirders);
       pBridge->SetHaunchInputDistributionType(disttype);
       pBridge->SetHaunchLayoutType(pgsTypes::hltAlongSpans);
@@ -392,12 +392,12 @@ void CHaunchDirectSameAsGrid::GetGridData(CDataExchange* pDX)
             col++;
          }
 
-         pSpan->SetDirectHaunchDepth(haunches);
+         pSpan->SetDirectHaunchDepths(haunches);
       }
    }
    else
    {
-      pBridge->SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
+      ATLASSERT(pBridge->GetHaunchInputDepthType() == pgsTypes::hidHaunchDirectly || pBridge->GetHaunchInputDepthType() == pgsTypes::hidHaunchPlusSlabDirectly);
       pBridge->SetHaunchInputLocationType(pgsTypes::hilSame4AllGirders);
       pBridge->SetHaunchInputDistributionType(disttype);
       pBridge->SetHaunchLayoutType(pgsTypes::hltAlongSegments);
@@ -421,18 +421,18 @@ void CHaunchDirectSameAsGrid::GetGridData(CDataExchange* pDX)
             col++;
          }
 
-         pGirder0->SetDirectHaunchDepth(iseg,haunches); // First set haunch in girder zero
+         pGirder0->SetDirectHaunchDepths(iseg,haunches); // First set haunch in girder zero
       } // segments
 
          // Set same haunch depth across all girders in group
       for (SegmentIndexType iseg = 0; iseg < nSegs; iseg++)
       {
-         haunches = pGirder0->GetDirectHaunchDepth(iseg);
+         haunches = pGirder0->GetDirectHaunchDepths(iseg);
 
          for (GirderIndexType igdr = 1; igdr < nGdrs; igdr++)
          {
             auto* pGirder = pGroup->GetGirder(igdr);
-            pGirder->SetDirectHaunchDepth(iseg,haunches);
+            pGirder->SetDirectHaunchDepths(iseg,haunches);
          }
       }
    }

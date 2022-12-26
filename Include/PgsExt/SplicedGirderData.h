@@ -151,12 +151,12 @@ public:
    // Note that data from girder 0 is used for all segments when hilSame4AllGirders
    // =================================================================================
    // Set the Haunch at a girder (same for all segments). i.e.; hilSame4AllGirders
-   void SetDirectHaunchDepth(const std::vector<Float64>& haunchDepth);
+   void SetDirectHaunchDepths(const std::vector<Float64>& haunchDepth);
 
    // Set/Get the Haunch Depth at a girder for a specific segment. i.e.; hilPerEach
    // Use when hilPerEach
-   void SetDirectHaunchDepth(SegmentIndexType segIdx, const std::vector<Float64>& HaunchDepth);
-   std::vector<Float64> GetDirectHaunchDepth(SegmentIndexType segIdx,bool bGetRawValue = false) const;
+   void SetDirectHaunchDepths(SegmentIndexType segIdx, const std::vector<Float64>& HaunchDepth);
+   std::vector<Float64> GetDirectHaunchDepths(SegmentIndexType segIdx,bool bGetRawValue = false) const;
 
    // Copies segment-by-segment data from one segment to another
    void CopyHaunchDepth(SegmentIndexType sourceSegIdx,SegmentIndexType targetSegIdx);
@@ -187,6 +187,9 @@ protected:
    void DeleteSegments();
    void DeleteClosures();
    void Resize(SegmentIndexType nSegments);
+
+   // Haunch input data is tricky to copy - use a function to do this.
+   void CopyHaunchData(const CSplicedGirderData& rOther);
 
    // Call this method when a segment is being removed from a girder
    // It removes references to this segment from the timeline manager

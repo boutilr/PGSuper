@@ -52,6 +52,11 @@ public:
 
    CBridgeDescription2 m_BridgeDesc;
 
+   // Simple clients can just copy the BridgeDesc above. However, some clients (e.g., CPierDetailsDlg) have very complex
+   // hooks into the BridgeDesc. For these cases, the function below will only copy the current setting for haunch data
+   void CopyHaunchData(const CSplicedGirderData& rOther);
+
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 

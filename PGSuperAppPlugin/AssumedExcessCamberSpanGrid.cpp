@@ -230,7 +230,7 @@ void CAssumedExcessCamberSpanGrid::GetGridData(CDataExchange* pDX)
 
    CComPtr<IBroker> pBroker;
    EAFGetBroker(&pBroker);
-   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   GET_IFACE2_NOCHECK(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
    ROWCOL nRows = GetRowCount();
    for (ROWCOL row = 1; row <= nRows; row++)

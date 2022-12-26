@@ -273,7 +273,7 @@ void CHaunchDirectSpansGrid::FillGrid()
          for (auto gdrIdx = 0; gdrIdx < maxGdrs; gdrIdx++)
          {
             ROWCOL row = m_nExtraHeaderRows + gdrIdx + 1;
-            std::vector<Float64> haunches = pSpan->GetDirectHaunchDepth(gdrIdx);
+            std::vector<Float64> haunches = pSpan->GetDirectHaunchDepths(gdrIdx);
 
             // Resize if no match for current settings
             CEditHaunchByHaunchDlg::NormalizeHaunchDepths(haunches,disttype,pBridge);
@@ -305,7 +305,7 @@ void CHaunchDirectSpansGrid::FillGrid()
             ROWCOL row = m_nExtraHeaderRows + gdrIdx + 1;
             ROWCOL col = spanCol;
 
-            std::vector<Float64> haunches = pSpan->GetDirectHaunchDepth(gdrIdx);
+            std::vector<Float64> haunches = pSpan->GetDirectHaunchDepths(gdrIdx);
 
             // Resize if no match for current settings
             CEditHaunchByHaunchDlg::NormalizeHaunchDepths(haunches,disttype,pBridge);
@@ -367,12 +367,12 @@ void CHaunchDirectSpansGrid::GetGridData(CDataExchange* pDX)
             col++;
          }
 
-         pSpan->SetDirectHaunchDepth(gdrIdx,haunches);
+         pSpan->SetDirectHaunchDepths(gdrIdx,haunches);
          row++;
       } // girder
    } // span
 
-   pBridge->SetHaunchInputDepthType(pgsTypes::hidHaunchDirectly);
+   ATLASSERT(pBridge->GetHaunchInputDepthType() == pgsTypes::hidHaunchDirectly || pBridge->GetHaunchInputDepthType() == pgsTypes::hidHaunchPlusSlabDirectly);
    pBridge->SetHaunchInputLocationType(pgsTypes::hilPerEach);
    pBridge->SetHaunchInputDistributionType(disttype);
    pBridge->SetHaunchLayoutType(pgsTypes::hltAlongSpans);
