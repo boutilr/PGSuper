@@ -632,13 +632,13 @@ void CSpanData2::ProtectAssumedExcessCamber() const
    }
 }
 
-void CSpanData2::SetDirectHaunchDepth(const std::vector<Float64>& HaunchDepths)
+void CSpanData2::SetDirectHaunchDepths(const std::vector<Float64>& HaunchDepths)
 {
    GirderIndexType nGirders = GetGirderCount();
    m_vHaunchDepths.assign(nGirders,HaunchDepths);
 }
 
-void CSpanData2::SetDirectHaunchDepth(GirderIndexType gdrIdx, const std::vector<Float64>& HaunchDepth)
+void CSpanData2::SetDirectHaunchDepths(GirderIndexType gdrIdx, const std::vector<Float64>& HaunchDepth)
 {
    ProtectHaunchDepth();
    ATLASSERT(gdrIdx < m_vHaunchDepths.size());
@@ -646,7 +646,7 @@ void CSpanData2::SetDirectHaunchDepth(GirderIndexType gdrIdx, const std::vector<
    m_vHaunchDepths[gdrIdx] = HaunchDepth;
 }
 
-std::vector<Float64> CSpanData2::GetDirectHaunchDepth(GirderIndexType gdrIdx,bool bGetRawValue) const
+std::vector<Float64> CSpanData2::GetDirectHaunchDepths(GirderIndexType gdrIdx,bool bGetRawValue) const
 {
    if (bGetRawValue)
    {
@@ -659,7 +659,7 @@ std::vector<Float64> CSpanData2::GetDirectHaunchDepth(GirderIndexType gdrIdx,boo
       pgsTypes::HaunchInputLocationType type = m_pBridgeDesc->GetHaunchInputLocationType();
       if (type == pgsTypes::hilSame4Bridge)
       {
-         return m_pBridgeDesc->GetHaunchDepths();
+         return m_pBridgeDesc->GetDirectHaunchDepths();
       }
       else
       {
@@ -686,7 +686,7 @@ void CSpanData2::ProtectHaunchDepth() const
    if (nFlts == 0)
    {
       // probably switched from hilSame4Bridge. Get HaunchDepth value from bridge and assign as a default
-      std::vector<Float64> defVal = m_pBridgeDesc->GetHaunchDepths();
+      std::vector<Float64> defVal = m_pBridgeDesc->GetDirectHaunchDepths();
       m_vHaunchDepths.assign(nGirders,defVal);
    }
    else if (nFlts < nGirders)

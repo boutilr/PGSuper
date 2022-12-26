@@ -744,10 +744,6 @@ Float64 CPrecastSegmentData::GetSlabOffset(pgsTypes::MemberEndType end,bool bRaw
             {
                return pPier->GetSlabOffset(face);
             }
-            else
-            {
-               return pTS->GetSlabOffset(face);
-            }
          }
          case pgsTypes::sotSegment:
             return m_SlabOffset[end];

@@ -3347,7 +3347,7 @@ void CBridgeAgentImp::GetHaunchDepth4BySpanInput(const CPrecastSegmentData* pSeg
    {
       // Special, trivial case. Haunch is uniform across span. Just use haunch depth of first span on segment
       const CSpanData2* pSpan = pSegment->GetSpan(pgsTypes::metStart);
-      std::vector<Float64> spanHaunches = pSpan->GetDirectHaunchDepth(gdrIdx);
+      std::vector<Float64> spanHaunches = pSpan->GetDirectHaunchDepths(gdrIdx);
       ATLASSERT(spanHaunches.size() == 1);
 
       pHaunchDepths->Add(spanHaunches.front());
@@ -3367,7 +3367,7 @@ void CBridgeAgentImp::GetHaunchDepth4BySpanInput(const CPrecastSegmentData* pSeg
          CSpanKey spanKey(spanIdx,gdrIdx);
          Float64 spanLength = GetSpanLength(spanKey);
 
-         std::vector<Float64> spanHaunches = pSpan->GetDirectHaunchDepth(gdrIdx);
+         std::vector<Float64> spanHaunches = pSpan->GetDirectHaunchDepths(gdrIdx);
          std::size_t numHaunches = spanHaunches.size();
          std::size_t currLoc = 0;
          for (auto haunch : spanHaunches)
@@ -4198,7 +4198,7 @@ bool CBridgeAgentImp::LayoutSsmHaunches()
                   if (haunchLayoutType == pgsTypes::hltAlongSegments)
                   {
                      // Simple case - input is direct to segments
-                     std::vector<Float64> haunches = pGirder->GetDirectHaunchDepth(segIdx);
+                     std::vector<Float64> haunches = pGirder->GetDirectHaunchDepths(segIdx);
                      for (auto haunch : haunches)
                      {
                         pHaunchDepths->Add(haunch);

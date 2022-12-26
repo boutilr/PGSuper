@@ -6399,7 +6399,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
          m_BridgeDescription.SetHaunchInputDistributionType(pgsTypes::hidUniform);
 
          Float64 haunchDepth = m_BridgeDescription.GetSlabOffset() - slabDepth;
-         m_BridgeDescription.SetHaunchDepths( std::vector<Float64>(1,haunchDepth) );
+         m_BridgeDescription.SetDirectHaunchDepths( std::vector<Float64>(1,haunchDepth) );
 
          m_BridgeDescription.CopyDown(false,false,false,false,false,true,false); // copy the down to the individual span/segment level
       }
@@ -6435,7 +6435,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
                   end = end < 0.0 ? 0.0 : end;
 
                   std::vector<Float64> haunchVals{ start, end };
-                  pGirder->SetDirectHaunchDepth(segIdx,haunchVals);
+                  pGirder->SetDirectHaunchDepths(segIdx,haunchVals);
                }
             }
          }
@@ -6470,7 +6470,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
                   end = end < 0.0 ? 0.0 : end;
 
                   std::vector<Float64> haunchVals{ start, end };
-                  pGirder->SetDirectHaunchDepth(segIdx,haunchVals);
+                  pGirder->SetDirectHaunchDepths(segIdx,haunchVals);
                }
             }
          }
@@ -7361,80 +7361,38 @@ pgsTypes::SlabOffsetType CProjectAgentImp::GetSlabOffsetType() const
    return m_BridgeDescription.GetSlabOffsetType();
 }
 
-void CProjectAgentImp::SetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, pgsTypes::PierFaceType face, Float64 offset)
+void CProjectAgentImp::SetSlabOffset(SupportIndexType supportIdx, pgsTypes::PierFaceType face, Float64 offset)
 {
-   if (supportType == pgsTypes::stPier)
+   CPierData2* pPier = m_BridgeDescription.GetPier(supportIdx);
+   if (m_BridgeDescription.GetSlabOffsetType() != pgsTypes::sotBearingLine || !IsEqual(pPier->GetSlabOffset(face), offset))
    {
-      CPierData2* pPier = m_BridgeDescription.GetPier(supportIdx);
-      if (m_BridgeDescription.GetSlabOffsetType() != pgsTypes::sotBearingLine || !IsEqual(pPier->GetSlabOffset(face), offset))
-      {
-         pPier->SetSlabOffset(face, offset);
-         m_BridgeDescription.SetSlabOffsetType(pgsTypes::sotBearingLine);
-         Fire_BridgeChanged();
-      }
-   }
-   else
-   {
-      CTemporarySupportData* pTS = m_BridgeDescription.GetTemporarySupport(supportIdx);
-      if (m_BridgeDescription.GetSlabOffsetType() != pgsTypes::sotBearingLine || !IsEqual(pTS->GetSlabOffset(face), offset))
-      {
-         pTS->SetSlabOffset(face, offset);
-         m_BridgeDescription.SetSlabOffsetType(pgsTypes::sotBearingLine);
-         Fire_BridgeChanged();
-      }
+      pPier->SetSlabOffset(face, offset);
+      m_BridgeDescription.SetSlabOffsetType(pgsTypes::sotBearingLine);
+      Fire_BridgeChanged();
    }
 }
 
-void CProjectAgentImp::SetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, Float64 backSlabOffset,Float64 aheadSlabOffset)
+void CProjectAgentImp::SetSlabOffset(SupportIndexType supportIdx, Float64 backSlabOffset,Float64 aheadSlabOffset)
 {
-   if (supportType == pgsTypes::stPier)
+   CPierData2* pPier = m_BridgeDescription.GetPier(supportIdx);
+   if (m_BridgeDescription.GetSlabOffsetType() != pgsTypes::sotBearingLine || !IsEqual(pPier->GetSlabOffset(pgsTypes::Back), backSlabOffset) || !IsEqual(pPier->GetSlabOffset(pgsTypes::Ahead), aheadSlabOffset))
    {
-      CPierData2* pPier = m_BridgeDescription.GetPier(supportIdx);
-      if (m_BridgeDescription.GetSlabOffsetType() != pgsTypes::sotBearingLine || !IsEqual(pPier->GetSlabOffset(pgsTypes::Back), backSlabOffset) || !IsEqual(pPier->GetSlabOffset(pgsTypes::Ahead), aheadSlabOffset))
-      {
-         pPier->SetSlabOffset(backSlabOffset,aheadSlabOffset);
-         m_BridgeDescription.SetSlabOffsetType(pgsTypes::sotBearingLine);
-         Fire_BridgeChanged();
-      }
-   }
-   else
-   {
-      CTemporarySupportData* pTS = m_BridgeDescription.GetTemporarySupport(supportIdx);
-      if (m_BridgeDescription.GetSlabOffsetType() != pgsTypes::sotBearingLine || !IsEqual(pTS->GetSlabOffset(pgsTypes::Back), backSlabOffset) || !IsEqual(pTS->GetSlabOffset(pgsTypes::Ahead), aheadSlabOffset))
-      {
-         pTS->SetSlabOffset(backSlabOffset, aheadSlabOffset);
-         m_BridgeDescription.SetSlabOffsetType(pgsTypes::sotBearingLine);
-         Fire_BridgeChanged();
-      }
+      pPier->SetSlabOffset(backSlabOffset,aheadSlabOffset);
+      m_BridgeDescription.SetSlabOffsetType(pgsTypes::sotBearingLine);
+      Fire_BridgeChanged();
    }
 }
 
-Float64 CProjectAgentImp::GetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, pgsTypes::PierFaceType face) const
+Float64 CProjectAgentImp::GetSlabOffset(SupportIndexType supportIdx, pgsTypes::PierFaceType face) const
 {
-   if (supportType == pgsTypes::stPier)
-   {
-      const CPierData2* pPier = m_BridgeDescription.GetPier(supportIdx);
-      return pPier->GetSlabOffset(face);
-   }
-   else
-   {
-      const CTemporarySupportData* pTS = m_BridgeDescription.GetTemporarySupport(supportIdx);
-      return pTS->GetSlabOffset(face);
-   }
+   const CPierData2* pPier = m_BridgeDescription.GetPier(supportIdx);
+   return pPier->GetSlabOffset(face);
 }
 
-void CProjectAgentImp::GetSlabOffset(pgsTypes::SupportType supportType, SupportIndexType supportIdx, Float64* pBackSlabOffset, Float64* pAheadSlabOffset) const
+void CProjectAgentImp::GetSlabOffset(SupportIndexType supportIdx, Float64* pBackSlabOffset, Float64* pAheadSlabOffset) const
 {
-   if (supportType == pgsTypes::stPier)
-   {
-      const CPierData2* pPier = m_BridgeDescription.GetPier(supportIdx);
-      pPier->GetSlabOffset(pBackSlabOffset,pAheadSlabOffset);
-   }
-   else
-   {
-      const CTemporarySupportData* pTS = m_BridgeDescription.GetTemporarySupport(supportIdx);
-      pTS->GetSlabOffset(pBackSlabOffset, pAheadSlabOffset);
-   }
+   const CPierData2* pPier = m_BridgeDescription.GetPier(supportIdx);
+   pPier->GetSlabOffset(pBackSlabOffset,pAheadSlabOffset);
 }
 
 void CProjectAgentImp::SetSlabOffset(const CSegmentKey& segmentKey, pgsTypes::MemberEndType end, Float64 offset)

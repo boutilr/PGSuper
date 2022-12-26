@@ -684,19 +684,6 @@ bool CPGSDocBase::EditDirectSelectionPrestressing(const CSegmentKey& segmentKey)
    oldSegmentData.m_SegmentData = *pSegment;
    oldSegmentData.m_TimelineMgr = *pTimelineMgr;
 
-   // This function doesn't change slab offset data but we need to reserve it with the transaction
-   oldSegmentData.m_SlabOffsetType = pBridgeDesc->GetSlabOffsetType();
-   if (oldSegmentData.m_SlabOffsetType == pgsTypes::sotBridge)
-   {
-      oldSegmentData.m_SlabOffset[pgsTypes::metStart] = pBridgeDesc->GetSlabOffset();
-      oldSegmentData.m_SlabOffset[pgsTypes::metEnd] = oldSegmentData.m_SlabOffset[pgsTypes::metStart];
-   }
-   else
-   {
-      oldSegmentData.m_SlabOffset[pgsTypes::metStart] = pSegment->GetSlabOffset(pgsTypes::metStart);
-      oldSegmentData.m_SlabOffset[pgsTypes::metEnd]   =  pSegment->GetSlabOffset(pgsTypes::metEnd);
-   }
-
    if (pSegment->Strands.GetStrandDefinitionType() != pgsTypes::sdtDirectSelection )
    {
       // We can go no further
@@ -822,19 +809,6 @@ bool CPGSDocBase::EditDirectRowInputPrestressing(const CSegmentKey& segmentKey)
    oldSegmentData.m_SegmentData = *pSegment;
    oldSegmentData.m_TimelineMgr = *pTimelineMgr;
 
-   // This function doesn't change slab offset data but we need to reserve it with the transaction
-   oldSegmentData.m_SlabOffsetType = pBridgeDesc->GetSlabOffsetType();
-   if (oldSegmentData.m_SlabOffsetType == pgsTypes::sotBridge)
-   {
-      oldSegmentData.m_SlabOffset[pgsTypes::metStart] = pBridgeDesc->GetSlabOffset();
-      oldSegmentData.m_SlabOffset[pgsTypes::metEnd] = oldSegmentData.m_SlabOffset[pgsTypes::metStart];
-   }
-   else
-   {
-      oldSegmentData.m_SlabOffset[pgsTypes::metStart] = pSegment->GetSlabOffset(pgsTypes::metStart);
-      oldSegmentData.m_SlabOffset[pgsTypes::metEnd]   =  pSegment->GetSlabOffset(pgsTypes::metEnd);
-   }
-
    if (pSegment->Strands.GetStrandDefinitionType() != pgsTypes::sdtDirectRowInput )
    {
       // We can go no further
@@ -909,19 +883,6 @@ bool CPGSDocBase::EditDirectStrandInputPrestressing(const CSegmentKey& segmentKe
    oldSegmentData.m_SegmentKey = segmentKey;
    oldSegmentData.m_SegmentData = *pSegment;
    oldSegmentData.m_TimelineMgr = *pTimelineMgr;
-
-   // This function doesn't change slab offset data but we need to reserve it with the transaction
-   oldSegmentData.m_SlabOffsetType = pBridgeDesc->GetSlabOffsetType();
-   if (oldSegmentData.m_SlabOffsetType == pgsTypes::sotBridge)
-   {
-      oldSegmentData.m_SlabOffset[pgsTypes::metStart] = pBridgeDesc->GetSlabOffset();
-      oldSegmentData.m_SlabOffset[pgsTypes::metEnd] = oldSegmentData.m_SlabOffset[pgsTypes::metStart];
-   }
-   else
-   {
-      oldSegmentData.m_SlabOffset[pgsTypes::metStart] = pSegment->GetSlabOffset(pgsTypes::metStart);
-      oldSegmentData.m_SlabOffset[pgsTypes::metEnd]   =  pSegment->GetSlabOffset(pgsTypes::metEnd);
-   }
 
    if (pSegment->Strands.GetStrandDefinitionType() != pgsTypes::sdtDirectStrandInput)
    {

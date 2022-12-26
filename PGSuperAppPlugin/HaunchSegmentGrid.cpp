@@ -379,7 +379,7 @@ void CHaunchSegmentGrid::GetGridData(CDataExchange* pDX)
    
    Float64 minSlabOffset = pBridge->GetMinSlabOffset();
    CString strMinValError;
-   strMinValError.Format(_T("Slab Offset must be greater or equal to slab depth (%s)"), FormatDimension(minSlabOffset, *m_pUnit));
+   strMinValError.Format(_T("Slab Offset must be greater or equal to slab depth + fillet (%s)"), FormatDimension(minSlabOffset, *m_pUnit));
 
    GroupIndexType startGroupIdx = (m_GroupIdx == ALL_GROUPS ? 0 : m_GroupIdx);
    GroupIndexType endGroupIdx = (m_GroupIdx == ALL_GROUPS ? pBridge->GetGirderGroupCount() - 1 : startGroupIdx);

@@ -204,6 +204,11 @@ void CSplicedGirderData::Resize(SegmentIndexType nSegments)
 #endif
 }
 
+void CSplicedGirderData::CopyHaunchData(const CSplicedGirderData& rOther)
+{
+   m_vHaunchDepths = rOther.m_vHaunchDepths;
+}
+
 CSplicedGirderData& CSplicedGirderData::operator= (const CSplicedGirderData& rOther)
 {
    if( this != &rOther )
@@ -1089,13 +1094,13 @@ void CSplicedGirderData::SetConditionFactorType(pgsTypes::ConditionFactorType co
    m_ConditionFactorType = conditionFactorType;
 }
 
-void CSplicedGirderData::SetDirectHaunchDepth(const std::vector<Float64>& haunchDepths)
+void CSplicedGirderData::SetDirectHaunchDepths(const std::vector<Float64>& haunchDepths)
 {
    GirderIndexType nSegs = GetSegmentCount();
    m_vHaunchDepths.assign(nSegs, haunchDepths);
 }
 
-void CSplicedGirderData::SetDirectHaunchDepth(SegmentIndexType segIdx, const std::vector<Float64>& rHaunchDepth)
+void CSplicedGirderData::SetDirectHaunchDepths(SegmentIndexType segIdx, const std::vector<Float64>& rHaunchDepth)
 {
    ProtectHaunchDepth();
    ATLASSERT(segIdx < m_vHaunchDepths.size());
@@ -1103,7 +1108,7 @@ void CSplicedGirderData::SetDirectHaunchDepth(SegmentIndexType segIdx, const std
    m_vHaunchDepths[segIdx] = rHaunchDepth;
 }
 
-std::vector<Float64> CSplicedGirderData::GetDirectHaunchDepth(SegmentIndexType segIdx,bool bGetRawValue) const
+std::vector<Float64> CSplicedGirderData::GetDirectHaunchDepths(SegmentIndexType segIdx,bool bGetRawValue) const
 {
    if (bGetRawValue)
    {
@@ -1117,7 +1122,7 @@ std::vector<Float64> CSplicedGirderData::GetDirectHaunchDepth(SegmentIndexType s
       pgsTypes::HaunchInputLocationType type = pBridgeDesc->GetHaunchInputLocationType();
       if (type == pgsTypes::hilSame4Bridge)
       {
-         return pBridgeDesc->GetHaunchDepths();
+         return pBridgeDesc->GetDirectHaunchDepths();
       }
       else
       {
@@ -1145,7 +1150,7 @@ void CSplicedGirderData::ProtectHaunchDepth() const
    {
       // probably switched from hilSame4Bridge. Get HaunchDepth value from bridge and assign as a default
       const CBridgeDescription2* pBridgeDesc = GetBridgeDescription();
-      std::vector<Float64> defVal = pBridgeDesc->GetHaunchDepths();
+      std::vector<Float64> defVal = pBridgeDesc->GetDirectHaunchDepths();
       m_vHaunchDepths.assign(nSegs,defVal);
    }
    else if (nFlts < nSegs)
