@@ -421,20 +421,13 @@ void CHaunchDirectSameAsGrid::GetGridData(CDataExchange* pDX)
             col++;
          }
 
-         pGirder0->SetDirectHaunchDepths(iseg,haunches); // First set haunch in girder zero
-      } // segments
-
-         // Set same haunch depth across all girders in group
-      for (SegmentIndexType iseg = 0; iseg < nSegs; iseg++)
-      {
-         haunches = pGirder0->GetDirectHaunchDepths(iseg);
-
-         for (GirderIndexType igdr = 1; igdr < nGdrs; igdr++)
+         // Set for all girders in group
+         for (GirderIndexType igdr = 0; igdr < nGdrs; igdr++)
          {
             auto* pGirder = pGroup->GetGirder(igdr);
             pGirder->SetDirectHaunchDepths(iseg,haunches);
          }
-      }
+      } // segments
    }
 }
 

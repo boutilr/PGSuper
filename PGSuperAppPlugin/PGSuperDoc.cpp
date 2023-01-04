@@ -218,12 +218,36 @@ bool CPGSuperDoc::EditGirderSegmentDescription(const CSegmentKey& segmentKey,int
       newGirderData.m_Girder.SetTopWidth(type,leftStart,rightStart,leftEnd,rightEnd);
       *newGirderData.m_Girder.GetSegment(segmentKey.segmentIndex) = *dlg.GetSegment();
 
-      newGirderData.m_SlabOffsetType = dlg.m_General.m_SlabOffsetType;
-      newGirderData.m_SlabOffset[pgsTypes::metStart] = dlg.m_General.m_SlabOffset[pgsTypes::metStart];
-      newGirderData.m_SlabOffset[pgsTypes::metEnd]   = dlg.m_General.m_SlabOffset[pgsTypes::metEnd];
+      if (pBridgeDesc->GetHaunchInputDepthType() == pgsTypes::hidACamber)
+      {
+         newGirderData.m_SlabOffsetType = pBridgeDesc->GetSlabOffsetType(); // Not changed by the dialog
+         newGirderData.m_SlabOffset[pgsTypes::metStart] = dlg.m_General.m_SlabOffsetOrHaunch[pgsTypes::metStart];
+         newGirderData.m_SlabOffset[pgsTypes::metEnd] = dlg.m_General.m_SlabOffsetOrHaunch[pgsTypes::metEnd];
 
-      newGirderData.m_AssumedExcessCamberType = dlg.m_General.m_AssumedExcessCamberType;
-      newGirderData.m_AssumedExcessCamber = dlg.m_General.m_AssumedExcessCamber;
+         newGirderData.m_AssumedExcessCamberType = pBridgeDesc->GetAssumedExcessCamberType(); // Not changed by the dialog
+         newGirderData.m_AssumedExcessCamber = dlg.m_General.m_AssumedExcessCamber;
+      }
+      else
+      {
+         // Direct input of haunch depth
+         if (dlg.m_General.m_CanDisplayHauchDepths == CGirderDescGeneralPage::cdhEdit)
+         {
+            // Haunch value was edited in dialog. Determine if 1 or 2 values
+            if (pBridgeDesc->GetHaunchInputDistributionType() == pgsTypes::hidUniform)
+            {
+               newGirderData.m_HaunchDepths.push_back( dlg.m_General.m_SlabOffsetOrHaunch[pgsTypes::metStart]);
+            }
+            else if (pBridgeDesc->GetHaunchInputDistributionType() == pgsTypes::hidAtEnds)
+            {
+               newGirderData.m_HaunchDepths.push_back(dlg.m_General.m_SlabOffsetOrHaunch[pgsTypes::metStart]);
+               newGirderData.m_HaunchDepths.push_back(dlg.m_General.m_SlabOffsetOrHaunch[pgsTypes::metEnd]);
+            }
+            else
+            {
+               ATLASSERT(0); // above should be only options
+            }
+         }
+      }
 
       newGirderData.m_strGirderName = dlg.m_strGirderName;
 

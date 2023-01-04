@@ -561,26 +561,29 @@ Float64 CEditHaunchByHaunchDlg::GetValueFromGrid(CString cellValue,CDataExchange
    {
       value = WBFL::Units::ConvertToSysUnits(value,m_pUnit->UnitOfMeasure);
 
+      Float64 minHaunch = GetBridgeDesc()->GetMinimumAllowableHaunchDepth(GetHaunchInputDepthType());
+
+      CString ErrMsg;
       if (includeSlab)
       {
-         if (value+TOLERANCE < m_DeckThickness)
-         {
-            AfxMessageBox(_T("Values must be greater than or equal to Depth of Deck."),MB_ICONEXCLAMATION);
-            pGrid->SetCurrentCell(row,col,GX_SCROLLINVIEW | GX_DISPLAYEDITWND);
-            pDX->Fail();
-         }
-
-         // We store haunch depth for this case, not slab+haunch
-         value -= m_DeckThickness;
+         ErrMsg = _T("Haunch values must be greater than or equal to Depth of Deck + Fillet.");
       }
       else
       {
-         if (value < 0)
-         {
-            AfxMessageBox(_T("Values must be a positive number"),MB_ICONEXCLAMATION);
-            pGrid->SetCurrentCell(row,col,GX_SCROLLINVIEW | GX_DISPLAYEDITWND);
-            pDX->Fail();
-         }
+         ErrMsg = _T("Haunch values must be greater than the Fillet.");
+      }
+
+      if (value + TOLERANCE < minHaunch)
+      {
+         AfxMessageBox(ErrMsg,MB_ICONEXCLAMATION);
+         pGrid->SetCurrentCell(row,col,GX_SCROLLINVIEW | GX_DISPLAYEDITWND);
+         pDX->Fail();
+      }
+
+      // We store haunch depth for this case, not slab+haunch
+      if (includeSlab)
+      {
+         value -= m_DeckThickness;
       }
    }
 

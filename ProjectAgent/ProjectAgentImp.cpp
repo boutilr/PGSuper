@@ -7347,6 +7347,16 @@ void CProjectAgentImp::SetWearingSurfaceType(pgsTypes::WearingSurfaceType wearin
    }
 }
 
+void CProjectAgentImp::SetHaunchInputDepthType(pgsTypes::HaunchInputDepthType type)
+{
+   m_BridgeDescription.SetHaunchInputDepthType(type);
+}
+
+pgsTypes::HaunchInputDepthType CProjectAgentImp::GetHaunchInputDepthType() const
+{
+   return m_BridgeDescription.GetHaunchInputDepthType();
+}
+
 void CProjectAgentImp::SetSlabOffsetType(pgsTypes::SlabOffsetType offsetType)
 {
    if ( m_BridgeDescription.GetSlabOffsetType() != pgsTypes::sotSegment || m_BridgeDescription.GetSlabOffsetType() != offsetType )
@@ -7497,6 +7507,176 @@ Float64 CProjectAgentImp::GetAssumedExcessCamber( SpanIndexType spanIdx, GirderI
 {
    const CSpanData2* pSpan = m_BridgeDescription.GetSpan(spanIdx);
    return pSpan->GetAssumedExcessCamber(gdrIdx);
+}
+
+void CProjectAgentImp::SetHaunchInputLocationType(pgsTypes::HaunchInputLocationType type)
+{
+   if (m_BridgeDescription.GetHaunchInputLocationType() != type)
+   {
+      m_BridgeDescription.SetHaunchInputLocationType(type);
+      Fire_BridgeChanged();
+   }
+}
+
+pgsTypes::HaunchInputLocationType CProjectAgentImp::GetHaunchInputLocationType() const
+{
+   return m_BridgeDescription.GetHaunchInputLocationType();
+}
+
+void CProjectAgentImp::SetHaunchLayoutType(pgsTypes::HaunchLayoutType type)
+{
+   if (m_BridgeDescription.GetHaunchLayoutType() != type)
+   {
+      m_BridgeDescription.SetHaunchLayoutType(type);
+      Fire_BridgeChanged();
+   }
+}
+
+pgsTypes::HaunchLayoutType CProjectAgentImp::GetHaunchLayoutType() const
+{
+   return m_BridgeDescription.GetHaunchLayoutType();
+}
+
+void CProjectAgentImp::SetHaunchInputDistributionType(pgsTypes::HaunchInputDistributionType type)
+{
+   if (m_BridgeDescription.GetHaunchInputDistributionType() != type)
+   {
+      m_BridgeDescription.SetHaunchInputDistributionType(type);
+      Fire_BridgeChanged();
+   }
+}
+
+pgsTypes::HaunchInputDistributionType CProjectAgentImp::GetHaunchInputDistributionType() const
+{
+   return m_BridgeDescription.GetHaunchInputDistributionType();
+}
+
+void CProjectAgentImp::SetDirectHaunchDepths4Bridge(const std::vector<Float64>& haunchDepths)
+{
+   pgsTypes::HaunchInputDepthType haunchInputDepthType = m_BridgeDescription.GetHaunchInputDepthType();
+   pgsTypes::HaunchInputLocationType haunchInputLocationType = m_BridgeDescription.GetHaunchInputLocationType();
+   pgsTypes::HaunchInputDistributionType haunchInputDistributionType = m_BridgeDescription.GetHaunchInputDistributionType();
+   if (pgsTypes::hidACamber==haunchInputDepthType || pgsTypes::hilSame4Bridge!=haunchInputLocationType || haunchDepths.size()!=haunchInputDistributionType)
+   {
+      ATLASSERT(0); // Setting(s) are wrong above. Do nothing
+   }
+   else
+   {
+      m_BridgeDescription.SetDirectHaunchDepths(haunchDepths);
+      Fire_BridgeChanged();
+   }
+
+}
+
+void CProjectAgentImp::SetDirectHaunchDepthsPerSpan(SpanIndexType spanIdx,const std::vector<Float64>& haunchDepths)
+{
+   pgsTypes::HaunchInputDepthType haunchInputDepthType = m_BridgeDescription.GetHaunchInputDepthType();
+   pgsTypes::HaunchInputLocationType haunchInputLocationType = m_BridgeDescription.GetHaunchInputLocationType();
+   pgsTypes::HaunchLayoutType haunchLayoutType = m_BridgeDescription.GetHaunchLayoutType();
+   pgsTypes::HaunchInputDistributionType haunchInputDistributionType = m_BridgeDescription.GetHaunchInputDistributionType();
+   if (pgsTypes::hidACamber==haunchInputDepthType || pgsTypes::hilSame4AllGirders!=haunchInputLocationType || haunchLayoutType!=pgsTypes::hltAlongSpans || haunchDepths.size()!=haunchInputDistributionType )
+   {
+      ATLASSERT(0); // setting(s) are wrong above. Do nothing
+   }
+   else
+   {
+      CSpanData2* pSpan = m_BridgeDescription.GetSpan(spanIdx);
+      pSpan->SetDirectHaunchDepths(haunchDepths);
+      Fire_BridgeChanged();
+   }
+}
+
+void CProjectAgentImp::SetDirectHaunchDepthsPerSpan(SpanIndexType spanIdx,GirderIndexType gdrIdx,const std::vector<Float64>& haunchDepths)
+{
+   pgsTypes::HaunchInputDepthType haunchInputDepthType = m_BridgeDescription.GetHaunchInputDepthType();
+   pgsTypes::HaunchInputLocationType haunchInputLocationType = m_BridgeDescription.GetHaunchInputLocationType();
+   pgsTypes::HaunchLayoutType haunchLayoutType = m_BridgeDescription.GetHaunchLayoutType();
+   pgsTypes::HaunchInputDistributionType haunchInputDistributionType = m_BridgeDescription.GetHaunchInputDistributionType();
+   if (pgsTypes::hidACamber==haunchInputDepthType || pgsTypes::hilPerEach!=haunchInputLocationType || haunchLayoutType!=pgsTypes::hltAlongSpans || haunchDepths.size()!=haunchInputDistributionType)
+   {
+      ATLASSERT(0); // setting(s) are wrong above. Do nothing
+   }
+   else
+   {
+      CSpanData2* pSpan = m_BridgeDescription.GetSpan(spanIdx);
+      pSpan->SetDirectHaunchDepths(gdrIdx, haunchDepths);
+      Fire_BridgeChanged();
+   }
+}
+
+void CProjectAgentImp::SetDirectHaunchDepthsPerSegment(GroupIndexType group,SegmentIndexType segmentIdx,const std::vector<Float64>& haunchDepths)
+{
+   pgsTypes::HaunchInputDepthType haunchInputDepthType = m_BridgeDescription.GetHaunchInputDepthType();
+   pgsTypes::HaunchInputLocationType haunchInputLocationType = m_BridgeDescription.GetHaunchInputLocationType();
+   pgsTypes::HaunchLayoutType haunchLayoutType = m_BridgeDescription.GetHaunchLayoutType();
+   pgsTypes::HaunchInputDistributionType haunchInputDistributionType = m_BridgeDescription.GetHaunchInputDistributionType();
+   if (pgsTypes::hidACamber==haunchInputDepthType || pgsTypes::hilPerEach!=haunchInputLocationType || haunchLayoutType!=pgsTypes::hltAlongSegments || haunchDepths.size()!=haunchInputDistributionType)
+   {
+      ATLASSERT(0); // setting(s) are wrong above. Do nothing
+   }
+   else
+   {
+      CGirderGroupData* pGroup = m_BridgeDescription.GetGirderGroup(group);
+      GirderIndexType nGdrs = pGroup->GetGirderCount();
+      for (GirderIndexType iGdr = 0; iGdr < nGdrs; iGdr++)
+      {
+         pGroup->GetGirder(iGdr)->GetSegment(segmentIdx)->SetDirectHaunchDepths(haunchDepths);
+         Fire_BridgeChanged();
+      }
+   }
+}
+
+void CProjectAgentImp::SetDirectHaunchDepthsPerSegment(GroupIndexType group,GirderIndexType gdrIdx,SegmentIndexType segmentIdx,const std::vector<Float64>& haunchDepths)
+{
+   pgsTypes::HaunchInputDepthType haunchInputDepthType = m_BridgeDescription.GetHaunchInputDepthType();
+   pgsTypes::HaunchInputLocationType haunchInputLocationType = m_BridgeDescription.GetHaunchInputLocationType();
+   pgsTypes::HaunchLayoutType haunchLayoutType = m_BridgeDescription.GetHaunchLayoutType();
+   pgsTypes::HaunchInputDistributionType haunchInputDistributionType = m_BridgeDescription.GetHaunchInputDistributionType();
+   if (pgsTypes::hidACamber==haunchInputDepthType || pgsTypes::hilPerEach!=haunchInputLocationType || haunchLayoutType!=pgsTypes::hltAlongSegments || haunchDepths.size()!=haunchInputDistributionType)
+   {
+      ATLASSERT(0); // setting(s) are wrong above. Do nothing
+   }
+   else
+   {
+      CGirderGroupData* pGroup = m_BridgeDescription.GetGirderGroup(group);
+      pGroup->GetGirder(gdrIdx)->GetSegment(segmentIdx)->SetDirectHaunchDepths(haunchDepths);
+      Fire_BridgeChanged();
+   }
+}
+
+std::vector<Float64> CProjectAgentImp::GetDirectHaunchDepthsPerSpan(SpanIndexType spanIdx,GirderIndexType gdrIdx)
+{
+   pgsTypes::HaunchInputDepthType haunchInputDepthType = m_BridgeDescription.GetHaunchInputDepthType();
+   pgsTypes::HaunchLayoutType haunchLayoutType = m_BridgeDescription.GetHaunchLayoutType();
+   if (pgsTypes::hidACamber == haunchInputDepthType || haunchLayoutType != pgsTypes::hltAlongSpans)
+   {
+      ATLASSERT(0); // setting(s) are wrong above. Do nothing
+      pgsTypes::HaunchInputDistributionType haunchInputDistributionType = m_BridgeDescription.GetHaunchInputDistributionType();
+      return std::vector<Float64>(haunchInputDistributionType,0.0);
+   }
+   else
+   {
+      CSpanData2* pSpan = m_BridgeDescription.GetSpan(spanIdx);
+      return pSpan->GetDirectHaunchDepths(gdrIdx);
+   }
+}
+
+std::vector<Float64> CProjectAgentImp::GetDirectHaunchDepthsPerSegment(GroupIndexType group,GirderIndexType gdrIdx,SegmentIndexType segmentIdx)
+{
+   pgsTypes::HaunchInputDepthType haunchInputDepthType = m_BridgeDescription.GetHaunchInputDepthType();
+   pgsTypes::HaunchInputLocationType haunchInputLocationType = m_BridgeDescription.GetHaunchInputLocationType();
+   pgsTypes::HaunchLayoutType haunchLayoutType = m_BridgeDescription.GetHaunchLayoutType();
+   if (pgsTypes::hidACamber == haunchInputDepthType || haunchLayoutType != pgsTypes::hltAlongSegments)
+   {
+      ATLASSERT(0); // setting(s) are wrong above. Do nothing
+      pgsTypes::HaunchInputDistributionType haunchInputDistributionType = m_BridgeDescription.GetHaunchInputDistributionType();
+      return std::vector<Float64>(haunchInputDistributionType,0.0);
+   }
+   else
+   {
+      CGirderGroupData* pGroup = m_BridgeDescription.GetGirderGroup(group);
+      return pGroup->GetGirder(gdrIdx)->GetSegment(segmentIdx)->GetDirectHaunchDepths();
+   }
 }
 
 std::vector<pgsTypes::BoundaryConditionType> CProjectAgentImp::GetBoundaryConditionTypes(PierIndexType pierIdx) const

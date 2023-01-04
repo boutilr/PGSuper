@@ -157,7 +157,7 @@ public:
    // Data for multiple fillets was read and dealt with (version 3.1 of PGSuper had this)
    bool WasVersion3_1FilletRead() const;
 
-   //// Direct input of Haunch depths /// - This method differe from PGSuper's older method using "A" dimension and assumed excess camber
+   //// Direct input of Haunch depths (newer) /// - This method differs from PGSuper's older method using "A" dimension and assumed excess camber
    void SetHaunchInputLocationType(pgsTypes::HaunchInputLocationType type);
    pgsTypes::HaunchInputLocationType GetHaunchInputLocationType() const;
 
@@ -171,6 +171,9 @@ public:
    // Size of vector must match HaunchInputDistributionType enum val.
    void SetDirectHaunchDepths(std::vector<Float64> depths);
    std::vector<Float64> GetDirectHaunchDepths() const;
+
+   // Get minimum allowable value for direct haunch depth input only. This accounts for deck thickness and fillet depending on HaunchInputDepthType
+   Float64 GetMinimumAllowableHaunchDepth(pgsTypes::HaunchInputDepthType inputType) const;
 
    // =================================================================================
    // Spans and Girder Groups

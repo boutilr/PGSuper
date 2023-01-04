@@ -317,24 +317,31 @@ void CBridgeDescDeckDetailsPage::DoDataExchange(CDataExchange* pDX)
          // A single haunch value is input for the entire bridge
          Float64 haunchVal;
          DDX_UnitValueAndTag(pDX,IDC_SLAB_OFFSET,IDC_SLAB_OFFSET_UNIT,haunchVal,pDisplayUnits->GetComponentDimUnit());
-         DDV_UnitValueZeroOrMore(pDX,IDC_SLAB_OFFSET,haunchVal,pDisplayUnits->GetComponentDimUnit());
 
-         if (pParent->m_BridgeDesc.GetHaunchInputDepthType() == pgsTypes::hidHaunchPlusSlabDirectly)
+         pgsTypes::HaunchInputDepthType inputDepthType = pParent->m_BridgeDesc.GetHaunchInputDepthType();
+
+         Float64 minHaunch = pParent->m_BridgeDesc.GetMinimumAllowableHaunchDepth(inputDepthType);
+
+         if (inputDepthType == pgsTypes::hidHaunchPlusSlabDirectly)
          {
-            // haunch + slab value must be greater than deck depth
             Float64 Tdeck;
             if (pParent->m_BridgeDesc.GetDeckDescription()->GetDeckType() == pgsTypes::sdtCompositeSIP) // SIP
             {
                Tdeck = pParent->m_BridgeDesc.GetDeckDescription()->GrossDepth + pParent->m_BridgeDesc.GetDeckDescription()->PanelDepth;
-               DDV_UnitValueLimitOrMore(pDX,IDC_SLAB_OFFSET, haunchVal, Tdeck ,pDisplayUnits->GetComponentDimUnit(),_T("Please enter a haunch+slab depth that is greater than the slab depth of %f %s"));
             }
             else // all others
             {
                Tdeck = pParent->m_BridgeDesc.GetDeckDescription()->GrossDepth;
-               DDV_UnitValueLimitOrMore(pDX,IDC_SLAB_OFFSET, haunchVal, Tdeck, pDisplayUnits->GetComponentDimUnit(),_T("Please enter a haunch+slab depth that is greater than the slab depth of %f %s"));
             }
 
+            // haunch + slab value must be greater than deck depth
+            DDV_UnitValueLimitOrMore(pDX,IDC_SLAB_OFFSET, haunchVal,minHaunch,pDisplayUnits->GetComponentDimUnit(),_T("Please enter a haunch+slab depth that is greater than the slab depth + fillet of %f %s"));
+
             haunchVal -= Tdeck; // Value stored in bridgedesc is always haunch depth only
+         }
+         else
+         {
+            DDV_UnitValueLimitOrMore(pDX,IDC_SLAB_OFFSET,haunchVal,minHaunch,pDisplayUnits->GetComponentDimUnit(),_T("Please enter a haunch depth that is greater than the fillet depth of %f %s"));
          }
 
          std::vector<Float64> depths(1,haunchVal);

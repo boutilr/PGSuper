@@ -1299,6 +1299,33 @@ std::vector<Float64> CBridgeDescription2::GetDirectHaunchDepths() const
    return m_HaunchDepths;
 }
 
+Float64 CBridgeDescription2::GetMinimumAllowableHaunchDepth(pgsTypes::HaunchInputDepthType inputType) const
+{
+   // This function is for checking haunch input
+   ATLASSERT(inputType == pgsTypes::hidHaunchDirectly || inputType == pgsTypes::hidHaunchPlusSlabDirectly);
+
+   Float64 fillet = GetFillet();
+   if (inputType == pgsTypes::hidHaunchDirectly)
+   {
+      return fillet;
+   }
+   else
+   {
+      const CDeckDescription2* pDeck = GetDeckDescription();
+      Float64 Tdeck;
+      if (pDeck->GetDeckType() == pgsTypes::sdtCompositeSIP)
+      {
+         Tdeck = pDeck->GrossDepth + pDeck->PanelDepth;
+      }
+      else
+      {
+         Tdeck = pDeck->GrossDepth;
+      }
+
+      return fillet + Tdeck;
+   }
+}
+
 void CBridgeDescription2::CreateFirstSpan(const CPierData2* pFirstPier,const CSpanData2* pFirstSpan,const CPierData2* pNextPier,EventIndexType pierErectionEventIdx)
 {
    _ASSERT( 0 == m_Piers.size() && 0 == m_Spans.size() ); // this call should only be made once
@@ -3968,20 +3995,8 @@ void CBridgeDescription2::CopyHaunchSettings(const CBridgeDescription2& rOther)
             {
                const CSplicedGirderData* pOtherGirder = pOtherGroup->GetGirder(iGirder);
                CSplicedGirderData* pThisGirder = pThisGroup->GetGirder(iGirder);
-               SegmentIndexType segmentCnt = pOtherGirder->GetSegmentCount();
-               if (segmentCnt != pThisGirder->GetSegmentCount())
-               {
-                  ATLASSERT(0);
-                  return;
-               }
-               else
-               {
-                  for (SegmentIndexType iSegment = 0; iSegment < segmentCnt; iSegment++)
-                  {
-                     std::vector<Float64> haunches = pOtherGirder->GetDirectHaunchDepths(iSegment,true);
-                     pThisGirder->SetDirectHaunchDepths(iSegment,haunches);
-                  }
-               }
+
+               pThisGirder->CopyHaunchData(*pOtherGirder);
             }
          }
       }

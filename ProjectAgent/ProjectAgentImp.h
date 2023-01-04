@@ -274,6 +274,8 @@ public:
    virtual void SetMeasurementLocation(pgsTypes::MeasurementLocation ml) override;
    virtual pgsTypes::MeasurementLocation GetMeasurementLocation() const override;
    virtual void SetWearingSurfaceType(pgsTypes::WearingSurfaceType wearingSurfaceType) override;
+   virtual void SetHaunchInputDepthType(pgsTypes::HaunchInputDepthType type) override;
+   virtual pgsTypes::HaunchInputDepthType GetHaunchInputDepthType() const override;
    virtual void SetSlabOffsetType(pgsTypes::SlabOffsetType offsetType) override;
    virtual void SetSlabOffset(Float64 slabOffset) override;
    virtual pgsTypes::SlabOffsetType GetSlabOffsetType() const override;
@@ -293,6 +295,19 @@ public:
    virtual void SetAssumedExcessCamber(SpanIndexType spanIdx, Float64 assumedExcessCamber) override;
    virtual void SetAssumedExcessCamber( SpanIndexType spanIdx, GirderIndexType gdrIdx, Float64 assumedExcessCamber) override;
    virtual Float64 GetAssumedExcessCamber( SpanIndexType spanIdx, GirderIndexType gdrIdx) const override;
+   virtual void SetHaunchInputLocationType(pgsTypes::HaunchInputLocationType type) override;
+   virtual pgsTypes::HaunchInputLocationType GetHaunchInputLocationType() const override;
+   virtual void SetHaunchLayoutType(pgsTypes::HaunchLayoutType type) override;
+   virtual pgsTypes::HaunchLayoutType GetHaunchLayoutType() const override;
+   virtual void SetHaunchInputDistributionType(pgsTypes::HaunchInputDistributionType type) override;
+   virtual pgsTypes::HaunchInputDistributionType GetHaunchInputDistributionType() const override;
+   virtual void SetDirectHaunchDepths4Bridge(const std::vector<Float64>& haunchDepths) override;
+   virtual void SetDirectHaunchDepthsPerSpan(SpanIndexType spanIdx,const std::vector<Float64>& haunchDepths) override;
+   virtual void SetDirectHaunchDepthsPerSpan(SpanIndexType spanIdx,GirderIndexType gdrIdx,const std::vector<Float64>& haunchDepths) override;
+   virtual void SetDirectHaunchDepthsPerSegment(GroupIndexType group,SegmentIndexType SegmentIdx,const std::vector<Float64>& haunchDepths) override;
+   virtual void SetDirectHaunchDepthsPerSegment(GroupIndexType group,GirderIndexType gdrIdx,SegmentIndexType SegmentIdx,const std::vector<Float64>& haunchDepths) override;
+   virtual std::vector<Float64> GetDirectHaunchDepthsPerSpan(SpanIndexType spanIdx,GirderIndexType gdrIdx) override;
+   virtual std::vector<Float64> GetDirectHaunchDepthsPerSegment(GroupIndexType group,GirderIndexType gdrIdx,SegmentIndexType SegmentIdx) override;
    virtual std::vector<pgsTypes::BoundaryConditionType> GetBoundaryConditionTypes(PierIndexType pierIdx) const override;
    virtual std::vector<pgsTypes::PierSegmentConnectionType> GetPierSegmentConnectionTypes(PierIndexType pierIdx) const override;
    virtual const CTimelineManager* GetTimelineManager() const override;
