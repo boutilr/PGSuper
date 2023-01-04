@@ -652,16 +652,7 @@ void CTemporarySupportLayoutPage::UpdateHaunchAndCamberData(CDataExchange* pDX)
             Tdeck = pDeck->GrossDepth;
          }
 
-         Float64 fillet = pParent->m_BridgeDesc.GetFillet();
-         Float64 minHaunch;
-         if (inputType == pgsTypes::hidHaunchDirectly)
-         {
-            minHaunch = fillet;
-         }
-         else
-         {
-            minHaunch = fillet + Tdeck;
-         }
+         Float64 minHaunch = pParent->m_BridgeDesc.GetMinimumAllowableHaunchDepth(inputType);
 
          CString strMinValError;
          if (inputType == pgsTypes::hidHaunchPlusSlabDirectly)

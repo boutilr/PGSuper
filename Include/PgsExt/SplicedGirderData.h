@@ -150,17 +150,16 @@ public:
    // and  HaunchLayoutType==hltAlongSegments, and HaunchInputLocationType==hilSame4AllGirders or hilPerEach
    // Note that data from girder 0 is used for all segments when hilSame4AllGirders
    // =================================================================================
-   // Set the Haunch at a girder (same for all segments). i.e.; hilSame4AllGirders
+   // Set the Haunch at a girder (same for all segments).
    void SetDirectHaunchDepths(const std::vector<Float64>& haunchDepth);
 
-   // Set/Get the Haunch Depth at a girder for a specific segment. i.e.; hilPerEach
+   // Set/Get the Haunch Depth at a girder for a specific segment. i.e.; 
    // Use when hilPerEach
    void SetDirectHaunchDepths(SegmentIndexType segIdx, const std::vector<Float64>& HaunchDepth);
    std::vector<Float64> GetDirectHaunchDepths(SegmentIndexType segIdx,bool bGetRawValue = false) const;
 
-   // Copies segment-by-segment data from one segment to another
-   void CopyHaunchDepth(SegmentIndexType sourceSegIdx,SegmentIndexType targetSegIdx);
-
+   // Haunch input data is tricky to copy - use a function to do this.
+   void CopyHaunchData(const CSplicedGirderData& rOther);
 
    CGirderKey GetGirderKey() const;
 
@@ -188,9 +187,6 @@ protected:
    void DeleteClosures();
    void Resize(SegmentIndexType nSegments);
 
-   // Haunch input data is tricky to copy - use a function to do this.
-   void CopyHaunchData(const CSplicedGirderData& rOther);
-
    // Call this method when a segment is being removed from a girder
    // It removes references to this segment from the timeline manager
    void RemoveSegmentFromTimelineManager(const CPrecastSegmentData* pSegment);
@@ -207,10 +203,6 @@ protected:
    void AddClosureToTimelineManager(const CClosureJointData* pClosure,EventIndexType castClosureEventIdx);
 
    void RemovePTFromTimelineManager();
-
-
-   // make sure Haunch Depth data stays intact from segment count changes
-   void ProtectHaunchDepth() const;
 
    // Initializes the girder by creating a single segment. 
    // Called by CGirderGroupData when new girders are created. 
@@ -236,8 +228,6 @@ protected:
    
    std::vector<CPrecastSegmentData*> m_Segments; // owned by this object
    std::vector<CClosureJointData*> m_Closures;    // owned by this object
-
-   mutable std::vector< std::vector<Float64>> m_vHaunchDepths; // vector of Haunch Depths for each segment in girder.
 
    std::_tstring m_GirderType;
    const GirderLibraryEntry* m_pGirderLibraryEntry;

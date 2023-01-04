@@ -1708,16 +1708,7 @@ void CGirderSegmentGeneralPage::UpdateHaunchAndCamberData(CDataExchange* pDX)
          Tdeck = pDeck->GrossDepth;
       }
 
-      Float64 fillet = pBridgeDesc->GetFillet();
-      Float64 minHaunch;
-      if (inputType == pgsTypes::hidHaunchDirectly)
-      {
-         minHaunch = fillet;
-      }
-      else
-      {
-         minHaunch = fillet + Tdeck;
-      }
+      Float64 minHaunch = pBridgeDesc->GetMinimumAllowableHaunchDepth(inputType);
 
       CString strMinValError;
       if (inputType == pgsTypes::hidHaunchPlusSlabDirectly)

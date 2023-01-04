@@ -194,7 +194,7 @@ void CSpanLayoutPage::UpdateHaunchAndCamberControls()
          EnableHaunchAndCamberControls(TRUE,TRUE,bCanAssumedExcessCamberInputBeEnabled);
       }
 
-      // not all piers have slab offsets... hide controls if piers don't have it
+      // Not all span ends have slab offsets... hide controls if piers don't have it
       const CPierData2* pPrevPier = pParent->GetBridgeDescription()->GetPier(m_PrevPierIdx);
       const CPierData2* pNextPier = pParent->GetBridgeDescription()->GetPier(m_NextPierIdx);
       bool bHasStartSlabOffset = pPrevPier->HasSlabOffset();
@@ -416,16 +416,7 @@ void CSpanLayoutPage::UpdateHaunchAndCamberData(CDataExchange* pDX)
             Tdeck = pDeck->GrossDepth;
          }
 
-         Float64 fillet = pParent->m_BridgeDesc.GetFillet();
-         Float64 minHaunch;
-         if (inputType == pgsTypes::hidHaunchDirectly)
-         {
-            minHaunch = fillet;
-         }
-         else
-         {
-            minHaunch = fillet + Tdeck;
-         }
+         Float64 minHaunch = pParent->m_BridgeDesc.GetMinimumAllowableHaunchDepth(inputType);;
 
          CString strMinValError;
          if (inputType == pgsTypes::hidHaunchPlusSlabDirectly)
