@@ -216,7 +216,9 @@ void CFinishedElevationGraphController::OnGraphTypeChanged()
    else
    {
       pButPgl->ShowWindow(SW_SHOW);
+      pButPgl->SetCheck(TRUE);
       pBoxLoc->EnableWindow(TRUE);
+      OnShowPGL();
    }
 
    ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->SetGraphType(gt);
