@@ -600,7 +600,7 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
 
                // Required haunch must clear fillet at edges and make roadway at CL. Demand is how much we must add to clHaunch to meet requirements
                Float64 edgeDemand = max(fillet - lftHaunch,fillet - rgtHaunch);
-               Float64 clDemand = design_elevation - finished_elevation;
+               Float64 clDemand = finished_elevation - design_elevation;
 
                Float64 demand;
                if (edgeDemand > 0.0)
