@@ -248,8 +248,6 @@ void CDeckElevationChapterBuilder::BuildNoDeckElevationContent(rptChapter * pCha
    pSpec->GetBroker(&pBroker);
    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
-   rptChapter* pChapter = CPGSuperChapterBuilder::Build(pRptSpec, level);
-
    auto pSGRptSpec = std::dynamic_pointer_cast<const CGirderReportSpecification>(pRptSpec);
 
    CGirderKey girderKey;
