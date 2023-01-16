@@ -306,7 +306,7 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
             for (const auto& poi : vPoi)
             {
                Float64 lftElev,clElev,rgtElev;
-               pDeformedGirderGeometry->GetFinishedElevation(poi,nullptr,true/*bIncludeOverlay*/,&lftElev,&clElev,&rgtElev);
+               pDeformedGirderGeometry->GetFinishedElevation(poi,nullptr,&lftElev,&clElev,&rgtElev);
 
                if (m_GraphSide == gsCenterLine)
                {
@@ -555,7 +555,7 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
             for (const auto& poi : vPoi)
             {
                Float64 lftHaunch,clHaunch,rgtHaunch;
-               Float64 finished_elevation_cl = pDeformedGirderGeometry->GetFinishedElevation(poi,intervalIdx,true /*include overlay depth*/,&lftHaunch,&clHaunch,&rgtHaunch);
+               Float64 finished_elevation_cl = pDeformedGirderGeometry->GetFinishedElevation(poi,intervalIdx,&lftHaunch,&clHaunch,&rgtHaunch);
 
                Float64 tgLeft,tgCL,tgRight;
                pDeformedGirderGeometry->GetTopGirderElevationEx(poi,intervalIdx,nullptr,&tgLeft,&tgCL,&tgRight);
@@ -581,6 +581,8 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
             {
                if (m_bShowFinishedDeck) // top
                {
+                  Float64 overlayDepth = pBridge->GetOverlayDepth(intervalIdx);
+
                   COLORREF color = graphColor.GetColor(intervalIdx);
 
                   CString strLabel;
@@ -600,7 +602,7 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
                      Float64 haunchDepth = *hdIter;
                      const auto& poi = *poiIter;
                      Float64 deckDepth = pBridge->GetGrossSlabDepth(poi);
-                     Float64 elev = tgelev + haunchDepth + deckDepth;
+                     Float64 elev = tgelev + haunchDepth + deckDepth + overlayDepth;
                      if (gtElevationDifferential == m_GraphType)
                      {
                         Float64 pglElev = *pglIter++;

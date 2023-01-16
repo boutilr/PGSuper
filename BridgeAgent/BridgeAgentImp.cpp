@@ -58,7 +58,7 @@
 
 #include <MathEx.h>
 #include <Math\MathUtils.h>
-#include <Math\PwLinearFunction2dUsingPoints.h>
+#include <Math\PiecewiseFunction.h>
 #include <System\Flags.h>
 #include <Materials/Materials.h>
 
@@ -3361,7 +3361,7 @@ void CBridgeAgentImp::GetHaunchDepth4BySpanInput(const CPrecastSegmentData* pSeg
    else
    {
       // Use linear interpolation of piecewise linear span locations to determine haunch values across segments
-      mathPwLinearFunction2dUsingPoints pwLinearFunction;
+      WBFL::Math::PiecewiseFunction pwLinearFunction;
       Float64 segmentLength = GetSegmentLength(segmentKey);
 
       // Build layout along segments. Use girder line coord's as basis
@@ -3378,7 +3378,7 @@ void CBridgeAgentImp::GetHaunchDepth4BySpanInput(const CPrecastSegmentData* pSeg
          std::size_t currLoc = 0;
          for (auto haunch : spanHaunches)
          {
-            Float64 Xspan = spanLength * (Float64)currLoc / (Float64)numHaunches;
+            Float64 Xspan = spanLength * (Float64)currLoc / (Float64)(numHaunches-1);
             pgsPointOfInterest spanPoi = ConvertSpanPointToPoi(spanKey,Xspan);
             Float64 Xgirderline = ConvertPoiToGirderlineCoordinate(spanPoi);
             pwLinearFunction.AddPoint(Xgirderline,haunch);
@@ -10814,10 +10814,17 @@ Float64 CBridgeAgentImp::GetOverlayWeight() const
    return weight;
 }
 
-Float64 CBridgeAgentImp::GetOverlayDepth() const
+Float64 CBridgeAgentImp::GetOverlayDepth(IntervalIndexType interval) const
 {
-   Float64 depth;
-   m_Bridge->get_WearingSurfaceDepth(&depth);
+   Float64 depth(0.0);
+   if (HasOverlay() && !IsFutureOverlay())
+   {
+      if (interval >= this->GetOverlayInterval())
+      {
+         m_Bridge->get_WearingSurfaceDepth(&depth);
+      }
+   }
+
    return depth;
 }
 
@@ -12475,11 +12482,10 @@ std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails
 
    std::vector<BearingElevationDetails> vElevDetails;
 
-   Float64 overlayDepth = 0;
-   if ( HasOverlay() && !IsFutureOverlay() )
-   {
-      overlayDepth = GetOverlayDepth();
-   }
+   // Bearing elevation values are reported at the GCE
+   IntervalIndexType gceInterval = GetGeometryControlInterval();
+
+   Float64 overlayDepth = GetOverlayDepth(gceInterval);
 
    // Get pier direction
    CComPtr<IDirection> pierDirection;
@@ -24679,11 +24685,9 @@ std::vector<TEMPORARYSUPPORTELEVATIONDETAILS> CBridgeAgentImp::GetElevationDetai
    // Elevation = Finished Grade Elevation - Overlay - Haunch - Hgirder
    // Haunch = Bottom Slab Elevation - Top Girder Elevation
 
-   Float64 overlay_depth = 0;
-   if (HasOverlay() && !IsFutureOverlay())
-   {
-      overlay_depth = GetOverlayDepth();
-   }
+   // Bearing elevation values are reported at the GCE
+   IntervalIndexType gceInterval = GetGeometryControlInterval();
+   Float64 overlay_depth = GetOverlayDepth(gceInterval);
 
    const CTemporarySupportData* pTS = pBridgeDesc->GetTemporarySupport(tsIdx);
 
@@ -26129,116 +26133,6 @@ void CBridgeAgentImp::GetTopGirderElevationEx4DirectHaunch(const pgsPointOfInter
    Float64 leftEdge,rightEdge;
    GetTopWidth(poi,&leftEdge,&rightEdge);
 
-   Float64 overlay = 0;
-   if (HasOverlay() && !IsFutureOverlay())
-   {
-      overlay = GetOverlayDepth();
-   }
-
-   // Girder orientation effect
-   Float64 orientation = GetOrientation(segmentKey);
-   Float64 sinor = sin(orientation);
-   Float64 lft_orient_eff = -leftEdge  * sinor;
-   Float64 rgt_orient_eff =  rightEdge * sinor;
-
-   // Get elevation at CL girder
-   *pCenter = GetTopCLGirderElevationEx4DirectHaunch(poi, interval);
-
-   CComPtr<IDirection> segmentNormal;
-   GetSegmentNormal(segmentKey,&segmentNormal);
-   if (pDirection == nullptr || segmentNormal->IsEqual(pDirection) == S_OK)
-   {
-      // cut line is normal to the girder
-      *pLeft = *pCenter + lft_orient_eff;
-      *pRight = *pCenter + lft_orient_eff;
-   }
-   else
-   {
-      // we are measuring to the left/right edges along a skewed cut line
-      // get the angle between the CL Girder and the cut line
-      CComPtr<IDirection> segmentNormal;
-      GetSegmentNormal(segmentKey,&segmentNormal);
-
-      CComPtr<IAngle> skewAngle;
-      pDirection->AngleBetween(segmentNormal,&skewAngle);
-
-      Float64 angle;
-      skewAngle->get_Value(&angle);
-      ATLASSERT(!IsEqual(angle,PI_OVER_2));
-
-      // Get distance to edge points relative to the current poi
-      Float64 x_left = -leftEdge * tan(angle);
-      Float64 x_right = rightEdge * tan(angle);
-
-      // Create temporary pois along the segment and get CL elevations
-      Float64 distFromStart = poi.GetDistFromStart();
-      pgsPointOfInterest lftPoi = poi;
-      lftPoi.SetDistFromStart(distFromStart + x_left);
-
-      Float64 lftCLElevation = GetTopCLGirderElevationEx4DirectHaunch(lftPoi,interval);
-      *pLeft = lftCLElevation + lft_orient_eff;
-
-      pgsPointOfInterest rgtPoi = poi;
-      rgtPoi.SetDistFromStart(distFromStart + x_right);
-
-      Float64 rgtCLElevation = GetTopCLGirderElevationEx4DirectHaunch(rgtPoi,interval);
-      *pRight = rgtCLElevation + rgt_orient_eff;
-   }
-}
-
-Float64 CBridgeAgentImp::GetTopCLGirderElevationEx4DirectHaunch(const pgsPointOfInterest& poi,IntervalIndexType interval) const
-{
-   GET_IFACE(IGirder,pGirder);
-   GET_IFACE(IIntervals,pIntervals);
-   GET_IFACE(ILimitStateForces,pLimitStateForces);
-   GET_IFACE(IProductForces,pProduct);
-
-   // Must first get elevations at time of Geometry Control Event interval
-   IntervalIndexType gceInterval = pIntervals->GetGeometryControlInterval();
-
-   Float64 girderChordElevation = pGirder->GetTopGirderChordElevation(poi); // accounts for temp support elevation adjustments
-
-   Float64 tftCenter = GetTopFlangeThickening(poi);
-
-   // Min and max should be the same since we use Service I and no transient loads
-   pgsTypes::BridgeAnalysisType bat = pProduct->GetBridgeAnalysisType(pgsTypes::Minimize);
-   Float64 gceDeflMin,gceDeflMax;
-   pLimitStateForces->GetDeflection(gceInterval,pgsTypes::ServiceI,poi,bat,true,false,false,true,true,&gceDeflMin,&gceDeflMax);
-
-   Float64 gceDeflElevation = girderChordElevation + tftCenter + gceDeflMin;
-
-   // Use different delta factor based on whether going backward or forward in time
-   Float64 deltafac = interval > gceInterval ? 1.0 : 1.0;
-
-   Float64 deflElevation = gceDeflElevation;
-   if (interval != gceInterval)
-   {
-      // Deflection at our inteval
-      Float64 itvDeflMin,itvDeflMax;
-      pLimitStateForces->GetDeflection(interval,pgsTypes::ServiceI,poi,bat,true,false,false,true,true,&itvDeflMin,&itvDeflMax);
-
-      Float64 deltaDefl = itvDeflMin - gceDeflMin;
-
-      deflElevation += deltaDefl;
-   }
-
-   return deflElevation;
-}
-
-void CBridgeAgentImp::GetTopGirderElevation4ADim(const pgsPointOfInterest & poi,IDirection * pDirection,Float64 * pLeft,Float64 * pCenter,Float64 * pRight) const
-{
-   const CSegmentKey& segmentKey = poi.GetSegmentKey();
-
-   // Distance to left and right edge of the girder, from the cl, at the poi under consideration
-   Float64 leftEdge,rightEdge;
-   GetTopWidth(poi,&leftEdge,&rightEdge);
-
-   Float64 overlay = 0;
-   if (HasOverlay() && !IsFutureOverlay())
-   {
-      overlay = GetOverlayDepth();
-   }
-
    // Girder orientation effect
    Float64 orientation = GetOrientation(segmentKey);
    Float64 sinor = sin(orientation);
@@ -26354,11 +26248,9 @@ void CBridgeAgentImp::GetTopGirderElevation4ADim(const pgsPointOfInterest & poi,
 
    Float64 tft_clbrg = GetTopFlangeThickening(poiCLBrg);
 
-   Float64 overlay = 0;
-   if (HasOverlay() && !IsFutureOverlay() )
-   {
-      overlay = GetOverlayDepth();
-   }
+   IntervalIndexType gceInterval = GetGeometryControlInterval();
+
+   Float64 overlay = GetOverlayDepth(gceInterval);
 
    CComPtr<IDirection> segmentNormal;
    GetSegmentNormal(segmentKey,&segmentNormal);
@@ -26476,18 +26368,21 @@ void CBridgeAgentImp::GetTopGirderElevation4ADim(const pgsPointOfInterest & poi,
    }
 }
 
-void CBridgeAgentImp::GetFinishedElevation(const pgsPointOfInterest& poi, IDirection* pDirection, bool bIncludeOverlay, Float64* pLeft, Float64* pCenter, Float64* pRight) const
+void CBridgeAgentImp::GetFinishedElevation(const pgsPointOfInterest& poi, IDirection* pDirection, Float64* pLeft, Float64* pCenter, Float64* pRight) const
 {
    GET_IFACE(IBridgeDescription,pIBridgeDesc);
    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
-   pgsTypes::SupportedDeckType deckType = pBridgeDesc->GetDeckDescription()->GetDeckType();
+   const CDeckDescription2* pDeck = pBridgeDesc->GetDeckDescription();
+   pgsTypes::SupportedDeckType deckType = pDeck->GetDeckType();
 
    if (pgsTypes::sdtNone == deckType)
    {
       GetTopGirderElevation(poi,pDirection,pLeft,pCenter,pRight);
-      if (bIncludeOverlay && GetWearingSurfaceType() == pgsTypes::wstOverlay)
+
+      IntervalIndexType gceInterval = GetGeometryControlInterval();
+      Float64 overlay = GetOverlayDepth(gceInterval);
+      if (overlay>0.0)
       {
-         Float64 overlay = GetOverlayDepth();
          *pLeft += overlay;
          *pCenter += overlay;
          *pRight += overlay;
@@ -26501,10 +26396,11 @@ void CBridgeAgentImp::GetFinishedElevation(const pgsPointOfInterest& poi, IDirec
    }
 }
 
-Float64 CBridgeAgentImp::GetFinishedElevation(const pgsPointOfInterest& poi,IntervalIndexType interval,bool bIncludeOverlay,Float64* pLftHaunch,Float64* pCtrHaunch,Float64* pRgtHaunch) const
+Float64 CBridgeAgentImp::GetFinishedElevation(const pgsPointOfInterest& poi,IntervalIndexType interval,Float64* pLftHaunch,Float64* pCtrHaunch,Float64* pRgtHaunch) const
 {
    GET_IFACE(IBridgeDescription,pIBridgeDesc);
    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+   const CDeckDescription2* pDeck = pBridgeDesc->GetDeckDescription();
    pgsTypes::HaunchInputDepthType haunchInputDepthType = pBridgeDesc->GetHaunchInputDepthType();
 
    if (pgsTypes::hidHaunchDirectly == haunchInputDepthType || pgsTypes::hidHaunchPlusSlabDirectly == haunchInputDepthType)
@@ -26518,47 +26414,9 @@ Float64 CBridgeAgentImp::GetFinishedElevation(const pgsPointOfInterest& poi,Inte
       // Detailed description in this call will get direct input
       Float64 haunchDepth = GetStructuralHaunchDepth(poi,pgsTypes::hspDetailedDescription);
       Float64 slabDepth = GetGrossSlabDepth(poi);
+      Float64 overlay = GetOverlayDepth(interval);
 
-      ctrGrdElev += haunchDepth + slabDepth;
-
-      if (bIncludeOverlay && GetWearingSurfaceType() == pgsTypes::wstOverlay)
-      {
-         Float64 overlay = GetOverlayDepth();
-         ctrGrdElev += overlay;
-      }
-
-      // Haunch at CL girder is what is input. Outer haunch depths are pliable, and must
-      // follow roadway slope(s) along girder normal
-      *pCtrHaunch = haunchDepth;
-
-      Float64 leftEdge,rightEdge;
-      GetTopWidth(poi,&leftEdge,&rightEdge);
-
-      // Cut line is normal to the girder
-      Float64 station,zs;
-      GetStationAndOffset(poi,&station,&zs);
-
-      // roadway surface elevations above girder locations
-      Float64 YsbLeft = GetElevation(station,zs - leftEdge);
-      Float64 YsbCenter = GetElevation(station,zs);
-      Float64 YsbRight = GetElevation(station,zs + rightEdge);
-
-      Float64 lftSlope = (YsbLeft - YsbCenter) / leftEdge;
-      *pLftHaunch = *pCtrHaunch + leftEdge * lftSlope;
-
-      Float64 rgtSlope = (YsbRight - YsbCenter) / rightEdge;
-      *pRgtHaunch = *pCtrHaunch + rightEdge * rgtSlope;
-
-      return ctrGrdElev;
-   }
-   else
-   {
-      // Function is only valid for direct haunch input
-      ATLASSERT(0);
-      *pLftHaunch = *pCtrHaunch = *pRgtHaunch = Float64_Max;
-      return Float64_Max;
-   }
-}
+      ctrGrdElev += haunchDepth + slabDepth + overlay;
 
       // Haunch at CL girder is what is input. Outer haunch depths are pliable, and must
       // follow roadway slope(s) along girder normal
@@ -30564,7 +30422,7 @@ Float64 CBridgeAgentImp::GetDuration(IntervalIndexType idx) const
    return m_IntervalManager.GetDuration(idx);
 }
 
-LPCTSTR CBridgeAgentImp::GetDescription(IntervalIndexType idx) const
+std::_tstring CBridgeAgentImp::GetDescription(IntervalIndexType idx) const
 {
    VALIDATE(BRIDGE);
 //   return m_IntervalManager.GetDescription(idx);
@@ -30577,7 +30435,7 @@ LPCTSTR CBridgeAgentImp::GetDescription(IntervalIndexType idx) const
    if (i != std::string::npos)
       t.erase(i,s.length());
 
-   return t.c_str();
+   return t;
 }
 
 IntervalIndexType CBridgeAgentImp::GetInterval(EventIndexType eventIdx) const
@@ -36803,13 +36661,13 @@ void CBridgeAgentImp::ValidateGirderTopChordElevationADimInput(const CGirderKey&
       Float64 m = (elevEnd - elevStart) / segLength;
       // y = mx+b
       // x = 0 is at start pier CL Brg. so b = elevStart
-      mathLinFunc2d fnBasic(m, elevStart);
+      WBFL::Math::LinearFunction fnBasic(m, elevStart);
 
       pFunctions->insert(std::make_pair(segmentKey, fnBasic));
    }
 }
 
-void CBridgeAgentImp::ValidateGirderTopChordElevationDirectHaunchInput(const CGirderKey& girderKey,const CBridgeDescription2* pBridgeDesc,std::map<CSegmentKey,mathLinFunc2d>* pFunctions) const
+void CBridgeAgentImp::ValidateGirderTopChordElevationDirectHaunchInput(const CGirderKey& girderKey,const CBridgeDescription2* pBridgeDesc,std::map<CSegmentKey,WBFL::Math::LinearFunction>* pFunctions) const
 {
    VALIDATE(BRIDGE);
 
@@ -36817,6 +36675,10 @@ void CBridgeAgentImp::ValidateGirderTopChordElevationDirectHaunchInput(const CGi
    const CSplicedGirderData* pGirder = pGroup->GetGirder(girderKey.girderIndex);
 
    Float64 deckDepth = GetGrossSlabDepth();
+
+   // overlay is measured at the GCE
+   IntervalIndexType gceInterval = GetGeometryControlInterval();
+   Float64 overlayDepth = GetOverlayDepth(gceInterval);
 
    // Haunch depths come from WBFL
    CComPtr<ISuperstructureMember> ssmbr;
@@ -36884,14 +36746,14 @@ void CBridgeAgentImp::ValidateGirderTopChordElevationDirectHaunchInput(const CGi
       // The function object we are building needs its basis at segment ends, so fix that if not so.
       if (bAtStartBrg || bAtEndBrg)
       {
-         mathLinFunc2d tmpf = GenerateLineFunc2dFromPoints(startLoc,haunchStart,endLoc,haunchEnd);
+         WBFL::Math::LinearFunction tmpf = GenerateLineFunc2dFromPoints(startLoc,haunchStart,endLoc,haunchEnd);
          haunchStart = tmpf.Evaluate(0.0);
          haunchEnd   = tmpf.Evaluate(segLength);
       }
 
-      // this is a function for the basic straight line that connections the top of the segment at the two CL Bearing points
-      Float64 elevStart = startProfileElevation - deckDepth - haunchStart + elev_adj[pgsTypes::metStart];
-      Float64 elevEnd   = endProfileElevation - deckDepth - haunchEnd + elev_adj[pgsTypes::metEnd];
+      // this is a function for the basic straight line that connects the top of the segment at the two CL Bearing points
+      Float64 elevStart = startProfileElevation - deckDepth - overlayDepth - haunchStart + elev_adj[pgsTypes::metStart];
+      Float64 elevEnd   = endProfileElevation - deckDepth - overlayDepth - haunchEnd + elev_adj[pgsTypes::metEnd];
       Float64 m = (elevEnd - elevStart) / segLength;
       // y = mx+b
       // x = 0 is at start pier CL Brg. so b = elevStart

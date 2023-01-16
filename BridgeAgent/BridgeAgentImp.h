@@ -344,7 +344,7 @@ public:
    virtual bool HasOverlay() const override;
    virtual bool IsFutureOverlay() const override;
    virtual Float64 GetOverlayWeight() const override;
-   virtual Float64 GetOverlayDepth() const override;
+   virtual Float64 GetOverlayDepth(IntervalIndexType interval) const override;
    virtual Float64 GetSacrificalDepth() const override;
    virtual Float64 GetFillet() const override;
    virtual Float64 GetAssumedExcessCamber(SpanIndexType spanIdx,GirderIndexType gdr) const override;
@@ -1176,8 +1176,8 @@ public:
    virtual Float64 GetTopGirderElevation(const pgsPointOfInterest& poi,const GDRCONFIG* pConfig = nullptr) const override;
    virtual void GetTopGirderElevation(const pgsPointOfInterest& poi,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const override;
    virtual void GetTopGirderElevationEx(const pgsPointOfInterest& poi,IntervalIndexType interval,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const override;
-   virtual void GetFinishedElevation(const pgsPointOfInterest& poi,IDirection* pDirection,bool bIncludeOverlay,Float64* pLeft,Float64* pCenter,Float64* pRight) const override;
-   virtual Float64 GetFinishedElevation(const pgsPointOfInterest& poi,IntervalIndexType interval,bool bIncludeOverlay,Float64* pLftHaunch,Float64* pCtrHaunch,Float64* pRgtHaunch) const override;
+   virtual void GetFinishedElevation(const pgsPointOfInterest& poi,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const override;
+   virtual Float64 GetFinishedElevation(const pgsPointOfInterest& poi,IntervalIndexType interval,Float64* pLftHaunch,Float64* pCtrHaunch,Float64* pRgtHaunch) const override;
 
 // IGirderTendonGeometry
 public:
@@ -1253,7 +1253,7 @@ public:
    virtual EventIndexType GetEndEvent(IntervalIndexType idx) const override; 
    virtual Float64 GetTime(IntervalIndexType idx,pgsTypes::IntervalTimeType timeType) const override;
    virtual Float64 GetDuration(IntervalIndexType idx) const override;
-   virtual LPCTSTR GetDescription(IntervalIndexType idx) const override;
+   virtual std::_tstring GetDescription(IntervalIndexType idx) const override;
    virtual IntervalIndexType GetInterval(EventIndexType eventIdx) const override;
    virtual IntervalIndexType GetErectPierInterval(PierIndexType pierIdx) const override;
    virtual IntervalIndexType GetFirstStressStrandInterval(const CGirderKey& girderKey) const override;

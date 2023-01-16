@@ -484,7 +484,7 @@ interface IBridge : IUnknown
    virtual bool HasOverlay() const = 0;
    virtual bool IsFutureOverlay() const = 0;
    virtual Float64 GetOverlayWeight() const = 0;
-   virtual Float64 GetOverlayDepth() const = 0;
+   virtual Float64 GetOverlayDepth(IntervalIndexType interval) const = 0; // will return 0.0 if before overlay application interval
    virtual Float64 GetSacrificalDepth() const = 0;
    virtual Float64 GetFillet() const = 0;
    virtual Float64 GetAssumedExcessCamber(SpanIndexType spanIdx,GirderIndexType gdr) const = 0;
@@ -1892,7 +1892,8 @@ interface IDeformedGirderGeometry : public IUnknown
    // is used and the excess camber is computed using the supplied configuration. 
    virtual Float64 GetTopGirderElevation(const pgsPointOfInterest& poi,const GDRCONFIG* pConfig = nullptr) const = 0;
 
-   // Returns the top of girder elevation for the left, center, and right edges of the girder at the specified poi at the time of GCE
+   // Returns the top of girder elevation for the left, center, and right edges of the girder at the specified poi at the time of 
+   // the Geometry Control Event (GCE).
    //  The elevation takes into account slab offsets and excess camber. Direction defines a tranverse line passing through poi. 
    // Left and Right elevations are computed where the transverse line intersects the edges of the girder. 
    // If pDirection is nullptr, the transverse line is taken to be normal to the girder
@@ -1901,17 +1902,17 @@ interface IDeformedGirderGeometry : public IUnknown
    // Function below is only valid for direct haunch input. 
    virtual void GetTopGirderElevationEx(const pgsPointOfInterest& poi,IntervalIndexType interval,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const = 0;
 
-   // Finished elevation for no-deck girders at time of GCE
+   // Finished elevation, ONLY for NO-DECK girders at time of the GCE
    // Returns the finished top of girder elevation for the left, center, and right edges of the girder at the specified poi. The elevation takes into
    // account elevation adjustments and excess camber. Direction defines a tranverse line passing through poi. Left and Right elevations are computed
    // where the transverse line intersects the edges of the girder. If pDirection is nullptr, the transverse line is taken to be normal to the girder.
-   // if bIncludeOverlay is true, the depth of the overlay is included (future overlays are not included), otherwise this method is the same
-   // as GetTopGirderElevation
-   virtual void GetFinishedElevation(const pgsPointOfInterest& poi,IDirection* pDirection,bool bIncludeOverlay,Float64* pLeft,Float64* pCenter,Float64* pRight) const = 0;
+   // The depth of the overlay is included if applied at or before the GCE (future overlays are not included), otherwise this method is the same
+   // as GetTopGirderElevation for no-deck bridges
+   virtual void GetFinishedElevation(const pgsPointOfInterest& poi,IDirection* pDirection,Float64* pLeft,Float64* pCenter,Float64* pRight) const = 0;
 
    // Finished elevation for direct haunch input. Elevation can only be checked at CL girder because this is a hard point where the haunch depth is input. 
    // Haunch is pliable at left & right locations, so we return haunch depth at left/center/right to be checked against fillet dimension.
-   virtual Float64 GetFinishedElevation(const pgsPointOfInterest& poi,IntervalIndexType interval,bool bIncludeOverlay,Float64* pLftHaunch,Float64* pCtrHaunch,Float64* pRgtHaunch) const = 0;
+   virtual Float64 GetFinishedElevation(const pgsPointOfInterest& poi,IntervalIndexType interval,Float64* pLftHaunch,Float64* pCtrHaunch,Float64* pRgtHaunch) const = 0;
 };
 
 /*****************************************************************************

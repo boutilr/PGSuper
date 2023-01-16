@@ -5461,7 +5461,7 @@ void pgsDesigner2::CheckConstructability(const CGirderKey& girderKey,pgsConstruc
                Float64 elev = pAlignment->GetElevation(station,offset);
 
                std::array<Float64,3> finished_elevation;
-               pDeformedGirderGeometry->GetFinishedElevation(poi,nullptr,true /*include overlay depth*/,&finished_elevation[Left],&finished_elevation[Center],&finished_elevation[Right]);
+               pDeformedGirderGeometry->GetFinishedElevation(poi,nullptr,&finished_elevation[Left],&finished_elevation[Center],&finished_elevation[Right]);
 
                Float64 diff = fabs(finished_elevation[Center] - elev);
 
@@ -5523,7 +5523,7 @@ void pgsDesigner2::CheckConstructability(const CGirderKey& girderKey,pgsConstruc
                   Float64 elev = pAlignment->GetElevation(station,offset);
 
                   Float64 lftHaunch,ctrHaunch,rgtHaunch;
-                  Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,interval,true /*include overlay depth*/,&lftHaunch,&ctrHaunch,&rgtHaunch);
+                  Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,interval,&lftHaunch,&ctrHaunch,&rgtHaunch);
 
                   Float64 diff = fabs(finished_elevation - elev);
 

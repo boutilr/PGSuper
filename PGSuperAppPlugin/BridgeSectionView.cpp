@@ -1383,8 +1383,11 @@ void CBridgeSectionView::BuildOverlayDisplayObjects()
       return;
    }
 
+   GET_IFACE2(pBroker,IIntervals,pIntervals);
+   IntervalIndexType geomCtrlInterval = pIntervals->GetGeometryControlInterval();
+
    Float64 overlay_weight = pBridge->GetOverlayWeight();
-   Float64 depth = pBridge->GetOverlayDepth();
+   Float64 depth = pBridge->GetOverlayDepth(geomCtrlInterval);
 
    CComPtr<iDisplayMgr> dispMgr;
    GetDisplayMgr(&dispMgr);

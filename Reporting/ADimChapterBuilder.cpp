@@ -422,12 +422,12 @@ void CADimChapterBuilder::BuildAdimContent(rptChapter * pChapter,const std::shar
 
 void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
 {
-   CBrokerReportSpecification* pSpec = dynamic_cast<CBrokerReportSpecification*>(pRptSpec);
+   const CBrokerReportSpecification* pSpec = dynamic_cast<const CBrokerReportSpecification*>(pRptSpec.get());
    CComPtr<IBroker> pBroker;
    pSpec->GetBroker(&pBroker);
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
-   CGirderReportSpecification* pSGRptSpec = dynamic_cast<CGirderReportSpecification*>(pRptSpec);
+   const CGirderReportSpecification* pSGRptSpec = dynamic_cast<const CGirderReportSpecification*>(pRptSpec.get());
 
    CGirderKey girderKey;
    if (pSGRptSpec)
@@ -461,10 +461,15 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
 
    GET_IFACE2(pBroker,IBridgeDescription,pIBridgeDesc);
    const CDeckDescription2* pDeck = pIBridgeDesc->GetDeckDescription();
+
+   GET_IFACE2(pBroker,IIntervals,pIntervals);
+   IntervalIndexType gce_interval = pIntervals->GetGeometryControlInterval();
+   IntervalIndexType overlay_interval = pIntervals->GetOverlayInterval();
+
    Float64 overlay = 0;
    if (pDeck->WearingSurface == pgsTypes::wstOverlay)
    {
-      overlay = pBridge->GetOverlayDepth();
+      overlay = pBridge->GetOverlayDepth(gce_interval);
 
       if (pDeck->bInputAsDepthAndDensity == false)
       {
@@ -480,8 +485,6 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
    GET_IFACE2(pBroker,IRoadway,pAlignment);
    GET_IFACE2(pBroker,IPointOfInterest,pPoi);
    GET_IFACE2(pBroker,IDeformedGirderGeometry,pDeformedGirderGeometry);
-   GET_IFACE2(pBroker,IIntervals,pIntervals);
-   IntervalIndexType gce_interval = pIntervals->GetGeometryControlInterval();
    std::vector<IntervalIndexType> vSpecIntervals = pIntervals->GetSpecCheckGeometryControlIntervals();
    std::vector<IntervalIndexType>::iterator iti = vSpecIntervals.begin();
    *pPara << _T("The Geometry Control Event interval is interval ") << LABEL_INTERVAL(gce_interval) << _T(". Finished Roadway Spec checks are performed for interval(s): ") <<  LABEL_INTERVAL(*iti++);
@@ -549,9 +552,8 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
             (*pTable)(row + 6,col) << Bold(_T("Left Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
             (*pTable)(row + 7,col) << Bold(_T("CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
             (*pTable)(row + 8,col) << Bold(_T("Right Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
-            (*pTable)(row + 9,col) << Bold(_T("Req'd CL Haunch (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
+            (*pTable)(row + 9,col) << Bold(_T("Min Haunch - Fillet (")) << Bold(pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.UnitTag()) << Bold(_T(")"));
 
-            bool bNegDemand = false;
             col = 1;
             for (const auto& poi : vPoi)
             {
@@ -566,7 +568,7 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
 
                // get parameters for finished elevation... for no deck, the finished elevation is the top of the girder
                Float64 lftHaunch,clHaunch,rgtHaunch;
-               Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,interval,true /*include overlay depth*/,&lftHaunch,&clHaunch,&rgtHaunch);
+               Float64 finished_elevation = pDeformedGirderGeometry->GetFinishedElevation(poi,interval,&lftHaunch,&clHaunch,&rgtHaunch);
 
                Float64 design_elevation = pAlignment->GetElevation(station,offset);
 
@@ -598,35 +600,14 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
                pColor = new rptRcColor(color);
                (*pTable)(row + 8,col) << pColor << dimH.SetValue(rgtHaunch) << color(Black);
 
-               // Required haunch must clear fillet at edges and make roadway at CL. Demand is how much we must add to clHaunch to meet requirements
-               Float64 edgeDemand = max(fillet - lftHaunch,fillet - rgtHaunch);
-               Float64 clDemand = finished_elevation - design_elevation;
-
-               Float64 demand;
-               if (edgeDemand > 0.0)
-               {
-                  demand = max(clDemand,edgeDemand);
-               }
-               else
-               {
-                  demand = clDemand;
-               }
-
-               Float64 haunchReqd = demand + clHaunch;
-
-               color = haunchReqd >= TOLERANCE ? rptRiStyle::Black : rptRiStyle::Red;
+               // Report min haunch
+               Float64 minHaunch = min(clHaunch, min(lftHaunch,rgtHaunch)) - fillet;
+               color = minHaunch >= 0 ? rptRiStyle::Black : rptRiStyle::Red;
                pColor = new rptRcColor(color);
-               (*pTable)(row + 9,col) << pColor << dimH.SetValue(haunchReqd) << color(Black);
-
-               bNegDemand |= haunchReqd < 0.0;
+               (*pTable)(row + 9,col) << pColor << dimH.SetValue(minHaunch) << color(Black);
 
                col++;
             } // next poi
-
-            if (bNegDemand)
-            {
-               *pPara << _T("Negative haunch demand indicates that the girder is set too low. Increase haunch at supports to resolve this problem.") << rptNewLine;
-            }
 
          } // next girder
       } // next span

@@ -27,6 +27,7 @@
 #include <IFace\Alignment.h>
 #include <IFace\AnalysisResults.h>
 #include <IFace\Project.h>
+#include <IFace\Intervals.h>
 
 #include <PgsExt\BridgeDescription2.h>
 
@@ -281,7 +282,10 @@ void CDeckElevationChapterBuilder::BuildNoDeckElevationContent(rptChapter * pCha
    Float64 overlay = 0;
    if (pDeck->WearingSurface == pgsTypes::wstOverlay)
    {
-      overlay = pBridge->GetOverlayDepth();
+      GET_IFACE2(pBroker,IIntervals,pIntervals);
+      IntervalIndexType geomCtrlInterval = pIntervals->GetGeometryControlInterval();
+
+      overlay = pBridge->GetOverlayDepth(geomCtrlInterval);
 
       if (pDeck->bInputAsDepthAndDensity == false)
       {
@@ -449,7 +453,7 @@ void CDeckElevationChapterBuilder::BuildNoDeckElevationContent(rptChapter * pCha
 
             // get parameters for finished elevation... for no deck, the finished elevation is the top of the girder
             std::array<Float64,3> finished_elevation;
-            pDeformedGirderGeometry->GetFinishedElevation(poi, direction, true /*include overlay depth*/, &finished_elevation[Left], &finished_elevation[Center], &finished_elevation[Right]);
+            pDeformedGirderGeometry->GetFinishedElevation(poi, direction, &finished_elevation[Left], &finished_elevation[Center], &finished_elevation[Right]);
 
             for (int i = 0; i < 3; i++) // left, center, right
             {
