@@ -55,6 +55,7 @@ protected:
    afx_msg void OnShowFinishedGirderTop();
    afx_msg void OnShowFinishedGirderBottom();
    afx_msg void OnShowGirderChord();
+   afx_msg void OnShowHaunchDepth();
    afx_msg void OnGraphTypeChanged();
    afx_msg void OnGraphSideChanged();
 

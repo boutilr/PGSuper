@@ -65,6 +65,7 @@ BEGIN_MESSAGE_MAP(CFinishedElevationGraphController, CMultiIntervalGirderGraphCo
    ON_BN_CLICKED(IDC_GIRDER_CHORD,OnShowGirderChord)
    ON_CBN_SELCHANGE(IDC_GRAPH_TYPE,OnGraphTypeChanged)
    ON_CBN_SELCHANGE(IDC_PLOT_AT,OnGraphSideChanged)
+   ON_BN_CLICKED(IDC_HAUNCH_DEPTH,OnShowHaunchDepth)
    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -140,6 +141,9 @@ BOOL CFinishedElevationGraphController::OnInitDialog()
    CFinishedElevationGraphBuilder::GraphSide gs = ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->GetGraphSide();
    st = pBox->SetCurSel((int)gs);
 
+   pBut = (CButton*)GetDlgItem(IDC_HAUNCH_DEPTH);
+   pBut->ShowWindow(SW_HIDE);
+
    return TRUE;
 }
 
@@ -156,42 +160,49 @@ void CFinishedElevationGraphController::OnShowFinishedDeck()
 {
    CButton* pBox = (CButton*)GetDlgItem(IDC_FINISHED_DECK);
    BOOL show = pBox->GetCheck() == 0 ? FALSE : TRUE;
-   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedDeck(show);
+   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedDeck(show,true);
 }
 
 void CFinishedElevationGraphController::OnShowPGL()
 {
    CButton* pBox = (CButton*)GetDlgItem(IDC_PGL);
    BOOL show = pBox->GetCheck() == 0 ? FALSE : TRUE;
-   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowPGL(show);
+   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowPGL(show,true);
 }
 
 void CFinishedElevationGraphController::OnShowFinishedDeckBottom()
 {
    CButton* pBox = (CButton*)GetDlgItem(IDC_FINISHED_DECK_BOTTOM);
    BOOL show = pBox->GetCheck() == 0 ? FALSE : TRUE;
-   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedDeckBottom(show);
+   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedDeckBottom(show,true);
 }
 
 void CFinishedElevationGraphController::OnShowFinishedGirderTop()
 {
    CButton* pBox = (CButton*)GetDlgItem(IDC_FINISHED_GIRDER_TOP);
    BOOL show = pBox->GetCheck() == 0 ? FALSE : TRUE;
-   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderTop(show);
+   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderTop(show,true);
 }
 
 void CFinishedElevationGraphController::OnShowFinishedGirderBottom()
 {
    CButton* pBox = (CButton*)GetDlgItem(IDC_FINISHED_GIRDER_BOTTOM);
    BOOL show = pBox->GetCheck() == 0 ? FALSE : TRUE;
-   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderBottom(show);
+   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderBottom(show,true);
 }
 
 void CFinishedElevationGraphController::OnShowGirderChord()
 {
    CButton* pBox = (CButton*)GetDlgItem(IDC_GIRDER_CHORD);
    BOOL show = pBox->GetCheck() == 0 ? FALSE : TRUE;
-   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowGirderChord(show);
+   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowGirderChord(show,true);
+}
+
+void CFinishedElevationGraphController::OnShowHaunchDepth()
+{
+   CButton* pBox = (CButton*)GetDlgItem(IDC_HAUNCH_DEPTH);
+   BOOL show = pBox->GetCheck() == 0 ? FALSE : TRUE;
+   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowHaunchDepth(show,true);
 }
 
 void CFinishedElevationGraphController::OnGraphTypeChanged()
@@ -200,35 +211,39 @@ void CFinishedElevationGraphController::OnGraphTypeChanged()
    CFinishedElevationGraphBuilder::GraphType gt = (CFinishedElevationGraphBuilder::GraphType)pBox->GetCurSel();
 
    CButton* pButPgl = (CButton*)GetDlgItem(IDC_PGL);
+   CButton* pButHaunch = (CButton*)GetDlgItem(IDC_HAUNCH_DEPTH);
    CComboBox* pBoxLoc = (CComboBox*)GetDlgItem(IDC_PLOT_AT);
    if (CFinishedElevationGraphBuilder::gtElevationDifferential == gt)
    {
       // graph of PGL is not an option for this case
       pButPgl->SetCheck(FALSE);
       pButPgl->ShowWindow(SW_HIDE);
-      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowPGL(FALSE);
+      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowPGL(FALSE,false);
+
+      pButHaunch->ShowWindow(SW_SHOW);
 
       // Differentials are only at CL Girder
       pBoxLoc->SetCurSel((int)CFinishedElevationGraphBuilder::gsCenterLine);
       pBoxLoc->EnableWindow(FALSE);
-      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->SetGraphSide(CFinishedElevationGraphBuilder::gsCenterLine);
+      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->SetGraphSide(CFinishedElevationGraphBuilder::gsCenterLine,false);
    }
    else
    {
-      pButPgl->ShowWindow(SW_SHOW);
       pButPgl->SetCheck(TRUE);
+      pButPgl->ShowWindow(SW_SHOW);
+      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowPGL(TRUE,false);
+      pButHaunch->ShowWindow(SW_HIDE);
       pBoxLoc->EnableWindow(TRUE);
-      OnShowPGL();
    }
 
-   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->SetGraphType(gt);
+   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->SetGraphType(gt,true);
 }
 
 void CFinishedElevationGraphController::OnGraphSideChanged()
 {
    CComboBox* pBox = (CComboBox*)GetDlgItem(IDC_PLOT_AT);
    CFinishedElevationGraphBuilder::GraphSide gs = (CFinishedElevationGraphBuilder::GraphSide)pBox->GetCurSel();
-   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->SetGraphSide(gs);
+   ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->SetGraphSide(gs,CFinishedElevationGraphBuilder::gsCenterLine == gs);
 
    CButton* pBotBut = (CButton*)GetDlgItem(IDC_FINISHED_GIRDER_BOTTOM);
    CButton* pChordBut = (CButton*)GetDlgItem(IDC_GIRDER_CHORD);
@@ -236,10 +251,10 @@ void CFinishedElevationGraphController::OnGraphSideChanged()
    {
       pBotBut->EnableWindow(FALSE);
       pBotBut->SetCheck(0);
-      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderBottom(FALSE);
+      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowFinishedGirderBottom(FALSE,false);
       pChordBut->EnableWindow(FALSE);
       pChordBut->SetCheck(0);
-      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowGirderChord(FALSE);
+      ((CFinishedElevationGraphBuilder*)GetGraphBuilder())->ShowGirderChord(FALSE,true);
    }
    else
    {

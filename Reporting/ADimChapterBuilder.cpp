@@ -516,7 +516,7 @@ void CADimChapterBuilder::BuildDirectHaunchElevationContent(rptChapter* pChapter
             CSpanKey spanKey(spanIdx,gdrIdx);
             PoiList vPoi;
             pPoi->GetPointsOfInterest(spanKey,POI_SPAN | POI_TENTH_POINTS,&vPoi);
-            pPoi->GetPointsOfInterest(spanKey,POI_START_FACE | POI_END_FACE,&vPoi,POIFIND_OR);
+            pPoi->GetPointsOfInterest(spanKey,POI_CLOSURE, &vPoi,POIFIND_OR);
             pPoi->SortPoiList(&vPoi); // sorts and removes duplicates
 
             std::_tostringstream os;

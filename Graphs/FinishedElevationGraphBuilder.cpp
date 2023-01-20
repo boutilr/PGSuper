@@ -68,7 +68,8 @@ CFinishedElevationGraphBuilder::CFinishedElevationGraphBuilder() :
    m_bShowFinishedGirderTop(FALSE),
    m_ShowGirderChord(FALSE),
    m_GraphType(gtElevations),
-   m_GraphSide(gsCenterLine)
+   m_GraphSide(gsCenterLine),
+   m_ShowHaunchDepth(FALSE)
 {
    SetName(_T("Finished Elevations"));
    
@@ -205,19 +206,42 @@ void CFinishedElevationGraphBuilder::UpdateGraphTitle(GroupIndexType grpIdx,Gird
    m_Graph.SetSubtitle(strGraphSubTitle);
 }
 
+class MatchPoiInClosure
+{
+public:
+   MatchPoiInClosure(IPointOfInterest* pIPointOfInterest) : m_pIPointOfInterest(pIPointOfInterest) {}
+   bool operator()(const pgsPointOfInterest& poi) const
+   {
+      CClosureKey ckey;
+      return m_pIPointOfInterest->IsInClosureJoint(poi,&ckey);
+   }
+
+   IPointOfInterest* m_pIPointOfInterest;
+};
+
 void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,GirderIndexType gdrIdx)
 {
    GET_IFACE_NOCHECK(IBridge,pBridge);
    GET_IFACE_NOCHECK(IGirder,pGirder);
+   GET_IFACE(IIntervals,pIntervals);
+   GET_IFACE(ISectionProperties,pSectProps);
+
+   IntervalIndexType geomCtrlInterval = pIntervals->GetGeometryControlInterval();
 
    // clear graph
    m_Graph.ClearData();
 
    // Get the points of interest we need.
-   GET_IFACE(IPointOfInterest,pIPoi);
+   GET_IFACE(IPointOfInterest,pPoi);
    CSegmentKey segmentKey(grpIdx,gdrIdx,ALL_SEGMENTS);
+
    PoiList vPoi;
-   pIPoi->GetPointsOfInterest(segmentKey, &vPoi);
+   pPoi->GetPointsOfInterest(segmentKey,POI_ERECTED_SEGMENT,&vPoi);
+   pPoi->GetPointsOfInterest(segmentKey,POI_CLOSURE,&vPoi);
+   pPoi->GetPointsOfInterest(segmentKey,POI_START_FACE | POI_END_FACE,&vPoi);
+   // We can't compute accurate elevations within closure joints. Get rid of any pois inside of closure.
+   vPoi.erase(std::remove_if(vPoi.begin(), vPoi.end(), MatchPoiInClosure(pPoi)), std::end(vPoi)); 
+   pPoi->SortPoiList(&vPoi); // sorts and removes duplicates
 
    // Map POI coordinates to X-values for the graph
    std::vector<Float64> xVals;
@@ -283,6 +307,18 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
          {
             AddGraphPoint(dataGcSeries,X,girder_chord_elevation);
          }
+      }
+   }
+
+   if (ShowHaunchDepth())
+   {
+      CString strGCLabel(_T("Haunch Depth")); // always at CL
+      IndexType dataGcSeries = m_Graph.CreateDataSeries(strGCLabel,PS_DASHDOT,PenWeight,SALMON4);
+      auto xIter(xVals.begin());
+      for (auto poi : vPoi)
+      {
+         Float64 haunch_depth = pSectProps->GetStructuralHaunchDepth(poi,pgsTypes::hspDetailedDescription);
+         AddGraphPoint(dataGcSeries,*xIter++,haunch_depth);
       }
    }
 
@@ -581,7 +617,7 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
             {
                if (m_bShowFinishedDeck) // top
                {
-                  Float64 overlayDepth = pBridge->GetOverlayDepth(intervalIdx);
+                  Float64 overlayDepth = pBridge->GetOverlayDepth(geomCtrlInterval); // must add overlay from GCE, not current interval
 
                   COLORREF color = graphColor.GetColor(intervalIdx);
 
@@ -739,7 +775,7 @@ void CFinishedElevationGraphBuilder::ExportGraphData(LPCTSTR rstrDefaultFileName
    CExportGraphXYTool::ExportGraphData(m_Graph,rstrDefaultFileName);
 }
 
-void CFinishedElevationGraphBuilder::ShowFinishedDeck(BOOL show)
+void CFinishedElevationGraphBuilder::ShowFinishedDeck(BOOL show, bool bUpdate)
 {
    m_bShowFinishedDeck = show;
    Update();
@@ -750,10 +786,13 @@ BOOL CFinishedElevationGraphBuilder::ShowFinishedDeck() const
    return m_bShowFinishedDeck;
 }
 
-void CFinishedElevationGraphBuilder::ShowFinishedDeckBottom(BOOL show)
+void CFinishedElevationGraphBuilder::ShowFinishedDeckBottom(BOOL show,bool bUpdate)
 {
    m_bShowFinishedDeckBottom = show;
-   Update();
+   if (bUpdate)
+   {
+      Update();
+   }
 }
 
 BOOL CFinishedElevationGraphBuilder::ShowFinishedDeckBottom() const
@@ -761,10 +800,13 @@ BOOL CFinishedElevationGraphBuilder::ShowFinishedDeckBottom() const
    return m_bShowFinishedDeckBottom;
 }
 
-void CFinishedElevationGraphBuilder::ShowPGL(BOOL show)
+void CFinishedElevationGraphBuilder::ShowPGL(BOOL show,bool bUpdate)
 {
    m_bShowPGL = show;
-   Update();
+   if (bUpdate)
+   {
+      Update();
+   }
 }
 
 BOOL CFinishedElevationGraphBuilder::ShowPGL() const
@@ -772,10 +814,13 @@ BOOL CFinishedElevationGraphBuilder::ShowPGL() const
    return m_bShowPGL;
 }
 
-void CFinishedElevationGraphBuilder::ShowFinishedGirderBottom(BOOL show)
+void CFinishedElevationGraphBuilder::ShowFinishedGirderBottom(BOOL show,bool bUpdate)
 {
    m_bShowFinishedGirderBottom = show;
-   Update();
+   if (bUpdate)
+   {
+      Update();
+   }
 }
 
 BOOL CFinishedElevationGraphBuilder::ShowFinishedGirderBottom() const
@@ -783,10 +828,13 @@ BOOL CFinishedElevationGraphBuilder::ShowFinishedGirderBottom() const
    return m_bShowFinishedGirderBottom;
 }
 
-void CFinishedElevationGraphBuilder::ShowFinishedGirderTop(BOOL show)
+void CFinishedElevationGraphBuilder::ShowFinishedGirderTop(BOOL show,bool bUpdate)
 {
    m_bShowFinishedGirderTop = show;
-   Update();
+   if (bUpdate)
+   {
+      Update();
+   }
 }
 
 BOOL CFinishedElevationGraphBuilder::ShowFinishedGirderTop() const
@@ -794,10 +842,13 @@ BOOL CFinishedElevationGraphBuilder::ShowFinishedGirderTop() const
    return m_bShowFinishedGirderTop;
 }
 
-void CFinishedElevationGraphBuilder::ShowGirderChord(BOOL show)
+void CFinishedElevationGraphBuilder::ShowGirderChord(BOOL show,bool bUpdate)
 {
    m_ShowGirderChord = show;
-   Update();
+   if (bUpdate)
+   {
+      Update();
+   }
 }
 
 BOOL CFinishedElevationGraphBuilder::ShowGirderChord() const
@@ -805,10 +856,34 @@ BOOL CFinishedElevationGraphBuilder::ShowGirderChord() const
    return m_ShowGirderChord;
 }
 
-void CFinishedElevationGraphBuilder::SetGraphType(GraphType type)
+void CFinishedElevationGraphBuilder::ShowHaunchDepth(BOOL show,bool bUpdate)
+{
+   m_ShowHaunchDepth = show;
+   if (bUpdate)
+   {
+      Update();
+   }
+}
+
+BOOL CFinishedElevationGraphBuilder::ShowHaunchDepth() const
+{
+   if (gtElevationDifferential == m_GraphType)
+   {
+      return m_ShowHaunchDepth;
+   }
+   else
+   {
+      return FALSE;
+   }
+}
+
+void CFinishedElevationGraphBuilder::SetGraphType(GraphType type,bool bUpdate)
 {
    m_GraphType = type;
-   Update();
+   if (bUpdate)
+   {
+      Update();
+   }
 }
 
 CFinishedElevationGraphBuilder::GraphType CFinishedElevationGraphBuilder::GetGraphType() const
@@ -816,10 +891,13 @@ CFinishedElevationGraphBuilder::GraphType CFinishedElevationGraphBuilder::GetGra
    return m_GraphType;
 }
 
-void CFinishedElevationGraphBuilder::SetGraphSide(GraphSide side)
+void CFinishedElevationGraphBuilder::SetGraphSide(GraphSide side,bool bUpdate)
 {
    m_GraphSide = side;
-   Update();
+   if (bUpdate)
+   {
+      Update();
+   }
 }
 
 CFinishedElevationGraphBuilder::GraphSide CFinishedElevationGraphBuilder::GetGraphSide() const

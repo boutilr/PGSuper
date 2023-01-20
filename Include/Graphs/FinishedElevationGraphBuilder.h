@@ -45,23 +45,25 @@ public:
 
    void ExportGraphData(LPCTSTR rstrDefaultFileName);
 
-   void ShowFinishedDeck(BOOL show);
+   void ShowFinishedDeck(BOOL show,bool bUpdate);
    BOOL ShowFinishedDeck() const;
 
-   void ShowFinishedDeckBottom(BOOL show);
+   void ShowFinishedDeckBottom(BOOL show,bool bUpdate);
    BOOL ShowFinishedDeckBottom() const;
-   void ShowPGL(BOOL show);
+   void ShowPGL(BOOL show,bool bUpdate);
    BOOL ShowPGL() const;
-   void ShowFinishedGirderBottom(BOOL show);
+   void ShowFinishedGirderBottom(BOOL show,bool bUpdate);
    BOOL ShowFinishedGirderBottom() const;
-   void ShowFinishedGirderTop(BOOL show);
+   void ShowFinishedGirderTop(BOOL show,bool bUpdate);
    BOOL ShowFinishedGirderTop() const;
-   void ShowGirderChord(BOOL show);
+   void ShowGirderChord(BOOL show,bool bUpdate);
    BOOL ShowGirderChord() const;
+   void ShowHaunchDepth(BOOL show,bool bUpdate);
+   BOOL ShowHaunchDepth() const;
 
-   void SetGraphType(GraphType type);
+   void SetGraphType(GraphType type,bool bUpdate);
    GraphType GetGraphType()const;
-   void SetGraphSide(GraphSide side);
+   void SetGraphSide(GraphSide side,bool bUpdate);
    GraphSide GetGraphSide()const;
 protected:
    virtual CGirderGraphControllerBase* CreateGraphController() override;
@@ -80,6 +82,7 @@ protected:
    BOOL m_bShowFinishedGirderBottom;
    BOOL m_bShowFinishedGirderTop;
    BOOL m_ShowGirderChord;
+   BOOL m_ShowHaunchDepth;
    GraphType m_GraphType;
    GraphSide m_GraphSide;
 };

@@ -52,6 +52,8 @@
 #define IDC_PROPERTY                    3030
 #define IDC_BEAM                        3031
 #define IDC_TRANSFORMED                 3032
+#define IDC_BEAM2                       3032
+#define IDC_HAUNCH_DEPTH                3032
 #define IDC_GROSS                       3033
 #define IDC_FC                          3034
 #define IDC_EC                          3035

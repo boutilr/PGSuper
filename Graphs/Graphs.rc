@@ -308,8 +308,8 @@ BEGIN
     LTEXT           "Interval",IDC_STATIC,6,59,26,8
     LISTBOX         IDC_INTERVALS,6,70,158,174,LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Hold CTRL key to select multiple intervals\nHold SHIFT key to select range of intervals",IDC_STATIC,6,245,158,18
-    CONTROL         "Show Grid",IDC_GRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,264,48,10
-    CONTROL         "Show Girder",IDC_BEAM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,63,264,55,10
+    CONTROL         "Grid",IDC_GRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,264,30,10
+    CONTROL         "Girder",IDC_BEAM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,42,264,38,10
     PUSHBUTTON      "Export Graph Data",IDC_EXPORT_GRAPH_BTN,35,345,81,14
     CONTROL         "Show Design roadway (PGL)",IDC_PGL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,278,133,10
     LTEXT           "Graph Type",IDC_STATIC,7,26,38,8
@@ -325,6 +325,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,318,149,10
     CONTROL         "Show girder top chord (CL only)",IDC_GIRDER_CHORD,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,328,133,10
+    CONTROL         "Haunch Depth (CL)",IDC_HAUNCH_DEPTH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,82,264,82,10
 END
 
 
