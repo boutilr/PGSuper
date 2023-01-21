@@ -224,7 +224,7 @@ void CFinishedElevationGraphBuilder::UpdateGraphData(GroupIndexType grpIdx,Girde
    GET_IFACE_NOCHECK(IBridge,pBridge);
    GET_IFACE_NOCHECK(IGirder,pGirder);
    GET_IFACE(IIntervals,pIntervals);
-   GET_IFACE(ISectionProperties,pSectProps);
+   GET_IFACE_NOCHECK(ISectionProperties,pSectProps);
 
    IntervalIndexType geomCtrlInterval = pIntervals->GetGeometryControlInterval();
 
