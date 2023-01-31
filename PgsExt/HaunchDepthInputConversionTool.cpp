@@ -904,12 +904,17 @@ void HaunchDepthInputConversionTool::InitializeGeometrics(bool bSingleGirderLine
                   Float64 haunchStart = AStart - slabDepthStart;
                   Float64 haunchEnd = AEnd - slabDepthEnd;
 
+                  std::vector<Float64> spanHaunches{ haunchStart, haunchEnd };
+
                   for (int iLoc = 0; iLoc <= 10; iLoc++)
                   {
                      Float64 segLoc = segLength * (Float64)iLoc / 10.0;
                      Float64 haunch = LinInterpLine(segmentStartEndDist,haunchStart,endBrgLoc,haunchEnd,segLoc);
 
                      Float64 segLocGirderLine = segLoc + segStartLoc;
+                     Float64 segLocWrtBearing = segLoc - segmentStartEndDist;
+
+                     Float64 haunch = ::ComputeHaunchDepthAlongSegment(segLocWrtBearing, segSpanLength, spanHaunches);
 
                      pPwFunc->AddPoint(segLocGirderLine,haunch);
                   }
@@ -1168,7 +1173,7 @@ bool HaunchDepthInputConversionTool::CondenseDirectHaunchInput(CBridgeDescriptio
                      }
                   }
                }
-            }
+}
 
             if (isSame)
             {

@@ -385,8 +385,8 @@ IntervalIndexType CFinishedElevationGraphController::GetLastInterval()
    if (pLossParams->GetLossMethod() != pgsTypes::TIME_STEP || pBridge->GetHaunchInputDepthType() == pgsTypes::hidACamber)
    {
       // We can only compute camber at the GCE.
-      return pIntervals->GetGeometryControlInterval();
-   }
+   return pIntervals->GetGeometryControlInterval();
+}
    else
    {
       return pIntervals->GetIntervalCount() - 1;
