@@ -6415,7 +6415,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
          }
          else if (pgsTypes::hspDetailedDescription == haunchAnalysisSectionPropertiesType)
          {
-            msg = _T(" haunch depths that are input directly on the Haunch Description dialog. ");
+            msg = _T(" explicit haunch depths that are input directly on the Haunch Description dialog. ");
          }
 
    if (pDocType->IsPGSpliceDocument() && m_BridgeDescription.GetHaunchInputDepthType() == pgsTypes::hidACamber && m_BridgeDescription.GetDeckDescription()->GetDeckType() != pgsTypes::sdtNone)
