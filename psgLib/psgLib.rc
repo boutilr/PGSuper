@@ -603,9 +603,9 @@ BEGIN
     LTEXT           "times the least gross concrete thickness at the duct",IDC_STATIC,179,383,162,8
 END
 
-IDD_SPEC_CREEP DIALOGEX 0, 0, 379, 362
+IDD_SPEC_CREEP DIALOGEX 0, 0, 379, 366
 STYLE DS_SETFONT | DS_MODALFRAME | WS_CHILD | WS_CAPTION | WS_SYSMENU
-CAPTION "Creep and Camber"
+CAPTION "Creep, Camber and Haunch"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     GROUPBOX        "General Creep and Camber Parameters",IDC_STATIC,8,6,364,207
@@ -635,18 +635,18 @@ BEGIN
     LTEXT           "1 day of accelerated curing is equal to ",IDC_STATIC,27,190,123,8
     EDITTEXT        IDC_CURING_TIME_FACTOR,152,188,18,14,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "days of normal curing",IDC_STATIC,174,190,68,8
-    LTEXT           "Compute haunch dead load accounting for roadway elevation changes and assuming:",IDC_STATIC,15,253,288,8
-    COMBOBOX        IDC_HAUNCH_COMP_CB,16,263,347,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Maximum Allowed difference between assumed and computed excess camber",IDC_HAUNCH_TOLER_STATIC,15,233,249,8
-    EDITTEXT        IDC_HAUNCH_TOLER,265,231,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_HAUNCH_TOLER_UNIT,309,235,19,8
-    LTEXT           "Use",IDC_HAUNCH_FACTOR1,17,282,13,8
-    EDITTEXT        IDC_HAUNCH_FACTOR,33,279,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "% of assumed excess camber when computing haunch dead load",IDC_HAUNCH_FACTOR2,79,283,239,8
-    GROUPBOX        "Assumed Excess Camber and Haunch",IDC_STATIC,8,218,364,137
-    LTEXT           "Compute stiffness, stresses, positive moment capacity, and shear capacity using haunch depth assuming:",IDC_STATIC,15,300,288,8
-    COMBOBOX        IDC_HAUNCH_COMP_PROPS_CB,15,310,347,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "* Detailed Haunch Description. Haunch depth is defined either by direct input of haunch depths, or computed from input of slab offsets and assumed excess camber along segments.",IDC_STATIC,15,328,351,21
+    LTEXT           "Compute haunch dead load accounting for roadway elevation changes and assuming:",IDC_STATIC,15,256,288,8
+    COMBOBOX        IDC_HAUNCH_COMP_CB,16,266,347,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Maximum Allowed difference between assumed and computed excess camber",IDC_HAUNCH_TOLER_STATIC,15,236,249,8
+    EDITTEXT        IDC_HAUNCH_TOLER,265,234,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "Static",IDC_HAUNCH_TOLER_UNIT,309,238,19,8
+    LTEXT           "Use",IDC_HAUNCH_FACTOR1,17,285,13,8
+    EDITTEXT        IDC_HAUNCH_FACTOR,33,282,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "% of assumed excess camber when computing haunch dead load",IDC_HAUNCH_FACTOR2,79,286,239,8
+    GROUPBOX        "Assumed Excess Camber and Haunch",IDC_STATIC,8,221,364,137
+    LTEXT           "Compute stiffness, stresses, positive moment capacity, and shear capacity using haunch depth assuming:",IDC_STATIC,15,303,288,8
+    COMBOBOX        IDC_HAUNCH_COMP_PROPS_CB,15,313,347,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "* Detailed Haunch Description. Haunch depth is defined either by explicit direct input of haunch depths, or computed from input of slab offsets and assumed excess camber along segments.",IDC_STATIC,15,331,351,21
 END
 
 IDD_SPEC_LOSSES DIALOGEX 0, 0, 471, 224
@@ -1157,7 +1157,7 @@ BEGIN
     LTEXT           "Minimum difference between finished and design roadway surface elevation",IDC_ELEVATION_TOLERANCE_LABEL,37,292,240,8
     EDITTEXT        IDC_ELEVATION_TOLERANCE,279,289,40,14,ES_RIGHT | ES_AUTOHSCROLL
     LTEXT           "Static",IDC_ELEVATION_TOLERANCE_UNIT,322,292,19,8
-    LTEXT           "(Only applies when haunch depths are input directly, and to adjacent girder bridges without a deck. See documentation for additional details)",IDC_ELEVATION_TOLERANCE_NOTE,37,304,481,8
+    LTEXT           "(Only applies when explicit haunch depths are input directly, and to adjacent girder bridges without a deck. See documentation for additional details)",IDC_ELEVATION_TOLERANCE_NOTE,37,304,481,8
     GROUPBOX        "Concrete Strength for Limit State Evaluations",IDC_FC_GROUP,7,367,535,44
     CONTROL         "Use fc at the time of loading (5.14.3.2d and 5.14.1.3.3)",IDC_FC1,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,15,381,188,10
@@ -2162,7 +2162,7 @@ BEGIN
         RIGHTMARGIN, 372
         VERTGUIDE, 15
         TOPMARGIN, 6
-        BOTTOMMARGIN, 355
+        BOTTOMMARGIN, 359
     END
 
     IDD_SPEC_LOSSES, DIALOG

@@ -10724,9 +10724,7 @@ Float64 CBridgeAgentImp::GetOverlayDepth(IntervalIndexType interval) const
    Float64 depth(0.0);
    if (HasOverlay() && !IsFutureOverlay())
    {
-      GET_IFACE(IDocumentType,pDocType);
-#pragma Reminder ("Remove pgsuper constraint after reg testing with main branch")
-      if (pDocType->IsPGSpliceDocument() || interval >= this->GetOverlayInterval())
+      if (interval >= GetOverlayInterval())
       {
          m_Bridge->get_WearingSurfaceDepth(&depth);
       }

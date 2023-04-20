@@ -5630,6 +5630,10 @@ void pgsDesigner2::CheckConstructability(const CGirderKey& girderKey,pgsConstruc
             artifact.CheckStirrupLength(bDoStirrupsEngageDeck && tSlab / 2 < fabs(slab_offset_details.HaunchDiff));
          }
 
+         // warning tolerance for excessive haunch
+         Float64 warn_tol = pGirderEntry->GetExcessiveSlabOffsetWarningTolerance();
+         artifact.SetExcessSlabOffsetWarningTolerance(warn_tol);
+
          ///////////////////////////////////////////////////////////////
          //
          // Camber Tolerance for Haunch 

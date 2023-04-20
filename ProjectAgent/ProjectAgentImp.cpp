@@ -6415,7 +6415,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
          }
          else if (pgsTypes::hspDetailedDescription == haunchAnalysisSectionPropertiesType)
          {
-            msg = _T(" haunch depths that are input directly on the Haunch Description dialog. ");
+            msg = _T(" explicit haunch depths that are input directly on the Haunch Description dialog. ");
          }
 
          CString strMsg(_T("Previous versions of PGSplice always assumed a zero haunch depth when computing composite structural section properties regardless of settings in the project criteria. The project criteria setting is now considered and will now compute properties based "));

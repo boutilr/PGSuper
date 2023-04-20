@@ -379,8 +379,18 @@ IntervalIndexType CFinishedElevationGraphController::GetFirstInterval()
 
 IntervalIndexType CFinishedElevationGraphController::GetLastInterval()
 {
+   GET_IFACE_NOCHECK(IBridge,pBridge);
    GET_IFACE(IIntervals,pIntervals);
-   return pIntervals->GetGeometryControlInterval();
+   GET_IFACE(ILossParameters,pLossParams);
+   if (pLossParams->GetLossMethod() != pgsTypes::TIME_STEP || pBridge->GetHaunchInputDepthType() == pgsTypes::hidACamber)
+   {
+      // We can only compute camber at the GCE.
+      return pIntervals->GetGeometryControlInterval();
+   }
+   else
+   {
+      return pIntervals->GetIntervalCount() - 1;
+   }
 }
 
 void CFinishedElevationGraphController::UpdateControlStatus(bool bInit)

@@ -1374,6 +1374,10 @@ void CConstructabilityCheckTable::BuildMinimumHaunchCheck(rptChapter* pChapter,I
    (*pTable)(0,col++) << COLHDR(_T("Minimum Haunch Depth"),rptLengthUnitTag,pDisplayUnits->GetComponentDimUnit());
    (*pTable)(0,col++) << _T("Status");
 
+   // Get minimum haunch depth along all girders/segments. Check if it may be excessive
+   Float64 minOfAllHaunches(Float64_Max);
+   Float64 excessiveWarnTol(0.0);
+
    RowIndexType row = 0;
    for (const auto& girderKey : girderList)
    {
@@ -1405,6 +1409,9 @@ void CConstructabilityCheckTable::BuildMinimumHaunchCheck(rptChapter* pChapter,I
             Float64 station,offset,minHaunch;
             pgsPointOfInterest poi;
             artifact.GetMinimumHaunchDepth(&station,&offset,&poi,&minHaunch);
+
+            minOfAllHaunches = min(minOfAllHaunches,minHaunch);
+            excessiveWarnTol = artifact.GetExcessSlabOffsetWarningTolerance();
 
             (*pTable)(row,col++) << rptRcStation(station,&pDisplayUnits->GetStationFormat());
             (*pTable)(row,col++) << RPT_OFFSET(offset,dim);
@@ -1443,6 +1450,13 @@ void CConstructabilityCheckTable::BuildMinimumHaunchCheck(rptChapter* pChapter,I
       INIT_UV_PROTOTYPE(rptLengthSectionValue,dimc,pDisplayUnits->GetComponentDimUnit(),true);
       *pBody << _T("Minimum haunch depth is taken along entire girder length and is compared with a fillet value of ") << dimc.SetValue(fillet) << rptNewLine;
       *pBody << pTable;
+
+      Float64 excessive = excessiveWarnTol + fillet;
+      if (minOfAllHaunches > excessive)
+      {
+         *pBody << Bold(_T("Warning:")) << _T(" The smallest haunch depth along the entire girder is ") << dimc.SetValue(minOfAllHaunches) << _T(". This is larger than the fillet value + the allowable tolerance for this girder = ")
+            << dimc.SetValue(excessive)  << Bold(_T(". Hence, the haunch depth is excessive for this girder.")) << _T(" Consider reducing the haunch depth along the girder to reduce waste material.") << rptNewLine << rptNewLine;
+      }
    }
    else
    {
