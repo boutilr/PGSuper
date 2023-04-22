@@ -41,7 +41,7 @@ Lifting checks failed for Segment 1.
 Hauling checks failed for Segment 1.
 Lifting checks failed for Segment 2.
 Hauling checks failed for Segment 2.
-Slab Offset ("A" Dimension) check failed
+Finished elevation check failed
 
 
  RoadW  Ng   Spcng     STRUCTURE     Span    Gdr  Type     N    Ns   Size Strn EccCL  EccEn  Astart  Aend                                              Fci    Fc      fcomp     ftens    ultMo   LLDFm  LLDFs  Dinit  Dslab  Dolay  Dothr  Dtot   LossIn  LossFn  LiftLc  fwHaul  trHaul  RfInMom RfInShr RfOpMom RfOpShr RfInSts
@@ -85,6 +85,6 @@ Lifting checks failed for Segment 1.
 Hauling checks failed for Segment 1.
 Lifting checks failed for Segment 2.
 Hauling checks failed for Segment 2.
-Slab Offset ("A" Dimension) check failed
+Finished elevation check failed
 
 

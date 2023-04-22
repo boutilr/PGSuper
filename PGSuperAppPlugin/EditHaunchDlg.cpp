@@ -133,9 +133,9 @@ BOOL CEditHaunchDlg::OnInitDialog()
    
    // Initilize combo boxes
    CComboBox* pBox = (CComboBox*)GetDlgItem(IDC_HAUNCH_DEPTH_TYPE);
-   int sqidx = pBox->AddString(CString(_T("Haunch Depth")));
+   int sqidx = pBox->AddString(CString(_T("Explicit Haunch Depths")));
    pBox->SetItemData(sqidx,(DWORD_PTR)pgsTypes::hidHaunchDirectly);
-   sqidx = pBox->AddString(CString(_T("Haunch+Deck Depth")));
+   sqidx = pBox->AddString(CString(_T("Explicit Haunch+Deck Depths")));
    pBox->SetItemData(sqidx,(DWORD_PTR)pgsTypes::hidHaunchPlusSlabDirectly);
 
    if (m_bIsInPGSuper)

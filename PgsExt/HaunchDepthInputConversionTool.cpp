@@ -265,9 +265,9 @@ std::pair<bool,CBridgeDescription2> HaunchDepthInputConversionTool::ConvertToSla
             Float64 haunchEnd = rLayout.m_pHaunchDepths->Evaluate(segEndBearingLoc);
 
             pgsPointOfInterest poiStart(segmentKey,0.0);
-            Float64 slabDepthStart = pBridge->GetStructuralSlabDepth(poiStart);
+            Float64 slabDepthStart = pBridge->GetGrossSlabDepth(poiStart);
             pgsPointOfInterest poiEnd(segmentKey,segLength);
-            Float64 slabDepthEnd = pBridge->GetStructuralSlabDepth(poiEnd);
+            Float64 slabDepthEnd = pBridge->GetGrossSlabDepth(poiEnd);
 
             Float64 AStart = haunchStart + slabDepthStart;
             Float64 AEnd = haunchEnd + slabDepthEnd;
@@ -306,9 +306,9 @@ std::pair<bool,CBridgeDescription2> HaunchDepthInputConversionTool::ConvertToSla
                Float64 haunchEnd = rLayout.m_pHaunchDepths->Evaluate(segEndBearingLoc);
 
                pgsPointOfInterest poiStart(segmentKey,0.0);
-               Float64 slabDepthStart = pBridge->GetStructuralSlabDepth(poiStart);
+               Float64 slabDepthStart = pBridge->GetGrossSlabDepth(poiStart);
                pgsPointOfInterest poiEnd(segmentKey,segLength);
-               Float64 slabDepthEnd = pBridge->GetStructuralSlabDepth(poiEnd);
+               Float64 slabDepthEnd = pBridge->GetGrossSlabDepth(poiEnd);
 
                Float64 AStart = haunchStart + slabDepthStart;
                Float64 AEnd = haunchEnd + slabDepthEnd;
@@ -357,9 +357,9 @@ std::pair<bool,CBridgeDescription2> HaunchDepthInputConversionTool::ConvertToSla
                   Float64 haunchEnd = rLayout.m_pHaunchDepths->Evaluate(segEndBearingLoc);
 
                   pgsPointOfInterest poiStart(segmentKey,0.0);
-                  Float64 slabDepthStart = pBridge->GetStructuralSlabDepth(poiStart);
+                  Float64 slabDepthStart = pBridge->GetGrossSlabDepth(poiStart);
                   pgsPointOfInterest poiEnd(segmentKey,segLength);
-                  Float64 slabDepthEnd = pBridge->GetStructuralSlabDepth(poiEnd);
+                  Float64 slabDepthEnd = pBridge->GetGrossSlabDepth(poiEnd);
 
                   Float64 AStart = haunchStart + slabDepthStart;
                   Float64 AEnd = haunchEnd + slabDepthEnd;
@@ -860,34 +860,31 @@ void HaunchDepthInputConversionTool::InitializeGeometrics(bool bSingleGirderLine
                   const CPrecastSegmentData* pSegment = pGirder->GetSegment(segmentIdx);
                   const CSegmentKey& segmentKey = pSegment->GetSegmentKey();
 
-                  Float64 segmentStartEndDist = pBridge->GetSegmentStartEndDistance(segmentKey);
-                  Float64 segmentEndEndDist = pBridge->GetSegmentEndEndDistance(segmentKey);
-
                   Float64 segStartLoc = rLayout.m_SegmentEnds[segmentIdx].first;
                   Float64 segEndLoc = rLayout.m_SegmentEnds[segmentIdx].second;
                   Float64 segLength = segEndLoc - segStartLoc;
-                  Float64 segSpanLength = segLength - segmentStartEndDist - segmentEndEndDist;
+
+                  Float64 segmentStartEndDist = pBridge->GetSegmentStartEndDistance(segmentKey);
+                  Float64 segmentEndEndDist = pBridge->GetSegmentEndEndDistance(segmentKey);
+
+                  Float64 endBrgLoc = segLength - segmentEndEndDist;
 
                   Float64 AStart,AEnd;
                   pSegment->GetSlabOffset(&AStart,&AEnd);
 
-                  pgsPointOfInterest poiStart(segmentKey,0.0);
-                  Float64 slabDepthStart = pBridge->GetStructuralSlabDepth(poiStart);
-                  pgsPointOfInterest poiEnd(segmentKey,segLength);
-                  Float64 slabDepthEnd = pBridge->GetStructuralSlabDepth(poiEnd);
+                  pgsPointOfInterest poiStart(segmentKey,0.0), poiEnd(segmentKey,segLength);
+                  Float64 slabDepthStart = pBridge->GetGrossSlabDepth(poiStart);
+                  Float64 slabDepthEnd = pBridge->GetGrossSlabDepth(poiEnd);
 
                   Float64 haunchStart = AStart - slabDepthStart;
                   Float64 haunchEnd = AEnd - slabDepthEnd;
 
-                  std::vector<Float64> spanHaunches{ haunchStart, haunchEnd };
-
                   for (int iLoc = 0; iLoc <= 10; iLoc++)
                   {
                      Float64 segLoc = segLength * (Float64)iLoc / 10.0;
-                     Float64 segLocGirderLine = segLoc + segStartLoc;
-                     Float64 segLocWrtBearing = segLoc - segmentStartEndDist;
+                     Float64 haunch = LinInterpLine(segmentStartEndDist,haunchStart,endBrgLoc,haunchEnd,segLoc);
 
-                     Float64 haunch = ::ComputeHaunchDepthAlongSegment(segLocWrtBearing, segSpanLength, spanHaunches);
+                     Float64 segLocGirderLine = segLoc + segStartLoc;
 
                      pPwFunc->AddPoint(segLocGirderLine,haunch);
                   }

@@ -10596,7 +10596,6 @@ Float64 CBridgeAgentImp::GetElevationAdjustment(IntervalIndexType intervalIdx, c
       const CPrecastSegmentData* pSegment = pBridgeDesc->GetSegment(segmentKey);
 
       // get elevation adjustments at the ends of the segment
-      // elevation adjustments are measured at the CL Bearing
       std::array<Float64, 2> elev_adj{ 0.0,0.0 };
       for (int i = 0; i < 2; i++)
       {
@@ -10611,11 +10610,11 @@ Float64 CBridgeAgentImp::GetElevationAdjustment(IntervalIndexType intervalIdx, c
          }
       }
 
+      // Elevation adjustments are along entire segment length
       // interpolate for the subject poi
-      Float64 Ls = GetSegmentSpanLength(segmentKey); // CL Brg to CL Brg span length of segment
+      Float64 Ls = GetSegmentLength(segmentKey); 
       Float64 Xpoi = poi.GetDistFromStart();
-      Float64 Xend = GetSegmentStartEndDistance(segmentKey);
-      elevAdj = ::LinInterp(Xpoi - Xend, elev_adj[pgsTypes::metStart], elev_adj[pgsTypes::metEnd], Ls);
+      elevAdj = ::LinInterp(Xpoi, elev_adj[pgsTypes::metStart], elev_adj[pgsTypes::metEnd], Ls);
    }
 
    return elevAdj;
@@ -10652,9 +10651,7 @@ Float64 CBridgeAgentImp::GetRotationAdjustment(IntervalIndexType intervalIdx, co
       }
 
       // interpolate for the subject poi
-      Float64 Ls = GetSegmentSpanLength(segmentKey); // CL Brg to CL Brg span length of segment
-      Float64 Xpoi = poi.GetDistFromStart();
-      Float64 Xend = GetSegmentStartEndDistance(segmentKey);
+      Float64 Ls = GetSegmentLength(segmentKey); // CL Brg to CL Brg span length of segment
       slopeAdj = (elev_adj[pgsTypes::metStart] - elev_adj[pgsTypes::metEnd])/ Ls;
    }
 
@@ -22872,11 +22869,15 @@ Float64 CBridgeAgentImp::GetTopSlabToTopGirderChordDistance(const pgsPointOfInte
 {
    Float64 top_rw = GetRoadwayToTopGirderChordDistance(poi);
 
-   // We place the girder chord the GCE - determine overlay depth at that time. (future overlays are after the GCE)
    IntervalIndexType gceInterval = GetGeometryControlInterval();
+
+   // Remove temporary support elevation adjustment.
+   Float64 ts_adj = GetElevationAdjustment(gceInterval,poi);
+
+   // We place the girder chord the GCE - determine overlay depth at that time. (future overlays are after the GCE)
    Float64 overlay_depth = GetOverlayDepth(gceInterval);
 
-   return top_rw - overlay_depth;
+   return top_rw + ts_adj - overlay_depth;
 }
 
 Float64 CBridgeAgentImp::GetTopSlabToTopGirderChordDistance(const pgsPointOfInterest& poi, Float64 Astart, Float64 Aend) const
@@ -24835,7 +24836,7 @@ std::vector<TEMPORARYSUPPORTELEVATIONDETAILS> CBridgeAgentImp::GetElevationDetai
                Float64 Hg = GetHg(intervalIdx,poi); // this is the basic height of the segment
                Hg *= girder_height_adjustment_factor; // adjust the vertical dimension for orientation and grade slopes
 
-               Float64 elevAdj = pTS->GetElevationAdjustment();
+               Float64 elevAdj = GetElevationAdjustment(gceInterval, poi);
 
                Float64 station,offset;
                GetStationAndOffset(pgsTypes::pcLocal,pnt,&station,&offset);
@@ -36483,8 +36484,8 @@ void CBridgeAgentImp::ValidateGirderTopChordElevationDirectHaunchInput(const CGi
       segment->ComputeHaunchDepth(startLoc,&haunchStart);
       segment->ComputeHaunchDepth(endLoc,&haunchEnd);
 
-      Float64 elevStart = startProfileElevation - deckDepth - overlayDepth - haunchStart + elev_adj[pgsTypes::metStart];
-      Float64 elevEnd =   endProfileElevation   - deckDepth - overlayDepth - haunchEnd   + elev_adj[pgsTypes::metEnd];
+      Float64 elevStart = startProfileElevation - deckDepth - overlayDepth - haunchStart;
+      Float64 elevEnd   = endProfileElevation - deckDepth - overlayDepth - haunchEnd;
 
       // At this point, we have elevations which may, or may not, be at the segment ends.
       // The function object we are building requires its basis at segment ends, so fix that if not so.
@@ -36494,6 +36495,10 @@ void CBridgeAgentImp::ValidateGirderTopChordElevationDirectHaunchInput(const CGi
          elevStart = tmpf.Evaluate(0.0);
          elevEnd = tmpf.Evaluate(segLength);
       }
+
+      // Elevation adjustments are always at ends
+      elevStart += elev_adj[pgsTypes::metStart];
+      elevEnd   += elev_adj[pgsTypes::metEnd];
 
       // this is a function for the basic straight line that connects at the top of the segment its ends
       Float64 m = (elevEnd - elevStart) / segLength;

@@ -596,10 +596,11 @@ interface IBridge : IUnknown
    virtual void GetRightCurbLinePoint(Float64 station, IDirection* direction,pgsTypes::PlanCoordinateType pcType,IPoint2d** point) const = 0;
    virtual void GetRightCurbLinePoint(Float64 station, IDirection* direction,pgsTypes::PlanCoordinateType pcType,IPoint3d** point) const = 0;
 
-   // Distance from Roadway surface to girder top chord (same as top of slab below, if no overlay at time of GCE)
+   // Distance from Roadway surface to girder top chord. This is adjusted for temp support elev adjustments, if applicable.
    virtual Float64 GetRoadwayToTopGirderChordDistance(const pgsPointOfInterest& poi) const = 0;
 
-   // Distance from top of slab of girder top chord line. Same as top of girder if no slab. Same as roadway if no overlay at time of GCE.
+   // Distance from top of slab of girder top chord line. Does not include temporary support elevation chord adjustment. 
+   // Same as top of girder if no slab. Same as roadway if no overlay at time of GCE and no TS elevation adjustment.
    virtual Float64 GetTopSlabToTopGirderChordDistance(const pgsPointOfInterest& poi) const = 0;
    virtual Float64 GetTopSlabToTopGirderChordDistance(const pgsPointOfInterest& poi, Float64 Astart, Float64 Aend) const = 0;
    
