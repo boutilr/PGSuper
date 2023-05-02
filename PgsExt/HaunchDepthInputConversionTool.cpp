@@ -40,6 +40,31 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+inline bool CompareFloatVectors(const std::vector<Float64>& vec1, const std::vector<Float64>& vec2)
+{
+   if (vec1.size() != vec2.size())
+   {
+      return false;
+   }
+   else
+   {
+      std::vector<Float64>::const_iterator it1 = vec1.begin();
+      std::vector<Float64>::const_iterator it2 = vec2.begin();
+      while (it1 != vec1.end())
+      {
+         if (!IsEqual(*it1,*it2))
+         {
+            return false;
+         }
+
+         it1++;
+         it2++;
+      }
+   }
+
+   return true;
+}
+
 // Function to compute haunches along a segment (or span) using function. Assumes vector is empty going in
 inline std::vector<Float64> LayoutHaunches(Float64 startLoc,Float64 segmentLength,int numValues,std::shared_ptr<WBFL::Math::Function> pHaunchDepthFunction )
 {
@@ -985,4 +1010,176 @@ void HaunchDepthInputConversionTool::InitializeGeometrics(bool bSingleGirderLine
 
       m_WasGeometricsInitialized = true;
    }
+}
+
+bool HaunchDepthInputConversionTool::CondenseDirectHaunchInput(CBridgeDescription2* pBridgeDescr)
+{
+   if (pBridgeDescr->GetHaunchInputDepthType() == pgsTypes::hidACamber)
+   {
+      ATLASSERT(0); // shouldn't be here
+      return false;
+   }
+
+   bool retVal = false;
+
+   if (pgsTypes::hilSame4Bridge == pBridgeDescr->GetHaunchInputLocationType())
+   {
+      // nothing we can do
+      return false;
+   }
+   else
+   {
+      if (pgsTypes::hltAlongSpans == pBridgeDescr->GetHaunchLayoutType())
+      {
+         SpanIndexType spanCnt = pBridgeDescr->GetSpanCount();
+
+         if (pgsTypes::hilPerEach == pBridgeDescr->GetHaunchInputLocationType())
+         {
+            bool isSame = true;
+            for (SpanIndexType iSpan = 0; iSpan < spanCnt; iSpan++)
+            {
+               CSpanData2* pSpan = pBridgeDescr->GetSpan(iSpan);
+               std::vector<Float64> gdr1haunches = pSpan->GetDirectHaunchDepths(0,true);
+
+               GirderIndexType girderCnt = pSpan->GetGirderCount();
+               for (GirderIndexType iGirder = 1; iGirder < girderCnt; iGirder++)
+               {
+                  std::vector<Float64> haunches = pSpan->GetDirectHaunchDepths(iGirder,true);
+                  if (!CompareFloatVectors(haunches,gdr1haunches))
+                  {
+                     isSame = false;
+                     break;
+                  }
+               }
+
+               if (!isSame)
+               {
+                  break;
+               }
+            }
+
+            if (isSame)
+            {
+               // haunches are same in every span
+               pBridgeDescr->SetHaunchInputLocationType(pgsTypes::hilSame4AllGirders);
+               retVal = true;
+            }
+         }
+
+         if (pgsTypes::hilPerEach == pBridgeDescr->GetHaunchInputLocationType())
+         {
+            bool isSame = true;
+
+            CSpanData2* pSpan1 = pBridgeDescr->GetSpan(0);
+            std::vector<Float64> span1haunches = pSpan1->GetDirectHaunchDepths(0,true);
+
+            for (SpanIndexType iSpan = 1; iSpan < spanCnt; iSpan++)
+            {
+               CSpanData2* pSpan = pBridgeDescr->GetSpan(iSpan);
+               std::vector<Float64> haunches = pSpan->GetDirectHaunchDepths(0,true);
+
+               if (!CompareFloatVectors(haunches, span1haunches))
+               {
+                  isSame = false;
+                  break;
+               }
+            }
+
+            if (isSame)
+            {
+               // haunches are same throughout bridge
+               pBridgeDescr->SetHaunchInputLocationType(pgsTypes::hilSame4Bridge);
+               pBridgeDescr->SetDirectHaunchDepths(span1haunches);
+               retVal = true;
+            }
+         }
+      }
+      else
+      {
+         // Haunches are at segments
+         GroupIndexType groupCnt = pBridgeDescr->GetGirderGroupCount();
+
+         if (pgsTypes::hilPerEach == pBridgeDescr->GetHaunchInputLocationType())
+         {
+            bool isSame = true;
+
+            for (GroupIndexType iGroup = 0; iGroup < groupCnt; iGroup++)
+            {
+               const CGirderGroupData* pGroup = pBridgeDescr->GetGirderGroup(iGroup);
+               const CSplicedGirderData* pGirder = pGroup->GetGirder(0); // assumes all girders in a group have same number of segments
+               SegmentIndexType segmentCnt = pGirder->GetSegmentCount();
+
+               for (SegmentIndexType iSeg = 0; iSeg < segmentCnt; iSeg++)
+               {
+                  GirderIndexType girderCnt = pGroup->GetGirderCount();
+                  std::vector<Float64> gdr1Haunchs;
+                  for (GirderIndexType iGirder = 0; iGirder < girderCnt; iGirder++)
+                  {
+                     const CSplicedGirderData* pGirder = pGroup->GetGirder(iGirder);
+                     if (iGirder == 0)
+                     {
+                        gdr1Haunchs = pGirder->GetDirectHaunchDepths(iSeg,true);
+                     }
+                     else
+                     {
+                        std::vector<Float64> haunches = pGirder->GetDirectHaunchDepths(iSeg,true);
+                        if (!CompareFloatVectors(haunches, gdr1Haunchs))
+                        {
+                           isSame = false;
+                           break;
+                        }
+                     }
+                  }
+               }
+            }
+
+            if (isSame)
+            {
+               // haunches are same in every segmentidx
+               pBridgeDescr->SetHaunchInputLocationType(pgsTypes::hilSame4AllGirders);
+               retVal = true;
+            }
+         }
+
+         if (pgsTypes::hilSame4AllGirders == pBridgeDescr->GetHaunchInputLocationType())
+         {
+            bool isSame = true;
+
+            std::vector<Float64> seg1Haunches = pBridgeDescr->GetGirderGroup((GroupIndexType)0)->GetGirder(0)->GetDirectHaunchDepths(0,true);
+            for (GroupIndexType iGroup = 0; iGroup < groupCnt; iGroup++)
+            {
+               const CGirderGroupData* pGroup = pBridgeDescr->GetGirderGroup(iGroup);
+               const CSplicedGirderData* pGirder1 = pGroup->GetGirder(0); // assumes all girders in a group have same number of segments
+               SegmentIndexType segmentCnt = pGirder1->GetSegmentCount();
+
+               for (SegmentIndexType iSeg = 0; iSeg < segmentCnt; iSeg++)
+               {
+                  if (iSeg == 0 && iGroup==0)
+                  {
+                     seg1Haunches = pGirder1->GetDirectHaunchDepths(iSeg,true);
+                  }
+                  else
+                  {
+                     std::vector<Float64> haunches = pGirder1->GetDirectHaunchDepths(iSeg,true);
+                     if (!CompareFloatVectors(haunches,seg1Haunches))
+                     {
+                        isSame = false;
+                        break;
+                     }
+                  }
+               }
+            }
+
+            if (isSame)
+            {
+               // haunches are same throughout bridge
+               pBridgeDescr->SetHaunchInputLocationType(pgsTypes::hilSame4Bridge);
+               pBridgeDescr->SetDirectHaunchDepths(seg1Haunches);
+               retVal = true;
+            }
+         }
+      }
+   }
+
+   return retVal;
 }

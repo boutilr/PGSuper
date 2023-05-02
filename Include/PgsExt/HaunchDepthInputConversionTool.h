@@ -42,6 +42,10 @@ public:
    std::pair<bool, CBridgeDescription2> ConvertToSlabOffsetInput(pgsTypes::SlabOffsetType newSlabOffsetType);
    std::pair<bool,CBridgeDescription2> ConvertToDirectHaunchInput(pgsTypes::HaunchInputLocationType newHaunchInputLocationType,pgsTypes::HaunchLayoutType newHaunchLayoutType,pgsTypes::HaunchInputDistributionType newHaunchInputDistributionType, bool forceInit=false);
 
+   // Condense direct haunch input if haunches are equal across bridge or segments/spans. Returns true if changes
+   bool CondenseDirectHaunchInput(CBridgeDescription2* pBridgeDescr);
+
+
    // Function to design haunches of all segments along a girderline or an individual segment based on the currently input haunch layout. 
    // rDesignGirderKey is girder where design is to be applied.
    // sourceGirderIdx is index of girderline where design is to take place. This allows you to design one girder and apply the design to another.

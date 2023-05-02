@@ -33,9 +33,12 @@
 
 #include <MFCTools\CustomDDX.h>
 #include <EAF\EAFAutoProgress.h>
+#include <EAF\EAFDocument.h>
+#include <EAF\EAFHelp.h>
 
 #include <PgsExt/BridgeDescription2.h>
 #include <PgsExt\HaunchDepthInputConversionTool.h>
+#include "..\Documentation\PGSuper.hh"
 
 // CFillHaunchDlg dialog
 
@@ -161,6 +164,7 @@ void CFillHaunchDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CFillHaunchDlg, CDialog)
 	ON_BN_CLICKED(IDC_COMPUTE_HAUNCH_RADIO,OnMethod)
 	ON_BN_CLICKED(IDC_ADD_HAUNCH_RADIO,OnMethod)
+	ON_COMMAND(IDHELP,OnHelp)
 END_MESSAGE_MAP()
 
 // CFillHaunchDlg message handlers
@@ -336,3 +340,7 @@ bool CFillHaunchDlg::ModifyAdd(CBridgeDescription2& rBridgeDescription)
 	return true;
 }
 
+void CFillHaunchDlg::OnHelp()
+{
+	EAFHelp(EAFGetDocument()->GetDocumentationSetName(),IDH_FILL_HAUNCH);
+}

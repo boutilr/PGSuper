@@ -45,6 +45,7 @@ public:
 	//{{AFX_MSG(CFillHaunchDlg)
 	virtual BOOL OnInitDialog() override;
 	afx_msg void OnMethod();
+	afx_msg void OnHelp();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP();
 

@@ -30128,17 +30128,7 @@ Float64 CBridgeAgentImp::GetDuration(IntervalIndexType idx) const
 std::_tstring CBridgeAgentImp::GetDescription(IntervalIndexType idx) const
 {
    VALIDATE(BRIDGE);
-//   return m_IntervalManager.GetDescription(idx);
-
-// Roadway geom string causes differences in .test reg files we don't need to see yet
-#pragma Reminder("Remove code below after regression testing haunch stuff - rdp")
-   std::_tstring t = m_IntervalManager.GetDescription(idx);
-   std::_tstring s = _T(", Roadway Geometry Control");
-   std::_tstring::size_type i = t.find(s);
-   if (i != std::string::npos)
-      t.erase(i,s.length());
-
-   return t;
+   return m_IntervalManager.GetDescription(idx);
 }
 
 IntervalIndexType CBridgeAgentImp::GetInterval(EventIndexType eventIdx) const

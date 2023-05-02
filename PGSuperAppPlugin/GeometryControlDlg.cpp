@@ -160,7 +160,7 @@ BOOL CGeometryControlDlg::OnInitDialog()
 
 void CGeometryControlDlg::OnHelp()
 {
-//   EAFHelp(EAFGetDocument()->GetDocumentationSetName(),IDH_CAST_DECK);
+   EAFHelp(EAFGetDocument()->GetDocumentationSetName(),IDH_GEOMETRY_CONTOL_EVENT);
 }
 
 void CGeometryControlDlg::OnBnClickedGceCheck()

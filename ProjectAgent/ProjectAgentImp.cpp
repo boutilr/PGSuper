@@ -6390,12 +6390,15 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
    if (pDocType->IsPGSpliceDocument() && m_BridgeDescription.GetHaunchInputDepthType() == pgsTypes::hidACamber && m_BridgeDescription.GetDeckDescription()->GetDeckType() != pgsTypes::sdtNone)
    {
       // Before version bridedesc 15 PGSplice used the slab offset to define the haunch. This is no longer supported. Need to convert
-      // old "A" data to direct haunch input. Haunch depths are dependent on bridge geometry so we must use unique layouts to capture old data
+      // old "A" data to direct haunch input. First convert to per each, then try to condense
       pgsTypes::HaunchInputLocationType hlt = pgsTypes::hilPerEach;
 
       // Use conversion tool. attempt to match "A" input with a linear end-to-end fit
       HaunchDepthInputConversionTool conversionTool(&m_BridgeDescription,m_pBroker,true);
       auto convPair = conversionTool.ConvertToDirectHaunchInput(hlt, pgsTypes::hltAlongSegments, pgsTypes::hidAtEnds);
+
+      bool didCondense = conversionTool.CondenseDirectHaunchInput(&(convPair.second)); // try to condense
+
       m_BridgeDescription.CopyHaunchSettings(convPair.second, false);
 
       CString strMsg(_T("Definition of haunch depths using the slab offset method is no longer supported in PGSplice. Haunch input data has been converted to the direct input method. A Geometry Control Event has been added to the timeline at the Open to Traffic event. It is very likely that this has changed haunch loads slightly, and thus dead load responses. It is also likely that roadway elevation checks will be changed significantly. Please review haunch dead loads and finished elevation checks accordingly."));

@@ -2077,7 +2077,7 @@ void CIntervalManager::ProcessStep4(EventIndexType eventIdx, const CTimelineEven
       if (pgsTypes::gcaGeometryControlEvent == geomType)
       {
 #pragma Reminder("Add code below after regression testing haunch stuff - rdp")
-//         strDescriptions.push_back(_T("Roadway Geometry Control"));
+         // strDescriptions.push_back(_T("Roadway Geometry Control"));
       }
    }
 
