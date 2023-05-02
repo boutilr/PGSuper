@@ -1168,7 +1168,7 @@ bool HaunchDepthInputConversionTool::CondenseDirectHaunchInput(CBridgeDescriptio
                      }
                   }
                }
-}
+            }
 
             if (isSame)
             {
