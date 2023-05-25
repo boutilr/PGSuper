@@ -436,14 +436,14 @@ void CBearingSeatElevationsDetailsChapterBuilder2::BuildBearingsTables(CComPtr<I
 
          if (pBackTable)
          {
-            std::vector<BearingElevationDetails> vBackElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Back, girderIndex);
+            std::vector<BearingElevationDetails> vBackElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Back, girderIndex, false);
 
             FillTable(pBackTable, pDisplayUnits, elev, dim, dist, bHasOverlay, bHasPrecamberBack, bIsDirectHaunchInput, vBackElevDetails);
          }
 
          if (pAheadTable)
          {
-            std::vector<BearingElevationDetails> vAheadElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Ahead, girderIndex);
+            std::vector<BearingElevationDetails> vAheadElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Ahead, girderIndex, false);
 
             FillTable(pAheadTable, pDisplayUnits, elev, dim, dist, bHasOverlay, bHasPrecamberAhead,bIsDirectHaunchInput, vAheadElevDetails);
          }
@@ -472,7 +472,7 @@ void CBearingSeatElevationsDetailsChapterBuilder2::BuildBearingsTables(CComPtr<I
          (*pPara) << pTable << rptNewLine;
          ADD_TABLE_NOTE;
 
-         std::vector<BearingElevationDetails> vBackElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Back, girderIndex);
+         std::vector<BearingElevationDetails> vBackElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Back, girderIndex, false);
 
          FillTable(pTable, pDisplayUnits, elev, dim, dist, bHasOverlay, bHasPrecamberBack, bIsDirectHaunchInput, vBackElevDetails);
       }

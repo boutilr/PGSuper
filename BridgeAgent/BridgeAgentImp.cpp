@@ -10082,9 +10082,9 @@ GDRCONFIG CBridgeAgentImp::GetSegmentConfiguration(const CSegmentKey& segmentKey
    }
    else
    {
-      // haunch is defined by direct input - slab offsets are not used - make garbage
-      config.SlabOffset[pgsTypes::metStart] = config.SlabOffset[pgsTypes::metEnd] = Float64_Inf;
-      config.AssumedExcessCamber = Float64_Inf;
+      // haunch is defined by direct input - slab offsets are not used - make zero 
+      config.SlabOffset[pgsTypes::metStart] = config.SlabOffset[pgsTypes::metEnd] = GetGrossSlabDepth();
+      config.AssumedExcessCamber = 0.0;
    }
 
    // Stirrup data
@@ -12355,14 +12355,14 @@ bool CBridgeAgentImp::HasTemporarySupportElevationAdjustments() const
    return false;
 }
 
-std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails(PierIndexType pierIdx, pgsTypes::PierFaceType face, GirderIndexType gdrIdx) const
+std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails(PierIndexType pierIdx, pgsTypes::PierFaceType face, GirderIndexType gdrIdx, bool bIgnoreUnrecoverableDeformations) const
 {
-   return GetBearingElevationDetails_Generic(pierIdx, face, CBridgeAgentImp::batBearings, gdrIdx);
+   return GetBearingElevationDetails_Generic(pierIdx, face, CBridgeAgentImp::batBearings, gdrIdx, bIgnoreUnrecoverableDeformations);
 }
 
 std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetailsAtGirderEdges(PierIndexType pierIdx, pgsTypes::PierFaceType face, GirderIndexType gdrIdx) const
 {
-   return GetBearingElevationDetails_Generic(pierIdx, face, CBridgeAgentImp::batGirderEdges, gdrIdx);
+   return GetBearingElevationDetails_Generic(pierIdx, face, CBridgeAgentImp::batGirderEdges, gdrIdx, false);
 }
 
 void CBridgeAgentImp::GetPierDisplaySettings(pgsTypes::DisplayEndSupportType* pStartPierType, pgsTypes::DisplayEndSupportType* pEndPierType, PierIndexType* pStartPierNumber) const
@@ -12373,7 +12373,7 @@ void CBridgeAgentImp::GetPierDisplaySettings(pgsTypes::DisplayEndSupportType* pS
    pBridgeDesc->GetPierDisplaySettings(pStartPierType, pEndPierType, pStartPierNumber);
 }
 
-std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails_Generic(PierIndexType pierIdx, pgsTypes::PierFaceType face, CBridgeAgentImp::BearingElevLocType locType,GirderIndexType gdrIndex) const
+std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails_Generic(PierIndexType pierIdx, pgsTypes::PierFaceType face, CBridgeAgentImp::BearingElevLocType locType,GirderIndexType gdrIndex,bool bIgnoreUnrecoverableDeformations) const
 {
    PierIndexType nPiers = GetPierCount();
    // these are invalid locations so return an empty vector
@@ -12652,14 +12652,14 @@ std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails
 
          // Finished elevation is tricky
          Float64 elevationAdjustmentForDeformation = 0.0;
-         if (haunchInputDepthType == pgsTypes::hidACamber)
+         if (haunchInputDepthType == pgsTypes::hidACamber || bIgnoreUnrecoverableDeformations)
          {
             // For "A" dim input, the finished elevation is at the PGL by definition
             elevDetails.FinishedGradeElevation = brgClDesignElevation;
          }
          else
          {
-            // Haunch depth input
+            // Haunch depth input - including unrecoverable deformations. 
             // The elevation of the beam at bearing cl depends on the pre-deformed girder shape and bearing location.
             // ASSUMPTION: The elevation adjustment at the CL girder-bearing is the same as at the workpoint location
             // Compute the relative excursion of the finished elevation due to adjusments made at the time of pier erection at CL.

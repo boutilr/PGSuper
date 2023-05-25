@@ -723,11 +723,42 @@ std::pair<bool,CBridgeDescription2> HaunchDepthInputConversionTool::DesignHaunch
          // Add slope affects with nominal fillet to determine minimum cl haunch anywhere along segment.
          Float64 minAllowCLHaunch = nominalFillet + slopeEffect;
 
-         Float64 haunchAdjustment = minAllowCLHaunch - minClHaunch;
+         Float64 filletHaunchAdjustment = minAllowCLHaunch - minClHaunch;
+
+         const CGirderGroupData* pGroup = rDesignBridgeDescr.GetGirderGroup(segmentKey.groupIndex);
+         const CSplicedGirderData* pGirder = pGroup->GetGirder(segmentKey.girderIndex);
+         const GirderLibraryEntry* pGirderEntry = pGirder->GetGirderLibraryEntry();
+
+         // Optional min haunch check at CL bearings
+         Float64 bearingHaunchAdjustment(0.0);
+         Float64 minBearingHaunch;
+         if (pGirderEntry->GetMinHaunchAtBearingLines(&minBearingHaunch))
+         {
+            // Add a buffer to min haunch value. This is because we don't get the exact CL bearing locations from GetPoi... below and the design can often miss by a smidge
+            minBearingHaunch += WBFL::Units::ConvertToSysUnits(0.125,WBFL::Units::Measure::Inch);
+
+            PoiList vSupportPois;
+            pPoi->GetPointsOfInterest(segmentKey,POI_FACEOFSUPPORT,&vSupportPois);
+
+            // check at all CL suport locations (this is an approximation, bearings might be slightly offset)
+            for (const auto& poi : vSupportPois)
+            {
+               Float64 xpoi = pPoi->ConvertPoiToGirderlineCoordinate(poi);
+
+               // CL haunch depth we computed in our Init function
+               Float64 currHaunch = rLayout.m_pHaunchDepths->Evaluate(xpoi);
+
+               if (currHaunch < minBearingHaunch)
+               {
+                  bearingHaunchAdjustment = max(bearingHaunchAdjustment, minBearingHaunch-currHaunch);
+               }
+            }
+         }
+
+         Float64 haunchSegAdjustment = max(filletHaunchAdjustment,bearingHaunchAdjustment);
 
          // Controlling adjustment along entire group
-         maxHaunchAdjustment4Group = max(maxHaunchAdjustment4Group,haunchAdjustment);
-
+         maxHaunchAdjustment4Group = max(maxHaunchAdjustment4Group, haunchSegAdjustment);
       } // segments
 
       // Now we have unadjusted CL design haunch values. Adjust these to match haunch depths to fillet + buffer

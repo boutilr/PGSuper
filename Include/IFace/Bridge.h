@@ -699,8 +699,10 @@ interface IBridge : IUnknown
    // Vector returned has special cases for results with BearingIndex values at CL girder and for single bearing locations. For multi
    // bearing cases an extra CL value is inserted at the start of each girder location. For single bearings, only one value is 
    // returned since it is by definition at the CL. All bearings along a bearing line can be requested by setting gdrIdx==ALL_GIRDERS
+   // Elevation computation can be a pure geometry comp if bIgnoreUnrecoverableDeformations==true. However, this is not exactly accurate
+   //   because the effect can be significant. However, the ignore option is given to avoid a full structural analysis of the girderline.
    enum specialBearingIndexType {sbiCLValue=INVALID_INDEX, sbiSingleBearingValue=INVALID_INDEX-1};
-   virtual std::vector<BearingElevationDetails> GetBearingElevationDetails(PierIndexType pierIdx,pgsTypes::PierFaceType face, GirderIndexType gdrIdx) const = 0;
+   virtual std::vector<BearingElevationDetails> GetBearingElevationDetails(PierIndexType pierIdx,pgsTypes::PierFaceType face, GirderIndexType gdrIdx, bool bIgnoreUnrecoverableDeformations) const = 0;
 
    // Compute bearing elevation data for each girder along bearing line at edges of girder bottom. Will return two values 0=Left, 1=Right
    virtual std::vector<BearingElevationDetails> GetBearingElevationDetailsAtGirderEdges(PierIndexType pierIdx,pgsTypes::PierFaceType face,GirderIndexType gdrIdx) const = 0;

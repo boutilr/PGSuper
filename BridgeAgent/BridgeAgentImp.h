@@ -425,7 +425,7 @@ public:
    virtual void GetSegmentsAtTemporarySupport(GirderIndexType gdrIdx,SupportIndexType tsIdx,CSegmentKey* pLeftSegmentKey,CSegmentKey* pRightSegmentKey) const override;
    virtual void GetTemporarySupportDirection(SupportIndexType tsIdx,IDirection** ppDirection) const override;
    virtual bool HasTemporarySupportElevationAdjustments() const override;
-   virtual std::vector<BearingElevationDetails> GetBearingElevationDetails(PierIndexType pierIdx,pgsTypes::PierFaceType face,GirderIndexType gdrIdx) const override;
+   virtual std::vector<BearingElevationDetails> GetBearingElevationDetails(PierIndexType pierIdx,pgsTypes::PierFaceType face,GirderIndexType gdrIdx, bool bIgnoreUnrecoverableDeformations) const override;
    virtual std::vector<BearingElevationDetails> GetBearingElevationDetailsAtGirderEdges(PierIndexType pierIdx,pgsTypes::PierFaceType face,GirderIndexType gdrIdx) const override;
    virtual void GetPierDisplaySettings(pgsTypes::DisplayEndSupportType* pStartPierType, pgsTypes::DisplayEndSupportType* pEndPierType, PierIndexType* pStartPierNumber) const override;
 
@@ -1749,7 +1749,7 @@ private:
 
    // Common function to return bearing elevation details at bearings or at girder edges
    enum BearingElevLocType { batBearings, batGirderEdges };
-   std::vector<BearingElevationDetails> GetBearingElevationDetails_Generic(PierIndexType pierIdx,pgsTypes::PierFaceType face, BearingElevLocType locType,GirderIndexType gdrIdx) const;
+   std::vector<BearingElevationDetails> GetBearingElevationDetails_Generic(PierIndexType pierIdx,pgsTypes::PierFaceType face, BearingElevLocType locType,GirderIndexType gdrIdx,bool bIgnoreUnrecoverableDeformations) const;
 
    std::vector<IntermedateDiaphragm> CBridgeAgentImp::GetCastInPlaceDiaphragms(const CSpanKey& spanKey, bool bLocationOnly) const;
    Float64 GetHalfElevation(Float64 gdrHeight, Float64 deckThickness) const;

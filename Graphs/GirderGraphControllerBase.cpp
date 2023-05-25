@@ -250,6 +250,8 @@ void CGirderGraphControllerBase::FillGroupCtrl()
       return; // not using a group list
    }
 
+   int cursel = pcbGroup->GetCurSel();
+
    pcbGroup->ResetContent();
 
    GET_IFACE(IDocumentType,pDocType);
@@ -284,7 +286,14 @@ void CGirderGraphControllerBase::FillGroupCtrl()
       pcbGroup->SetItemData(idx,grpIdx);
    }
 
-   pcbGroup->SetCurSel(0);
+   int nCount = pcbGroup->GetCount();
+
+   if ((cursel == CB_ERR) || cursel > nCount - 1)
+   {
+      cursel = 0;
+   }
+
+   pcbGroup->SetCurSel(cursel);
 }
 
 void CGirderGraphControllerBase::FillGirderCtrl()
