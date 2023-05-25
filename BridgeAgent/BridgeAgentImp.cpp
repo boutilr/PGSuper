@@ -12404,17 +12404,10 @@ std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails
    // If haunchInputDepthType==hidACamber, we know that design and computed deck elevations are the same at bearings.
    pgsTypes::HaunchInputDepthType haunchInputDepthType = pBridgeDesc->GetHaunchInputDepthType();
 
-   // If haunchInputDepthType==hidACamber, we know that design and computed deck elevations are the same at bearings.
-   pgsTypes::HaunchInputDepthType haunchInputDepthType = pBridgeDesc->GetHaunchInputDepthType();
-
    std::vector<BearingElevationDetails> vElevDetails;
 
    // Bearing elevation values are reported at the GCE
    IntervalIndexType gceInterval = GetGeometryControlInterval();
-
-   bool bIsDeck = GetDeckType() != pgsTypes::sdtNone;
-
-   Float64 overlayDepth = GetOverlayDepth(gceInterval);
 
    bool bIsDeck = GetDeckType() != pgsTypes::sdtNone;
 
@@ -12660,34 +12653,6 @@ std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails
          else
          {
             // Haunch depth input - including unrecoverable deformations. 
-            // The elevation of the beam at bearing cl depends on the pre-deformed girder shape and bearing location.
-            // ASSUMPTION: The elevation adjustment at the CL girder-bearing is the same as at the workpoint location
-            // Compute the relative excursion of the finished elevation due to adjusments made at the time of pier erection at CL.
-            Float64 clStation,clOffset;
-            GetStationAndOffset(poi,&clStation,&clOffset);
-            Float64 clDesignElevation = GetElevation(clStation,clOffset);
-
-            // Note that the call below starts a full bridge analysis up to the geometry control event interval. This is no longer just a geometry comp
-            Float64 lftHaunch,ctrHaunch,rgtHaunch;
-            Float64 clFinishedElevation = pDeformedGirderGeometry->GetFinishedElevation(poi, gceInterval, &lftHaunch, &ctrHaunch, &rgtHaunch);
-
-            // Adjustment at girder cl - bearing line intersection
-            elevationAdjustmentForDeformation = clFinishedElevation - clDesignElevation;
-
-            // Apply adjustment to elevation at workpoint
-            elevDetails.FinishedGradeElevation = brgClDesignElevation + elevationAdjustmentForDeformation;
-         }
-
-         // Finished elevation is tricky
-         Float64 elevationAdjustmentForDeformation = 0.0;
-         if (haunchInputDepthType == pgsTypes::hidACamber)
-         {
-            // For "A" dim input, the finished elevation is at the PGL by definition
-            elevDetails.FinishedGradeElevation = brgClDesignElevation;
-         }
-         else
-         {
-            // Haunch depth input
             // The elevation of the beam at bearing cl depends on the pre-deformed girder shape and bearing location.
             // ASSUMPTION: The elevation adjustment at the CL girder-bearing is the same as at the workpoint location
             // Compute the relative excursion of the finished elevation due to adjusments made at the time of pier erection at CL.

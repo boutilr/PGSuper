@@ -6421,40 +6421,6 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
             msg = _T(" explicit haunch depths that are input directly on the Haunch Description dialog. ");
          }
 
-   if (pDocType->IsPGSpliceDocument() && m_BridgeDescription.GetHaunchInputDepthType() == pgsTypes::hidACamber && m_BridgeDescription.GetDeckDescription()->GetDeckType() != pgsTypes::sdtNone)
-   {
-      // Before version bridedesc 15 PGSplice used the slab offset to define the haunch. This is no longer supported. Need to convert
-      // old "A" data to direct haunch input. First convert to per each, then try to condense
-      pgsTypes::HaunchInputLocationType hlt = pgsTypes::hilPerEach;
-
-      // Use conversion tool. attempt to match "A" input with a linear end-to-end fit
-      HaunchDepthInputConversionTool conversionTool(&m_BridgeDescription,m_pBroker,true);
-      auto convPair = conversionTool.ConvertToDirectHaunchInput(hlt, pgsTypes::hltAlongSegments, pgsTypes::hidAtEnds);
-
-      bool didCondense = conversionTool.CondenseDirectHaunchInput(&(convPair.second)); // try to condense
-
-      m_BridgeDescription.CopyHaunchSettings(convPair.second, false);
-
-      CString strMsg(_T("Definition of haunch depths using the slab offset method is no longer supported in PGSplice. Haunch input data has been converted to the direct input method. A Geometry Control Event has been added to the timeline at the Open to Traffic event. It is very likely that this has changed haunch loads slightly, and thus dead load responses. It is also likely that roadway elevation checks will be changed significantly. Please review haunch dead loads and finished elevation checks accordingly."));
-      GET_IFACE(IEAFStatusCenter,pStatusCenter);
-      pgsInformationalStatusItem* pStatusItem = new pgsInformationalStatusItem(m_StatusGroupID,m_scidLoadDescriptionWarning,strMsg);
-      pStatusCenter->Add(pStatusItem);
-
-      // Another change made in version 8 was to have the option to use hanch depths when computing composite section properties. This was
-      // only allowed in PGSuper prior to this. Look at the setting in the spec entry and alert the user if haunch is now used in section props.
-      pgsTypes::HaunchAnalysisSectionPropertiesType haunchAnalysisSectionPropertiesType = m_pSpecEntry->GetHaunchAnalysisSectionPropertiesType();
-      if (pgsTypes::hspZeroHaunch  != haunchAnalysisSectionPropertiesType)
-      {
-         CString msg;
-         if (pgsTypes::hspConstFilletDepth == haunchAnalysisSectionPropertiesType)
-         {
-            msg = _T("a constant haunch depth equal to the fillet value. ");
-         }
-         else if (pgsTypes::hspDetailedDescription == haunchAnalysisSectionPropertiesType)
-         {
-            msg = _T(" explicit haunch depths that are input directly on the Haunch Description dialog. ");
-         }
-
          CString strMsg(_T("Previous versions of PGSplice always assumed a zero haunch depth when computing composite structural section properties regardless of settings in the project criteria. The project criteria setting is now considered and will now compute properties based "));
          strMsg += msg;
          strMsg += CString(_T("This will likely change analysis results compared to the prior version.  Please review composite section properties and responses accordingly. "));
@@ -7300,11 +7266,6 @@ void CProjectAgentImp::SetWearingSurfaceType(pgsTypes::WearingSurfaceType wearin
       m_BridgeDescription.GetDeckDescription()->WearingSurface = wearingSurfaceType;
       Fire_BridgeChanged();
    }
-}
-
-void CProjectAgentImp::SetHaunchInputDepthType(pgsTypes::HaunchInputDepthType type)
-{
-   m_BridgeDescription.SetHaunchInputDepthType(type);
 }
 
 void CProjectAgentImp::SetHaunchInputDepthType(pgsTypes::HaunchInputDepthType type)
