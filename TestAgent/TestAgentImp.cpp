@@ -764,7 +764,7 @@ bool CTestAgentImp::RunGeometryTest(std::_tofstream& resultsFile, std::_tofstrea
    // ============================
    CGirderKey testGirder(segmentKey);
    // Write out all bearings at start end of girder
-   std::vector<BearingElevationDetails> startBearings = pBridge->GetBearingElevationDetails(startPierIdx, pgsTypes::Ahead, testGirder.girderIndex);
+   std::vector<BearingElevationDetails> startBearings = pBridge->GetBearingElevationDetails(startPierIdx, pgsTypes::Ahead, testGirder.girderIndex, false);
    for (const BearingElevationDetails& beDet : startBearings)
    {
       if (beDet.GirderKey == testGirder)
@@ -777,7 +777,7 @@ bool CTestAgentImp::RunGeometryTest(std::_tofstream& resultsFile, std::_tofstrea
    }
 
    // Write out all bearings at end end of girder
-   std::vector<BearingElevationDetails> endBearings = pBridge->GetBearingElevationDetails(endPierIdx, pgsTypes::Back, testGirder.girderIndex);
+   std::vector<BearingElevationDetails> endBearings = pBridge->GetBearingElevationDetails(endPierIdx, pgsTypes::Back, testGirder.girderIndex, false);
    for (const BearingElevationDetails& beDet : endBearings)
    {
       if (beDet.GirderKey == testGirder)

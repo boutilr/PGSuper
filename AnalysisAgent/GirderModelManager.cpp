@@ -15392,9 +15392,9 @@ void CGirderModelManager::GetMainSpanSlabLoadEx(const CSegmentKey& segmentKey, b
 
    pgsTypes::HaunchLoadComputationType HaunchLoadComputationType = pSpec->GetHaunchLoadComputationType();
 
-   if (isHaunchDirect && pgsTypes::hlcDetailedAnalysis == HaunchLoadComputationType)
+   if (isHaunchDirect) 
    {
-      // With direct haunch input we don't need to compute camber or flange thickening. 
+      // With direct haunch input we don't need to compute camber or flange thickening or precamber. 
       camberShape = std::make_unique<WBFL::Math::ZeroFunction>();
       imposedShape = std::make_unique<WBFL::Math::ZeroFunction>();
    }
@@ -15507,7 +15507,7 @@ void CGirderModelManager::GetMainSpanSlabLoadEx(const CSegmentKey& segmentKey, b
 
       Float64 top_girder_to_top_slab;
       Float64 girder_chord_elevation;
-      if (useDesignValues)
+      if (useDesignValues && !isHaunchDirect)
       {
          top_girder_to_top_slab = pBridge->GetTopSlabToTopGirderChordDistance(poi,dsnAstart,dsnAend);
          girder_chord_elevation = pGirder->GetTopGirderChordElevation(poi,dsnAstart,dsnAend);

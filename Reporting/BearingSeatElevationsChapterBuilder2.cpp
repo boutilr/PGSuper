@@ -253,7 +253,7 @@ rptRcTable* CBearingSeatElevationsChapterBuilderBase::BuildTable(const CString& 
    // first columns
    RowIndexType row = pTable->GetNumberOfHeaderRows();
 
-   std::vector<BearingElevationDetails> vElevDetails = pBridge->GetBearingElevationDetails(pierIdx, face, girderIndex);
+   std::vector<BearingElevationDetails> vElevDetails = pBridge->GetBearingElevationDetails(pierIdx, face, girderIndex, false);
    std::vector<BearingElevationDetails>::iterator iter(vElevDetails.begin());
    std::vector<BearingElevationDetails>::iterator iend(vElevDetails.end());
    GirderIndexType lastGdrIdx = INVALID_INDEX;

@@ -1,6 +1,6 @@
 Computation of Bridge Elevations - Slab Offset Input (PGSuper-Only) {#tg_vertical_geometry_slaboffset_elevations}
 ======================================
-**With Slab Offset input there is no need to compute finished deck elevations.** This is because it is assumed that the finished deck always exactly matches the design roadway elevations (GPGL). 
+**With Slab Offset input there is no need to compute finished deck elevations.** This is because for this input mode it is assumed that the finished deck always exactly matches the design roadway elevations (GPGL). 
 
 Top of girder elevations are computed based on Slab Offset input, and girder model deflections computed using assumptions for dead load and section properties.
 
