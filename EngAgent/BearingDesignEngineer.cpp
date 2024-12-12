@@ -1257,3 +1257,9 @@ void pgsBearingDesignEngineer::GetThermalExpansionDetails(CGirderKey girderKey, 
 
 }
 
+void pgsBearingDesignEngineer::CheckBearing(WBFL::EngTools::Bearing* brg,
+    WBFL::EngTools::BearingLoads* brg_loads, WBFL::EngTools::BearingCalculator* brg_calc) const
+{
+
+}
+
