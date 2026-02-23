@@ -42,7 +42,27 @@ bool DuctSizeCriteria::Compare(const DuctSizeCriteria& other, const SpecLibraryE
    if(operator!=(other))
    {
       bSame = false;
-      vDifferences.emplace_back(std::make_unique<PGS::Library::DifferenceStringItem>(_T("Size of Ducts parameters are different"), _T(""), _T("")));
+      if (!::IsEqual(DuctAreaPushRatio, other.DuctAreaPushRatio))
+      {
+          CString str1, str2;
+          str1.Format(_T("%2f"), DuctAreaPushRatio);
+          str2.Format(_T("%2f"), other.DuctAreaPushRatio);
+          vDifferences.emplace_back(std::make_unique<PGS::Library::DifferenceStringItem>(_T("Minimum ratio of inside area of duct to net area of prestressing steel using push method"), str1, str2));
+      }
+      if (!::IsEqual(DuctAreaPullRatio, other.DuctAreaPullRatio))
+      {
+          CString str1, str2;
+          str1.Format(_T("%2f"), DuctAreaPullRatio);
+          str2.Format(_T("%2f"), other.DuctAreaPullRatio);
+          vDifferences.emplace_back(std::make_unique<PGS::Library::DifferenceStringItem>(_T("Minimum ratio of inside area of duct to net area of prestressing steel using pull-through method"), str1, str2));
+      }
+      if (!::IsEqual(DuctDiameterRatio, other.DuctDiameterRatio))
+      {
+         CString str1, str2;
+         str1.Format(_T("%2f"), DuctDiameterRatio);
+         str2.Format(_T("%2f"), other.DuctDiameterRatio);
+		 vDifferences.emplace_back(std::make_unique<PGS::Library::DifferenceStringItem>(_T("Maximum ratio of outside duct diameter to gross concrete thickness at the duct"), str1, str2));
+      }
       if (bReturnOnFirstDifference) return false;
    }
 
