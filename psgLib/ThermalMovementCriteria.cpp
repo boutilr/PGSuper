@@ -30,7 +30,10 @@ bool ThermalMovementCriteria::Compare(const ThermalMovementCriteria& other, cons
     if (ThermalMovementFactor != other.ThermalMovementFactor)
     {
         bSame = false;
-        vDifferences.emplace_back(std::make_unique<PGS::Library::DifferenceStringItem>(_T("Thermal Movement Factors Are Different"), _T(""), _T("")));
+		CString str1, str2;
+        str1.Format(_T("%2f"), ThermalMovementFactor);
+        str2.Format(_T("%2f"), other.ThermalMovementFactor);
+        vDifferences.emplace_back(std::make_unique<PGS::Library::DifferenceStringItem>(_T("Thermal Movement Factors Are Different"), str1, str2));
         if (bReturnOnFirstDifference) return false;
     }
 
