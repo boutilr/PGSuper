@@ -315,6 +315,7 @@
 #define IDD_COPY_BEARING_PROPERTIES     1116
 #define IDC_FINAL_TAG                   1117
 #define IDC_HPOFFSET_START              1117
+#define IDD_PIER_LAYOUT_COMMON                1117
 #define IDC_HPOFFSET_END_UNIT           1118
 #define IDC_LIFTING                     1118
 #define IDC_AFTER_XFER_TAG              1119

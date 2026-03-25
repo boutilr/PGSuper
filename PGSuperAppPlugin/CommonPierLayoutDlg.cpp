@@ -45,7 +45,7 @@
 
 
 CCommonPierLayoutDlg::CCommonPierLayoutDlg(CWnd* pParent)
-	:CDialog(IDD_PIER_LAYOUT, pParent)
+	:CDialog(IDD_PIER_LAYOUT_COMMON, pParent)
 {
 
    Init();
