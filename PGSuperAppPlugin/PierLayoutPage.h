@@ -33,6 +33,7 @@
 #include <PsgLib\PierData2.h>
 #include "ColumnLayoutGrid.h"
 #include <PgsExt\ColumnFixityComboBox.h>
+#include "CommonPierLayoutDlg.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CPierLayoutPage dialog
@@ -75,41 +76,44 @@ protected:
    afx_msg void OnUserEc();
    afx_msg void OnMoreProperties();
    afx_msg void OnPierModelTypeChanged();
-   afx_msg void OnColumnShapeChanged();
-   afx_msg void OnColumnCountChanged(NMHDR* pNMHDR, LRESULT* pResult);
-   afx_msg void OnHeightMeasureChanged();
-   afx_msg void OnAddColumn();
-   afx_msg void OnRemoveColumns();
+   //afx_msg void OnColumnShapeChanged();
+   //afx_msg void OnColumnCountChanged(NMHDR* pNMHDR, LRESULT* pResult);
+   //afx_msg void OnHeightMeasureChanged();
+   //afx_msg void OnAddColumn();
+   //afx_msg void OnRemoveColumns();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
-   CMetaFileStatic m_LayoutPicture;
-   CColumnLayoutGrid m_ColumnLayoutGrid;
-   CColumnFixityComboBox m_cbColumnFixity;
+   //CMetaFileStatic m_LayoutPicture;
+   //CColumnLayoutGrid m_ColumnLayoutGrid;
+   //CColumnFixityComboBox m_cbColumnFixity;
 
    void FillPierModelTypeComboBox();
-   void FillRefColumnComboBox(ColumnIndexType nColumns=INVALID_INDEX);
-   void FillHeightMeasureComboBox();
-   void FillTransverseLocationComboBox();
+   //void FillRefColumnComboBox(ColumnIndexType nColumns=INVALID_INDEX);
+   //void FillHeightMeasureComboBox();
+   //void FillTransverseLocationComboBox();
 
    CPierData2* m_pPier;
    PierIndexType m_PierIdx;
 
    pgsTypes::PierModelType m_PierModelType;
 
+   // Embedded dialogs
+   CCommonPierLayoutDlg m_CommonPierLayoutDlg;
+
    void UpdateConcreteTypeLabel();
    void UpdateEc();
 
-   ColumnIndexType m_RefColumnIdx;
-   Float64 m_TransverseOffset;
-   pgsTypes::OffsetMeasurementType m_TransverseOffsetMeasurement;
-   Float64 m_XBeamWidth;
-   Float64 m_XBeamHeight[2];
-   Float64 m_XBeamTaperHeight[2];
-   Float64 m_XBeamTaperLength[2];
-   Float64 m_XBeamEndSlopeOffset[2];
-   Float64 m_XBeamOverhang[2];
-   pgsTypes::ColumnLongitudinalBaseFixityType m_ColumnFixity;
+   //ColumnIndexType m_RefColumnIdx;
+   //Float64 m_TransverseOffset;
+   //pgsTypes::OffsetMeasurementType m_TransverseOffsetMeasurement;
+   //Float64 m_XBeamWidth;
+   //Float64 m_XBeamHeight[2];
+   //Float64 m_XBeamTaperHeight[2];
+   //Float64 m_XBeamTaperLength[2];
+   //Float64 m_XBeamEndSlopeOffset[2];
+   //Float64 m_XBeamOverhang[2];
+   //pgsTypes::ColumnLongitudinalBaseFixityType m_ColumnFixity;
 };
 
 //{{AFX_INSERT_LOCATION}}
