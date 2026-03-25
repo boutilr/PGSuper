@@ -315,7 +315,7 @@
 #define IDD_COPY_BEARING_PROPERTIES     1116
 #define IDC_FINAL_TAG                   1117
 #define IDC_HPOFFSET_START              1117
-#define IDD_PIER_LAYOUT_COMMON                1117
+#define IDD_PIER_LAYOUT_COMMON          1117
 #define IDC_HPOFFSET_END_UNIT           1118
 #define IDC_LIFTING                     1118
 #define IDC_AFTER_XFER_TAG              1119
@@ -1491,7 +1491,6 @@
 #define IDC_BUTTON_EDIT_BEARING_DETAIL_1 2067
 #define IDC_SELECT_BEARINGS             2068
 #define IDC_STATIC_BRG_NOTE             2069
-#define IDC_TRANS_GROUP                 2070
 #define IDS_E_WRITE                     2500
 #define IDS_E_UNSAFESAVE                2501
 #define IDS_E_SAVERECOVER1              2502

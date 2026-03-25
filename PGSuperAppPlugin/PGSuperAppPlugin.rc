@@ -14,7 +14,8 @@
 #include <EAF\EAFResources.h>
 #if !defined _NOGRID
 #include "grid\gxresrc.h"
-#endif/////////////////////////////////////////////////////////////////////////////
+#endif
+/////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3517,63 +3518,16 @@ BEGIN
     LTEXT           "Pier Model Type",IDC_PIER_MODEL_LABEL,7,9,52,8
     COMBOBOX        IDC_PIER_MODEL_TYPE,63,7,120,179,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "All dimensions are in the plane of the pier",IDC_DIMENSIONS_NOTE,226,9,132,8
-    CONTROL         "",IDC_PIER_LAYOUT,"Static",SS_ENHMETAFILE,15,25,335,110
-    GROUPBOX        "Material Properties",IDC_MATERIAL_GROUP,7,140,351,29
-    LTEXT           "f'c",IDC_FC_LABEL,19,154,8,8
-    EDITTEXT        IDC_FC,35,151,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_FC_UNIT,79,154,19,8
-    CONTROL         "Ec",IDC_EC_LABEL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,102,153,22,10
-    EDITTEXT        IDC_EC,129,150,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_EC_UNIT,171,153,19,8
-    PUSHBUTTON      "More Properties...",IDC_MORE_PROPERTIES,196,151,84,14
-    LTEXT           "Concrete Type Label",IDC_CONCRETE_TYPE_LABEL,284,153,67,8
-    GROUPBOX        "Pier Cap Dimensions",IDC_CAP_GROUP,7,174,351,61
-    LTEXT           "H1",IDC_H1_LABEL,20,190,10,8
-    EDITTEXT        IDC_H1,34,187,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_H1_UNIT,76,190,19,8
-    LTEXT           "H2",IDC_H2_LABEL,103,190,10,8
-    EDITTEXT        IDC_H2,117,187,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_H2_UNIT,159,190,19,8
-    LTEXT           "H3",IDC_H3_LABEL,189,190,10,8
-    EDITTEXT        IDC_H3,201,187,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_H3_UNIT,244,190,19,8
-    LTEXT           "H4",IDC_H4_LABEL,271,190,10,8
-    EDITTEXT        IDC_H4,285,187,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_H4_UNIT,327,190,19,8
-    LTEXT           "X1",IDC_X1_LABEL,20,204,9,8
-    EDITTEXT        IDC_X1,34,202,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_X1_UNIT,76,204,19,8
-    LTEXT           "X2",IDC_X2_LABEL,103,204,9,8
-    EDITTEXT        IDC_X2,117,202,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_X2_UNIT,159,204,19,8
-    LTEXT           "X3",IDC_STATIC,189,203,9,8
-    EDITTEXT        IDC_X3,202,202,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_X3_UNIT,244,203,19,8
-    LTEXT           "X4",IDC_STATIC,271,203,9,8
-    EDITTEXT        IDC_X4,285,202,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_X4_UNIT,327,203,19,8
-    LTEXT           "X5",IDC_X5_LABEL,20,219,9,8
-    EDITTEXT        IDC_X5,34,217,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_X5_UNIT,76,219,19,8
-    LTEXT           "X6",IDC_X6_LABEL,104,219,9,8
-    EDITTEXT        IDC_X6,118,217,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_X6_UNIT,160,219,19,8
-    LTEXT           "W",IDC_W_LABEL,271,219,8,8
-    EDITTEXT        IDC_W,285,217,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_W_UNIT,327,219,19,8
-    GROUPBOX        "Column Layout",IDC_COLUMN_GROUP,7,241,351,142
-    LTEXT           "Base of column is defined by",IDC_STATIC,15,255,92,8
-    COMBOBOX        IDC_HEIGHT_MEASURE,109,253,73,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Longit. Base Fixity",IDC_FIXITY_LABEL,193,255,60,8
-    COMBOBOX        IDC_FIXITY,259,253,66,30,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Custom1",IDC_COLUMN_GRID,"GXWND",WS_BORDER | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP,15,269,311,90
-    COMBOBOX        IDC_REFCOLUMN,15,364,48,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "is located",IDC_STATIC,71,366,31,8
-    EDITTEXT        IDC_REFCOLUMN_OFFSET,105,364,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_REFCOLUMN_OFFSET_UNIT,149,366,9,8
-    COMBOBOX        IDC_REFCOLUMN_MEASUREMENT,163,364,107,81,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "+",IDC_ADD_COLUMN,333,268,23,14
-    PUSHBUTTON      "-",IDC_REMOVE_COLUMN,333,287,23,14
+    GROUPBOX        "Material Properties",IDC_MATERIAL_GROUP,7,25,351,29
+    LTEXT           "f'c",IDC_FC_LABEL,19,39,8,8
+    EDITTEXT        IDC_FC,35,36,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "Static",IDC_FC_UNIT,79,39,19,8
+    CONTROL         "Ec",IDC_EC_LABEL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,102,38,22,10
+    EDITTEXT        IDC_EC,129,35,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "Static",IDC_EC_UNIT,171,38,19,8
+    PUSHBUTTON      "More Properties...",IDC_MORE_PROPERTIES,196,36,84,14
+    LTEXT           "Concrete Type Label",IDC_CONCRETE_TYPE_LABEL,284,38,67,8
+    GROUPBOX        "Static",IDC_STATIC_BOUNDS,8,58,350,330
 END
 
 IDD_EDIT_HAUNCH DIALOGEX 0, 0, 629, 369
@@ -4016,19 +3970,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Layout"
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
-    LTEXT           "Pier Model Type",IDC_PIER_MODEL_LABEL,7,9,52,8
-    COMBOBOX        IDC_PIER_MODEL_TYPE,63,7,120,179,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "All dimensions are in the plane of the pier",IDC_DIMENSIONS_NOTE,226,9,132,8
-    CONTROL         "",IDC_PIER_LAYOUT,"Static",SS_ENHMETAFILE,15,25,335,110
-    GROUPBOX        "Material Properties",IDC_MATERIAL_GROUP,7,140,351,29
-    LTEXT           "f'c",IDC_FC_LABEL,19,154,8,8
-    EDITTEXT        IDC_FC,35,151,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_FC_UNIT,79,154,19,8
-    CONTROL         "Ec",IDC_EC_LABEL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,102,153,22,10
-    EDITTEXT        IDC_EC,129,150,40,14,ES_RIGHT | ES_AUTOHSCROLL
-    LTEXT           "Static",IDC_EC_UNIT,171,153,19,8
-    PUSHBUTTON      "More Properties...",IDC_MORE_PROPERTIES,196,151,84,14
-    LTEXT           "Concrete Type Label",IDC_CONCRETE_TYPE_LABEL,284,153,67,8
+    CONTROL         "",IDC_PIER_LAYOUT,"Static",SS_ENHMETAFILE,15,56,335,110
     GROUPBOX        "Pier Cap Dimensions",IDC_CAP_GROUP,7,174,351,61
     LTEXT           "H1",IDC_H1_LABEL,20,190,10,8
     EDITTEXT        IDC_H1,34,187,40,14,ES_RIGHT | ES_AUTOHSCROLL
@@ -5239,6 +5181,16 @@ BEGIN
     0, 0, 0, 0
 END
 
+IDD_PIER_LAYOUT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_PIER_LAYOUT_COMMON AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -5667,5 +5619,3 @@ END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
-
-

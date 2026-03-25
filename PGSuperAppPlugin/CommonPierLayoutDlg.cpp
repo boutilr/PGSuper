@@ -91,8 +91,8 @@ void CCommonPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 
-	auto pBroker = EAFGetBroker();
-	GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+	//auto pBroker = EAFGetBroker();
+	//GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
 }
 
