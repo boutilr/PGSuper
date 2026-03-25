@@ -213,6 +213,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClCompile Include="BridgeDescFramingGrid.cpp" />
     <ClCompile Include="BridgeDescFramingPage.cpp" />
     <ClCompile Include="BridgeDescGeneralPage.cpp" />
+    <ClCompile Include="CommonPierLayoutDlg.cpp" />
     <ClCompile Include="CopyBearingDlg.cpp" />
     <ClCompile Include="CopyPierDlg.cpp" />
     <ClCompile Include="CopyPierPropertiesCallbacks.cpp" />
@@ -609,6 +610,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClInclude Include="BridgeDescFramingPage.h" />
     <ClInclude Include="BridgeDescGeneralPage.h" />
     <ClInclude Include="CLSID.h" />
+    <ClInclude Include="CommonPierLayoutDlg.h" />
     <ClInclude Include="CopyBearingDlg.h" />
     <ClInclude Include="CopyPierDlg.h" />
     <ClInclude Include="CopyPierPropertiesCallbacks.h" />
