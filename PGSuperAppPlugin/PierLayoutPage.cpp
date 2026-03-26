@@ -129,8 +129,6 @@ BOOL CPierLayoutPage::OnInitDialog()
    m_CommonPierLayoutDlg.SetPierModelType(m_PierModelType);
    VERIFY(m_CommonPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
 
-   m_CommonPierLayoutDlg.ShowWindow(SW_SHOW);
-
    CPropertyPage::OnInitDialog();
 
    UpdateConcreteTypeLabel();
