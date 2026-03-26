@@ -22,6 +22,9 @@
 
 #pragma once
 #include "resource.h"
+#include <PsgLib\PierData2.h>
+#include "ColumnLayoutGrid.h"
+#include <PgsExt\ColumnFixityComboBox.h>
 
 
 // CommonPierLayoutDlg.h : header file
@@ -37,17 +40,45 @@ class CCommonPierLayoutDlg : public CDialog
 public:
 	CCommonPierLayoutDlg(CWnd* pParent = nullptr);
 
+	void SetPierModelType(const pgsTypes::PierModelType& pierModelType);
+	void SetPierData(const CPierData2& pierData);
+
    // Implementation
 protected:
 	void DoDataExchange(CDataExchange* pDX);
-	void Init();
 
 
 	virtual BOOL OnInitDialog() override;
 
+	afx_msg void OnColumnShapeChanged();
+	afx_msg void OnColumnCountChanged(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnHeightMeasureChanged();
+	afx_msg void OnAddColumn();
+	afx_msg void OnRemoveColumns();
+
 	DECLARE_MESSAGE_MAP()
 
+	pgsTypes::PierModelType m_PierModelType;
+	CPierData2 m_Pier;
 
+	CMetaFileStatic m_LayoutPicture;
+	CColumnLayoutGrid m_ColumnLayoutGrid;
+	CColumnFixityComboBox m_cbColumnFixity;
+
+	void FillRefColumnComboBox(ColumnIndexType nColumns=INVALID_INDEX);
+	void FillHeightMeasureComboBox();
+	void FillTransverseLocationComboBox();
+
+	ColumnIndexType m_RefColumnIdx;
+	Float64 m_TransverseOffset;
+	pgsTypes::OffsetMeasurementType m_TransverseOffsetMeasurement;
+	Float64 m_XBeamWidth;
+	Float64 m_XBeamHeight[2];
+	Float64 m_XBeamTaperHeight[2];
+	Float64 m_XBeamTaperLength[2];
+	Float64 m_XBeamEndSlopeOffset[2];
+	Float64 m_XBeamOverhang[2];
+	pgsTypes::ColumnLongitudinalBaseFixityType m_ColumnFixity;
 };
 
 
