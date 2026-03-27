@@ -79,13 +79,12 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
 
    // Pier Model
    DDX_CBItemData(pDX,IDC_PIER_MODEL_TYPE,m_PierModelType);
+   DDX_CBEnum(pDX, IDC_PIER_LAYOUT_TYPE, m_PierLayoutType);
 
    CConcreteMaterial& concrete = m_pPier->GetConcrete();
    DDX_UnitValueAndTag(pDX,IDC_FC,IDC_FC_UNIT,concrete.Fc,pDisplayUnits->GetStressUnit());
    DDX_UnitValueAndTag(pDX,IDC_EC,IDC_EC_UNIT,concrete.Ec,pDisplayUnits->GetModEUnit());
    DDX_Check_Bool(pDX,IDC_EC_LABEL,concrete.bUserEc);
-
-
 
    if ( pDX->m_bSaveAndValidate )
    {
@@ -102,6 +101,7 @@ BEGIN_MESSAGE_MAP(CPierLayoutPage, CPropertyPage)
 	ON_EN_CHANGE(IDC_FC, OnChangeFc)
    ON_BN_CLICKED(IDC_MORE_PROPERTIES, OnMoreProperties)
    ON_CBN_SELCHANGE(IDC_PIER_MODEL_TYPE, OnPierModelTypeChanged)
+   ON_CBN_SELCHANGE(IDC_PIER_LAYOUT_TYPE, OnPierLayoutTypeChanged)
 	ON_COMMAND(ID_HELP, OnHelp)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -112,11 +112,11 @@ END_MESSAGE_MAP()
 BOOL CPierLayoutPage::OnInitDialog() 
 {
 
-
    m_PierModelType = m_pPier->GetPierModelType();
-
+   m_PierLayoutType = pltCommon;
 
    FillPierModelTypeComboBox();
+   FillPierLayoutTypeComboBox();
 
    CWnd* pBox = GetDlgItem(IDC_STATIC_BOUNDS);
    pBox->ShowWindow(SW_HIDE);
@@ -140,6 +140,7 @@ BOOL CPierLayoutPage::OnInitDialog()
    OnUserEc();
 
    OnPierModelTypeChanged();
+   OnPierLayoutTypeChanged();
 
 
    return TRUE;  // return TRUE unless you set the focus to a control
@@ -206,10 +207,29 @@ void CPierLayoutPage::FillPierModelTypeComboBox()
    pcbPierModel->ResetContent();
 
    int idx = pcbPierModel->AddString(_T("Idealized"));
-   pcbPierModel->SetItemData(idx,(DWORD_PTR)pgsTypes::pmtIdealized);
+   pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pmtIdealized);
 
    idx = pcbPierModel->AddString(_T("Physical"));
-   pcbPierModel->SetItemData(idx,(DWORD_PTR)pgsTypes::pmtPhysical);
+   pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pmtPhysical);
+}
+
+void CPierLayoutPage::FillPierLayoutTypeComboBox()
+{
+   CComboBox* pcbPierModel = (CComboBox*)GetDlgItem(IDC_PIER_LAYOUT_TYPE);
+   pcbPierModel->ResetContent();
+
+   int idx = pcbPierModel->AddString(_T("Common"));
+   pcbPierModel->SetItemData(idx, (DWORD_PTR)pltCommon);
+
+   idx = pcbPierModel->AddString(_T("Hammerhead"));
+   pcbPierModel->SetItemData(idx, (DWORD_PTR)pltHammerhead);
+
+   idx = pcbPierModel->AddString(_T("Haunched"));
+   pcbPierModel->SetItemData(idx, (DWORD_PTR)pltHaunched);
+
+   idx = pcbPierModel->AddString(_T("Custom"));
+   pcbPierModel->SetItemData(idx, (DWORD_PTR)pltCustom);
+
 }
 
 void CPierLayoutPage::OnHelp() 
@@ -349,4 +369,30 @@ void CPierLayoutPage::OnPierModelTypeChanged()
    }
 }
 
+
+void CPierLayoutPage::OnPierLayoutTypeChanged()
+{
+    CComboBox* pcbPierModel = (CComboBox*)GetDlgItem(IDC_PIER_LAYOUT_TYPE);
+    int curSel = pcbPierModel->GetCurSel();
+    m_PierLayoutType = (PierLayoutType)pcbPierModel->GetItemData(curSel);
+
+    SwapDialogs();
+}
+
+void CPierLayoutPage::SwapDialogs()
+{
+    if (m_PierModelType == pgsTypes::pmtPhysical)
+    {
+        if (m_PierLayoutType == pltCommon)
+        {
+            m_CommonPierLayoutDlg.ShowWindow(SW_SHOW);
+            //m_KdotHaulingDlg.ShowWindow(SW_HIDE);
+        }
+        else
+        {
+            m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
+            //m_KdotHaulingDlg.ShowWindow(SW_SHOW);
+        }
+    }
+}
 
