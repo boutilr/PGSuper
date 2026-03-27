@@ -125,8 +125,9 @@ BOOL CPierLayoutPage::OnInitDialog()
    pBox->GetWindowRect(&boxRect);
    ScreenToClient(boxRect);
 
-   VERIFY(m_CommonPierLayoutDlg.Create(IDD_PIER_LAYOUT_COMMON, this));
    m_CommonPierLayoutDlg.SetPierModelType(m_PierModelType);
+   m_CommonPierLayoutDlg.SetPierData(*m_pPier);
+   VERIFY(m_CommonPierLayoutDlg.Create(IDD_PIER_LAYOUT_COMMON, this));
    VERIFY(m_CommonPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
 
    CPropertyPage::OnInitDialog();
