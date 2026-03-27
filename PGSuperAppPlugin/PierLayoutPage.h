@@ -32,6 +32,7 @@
 #include "resource.h"
 #include <PsgLib\PierData2.h>
 #include "CommonPierLayoutDlg.h"
+#include <WBFLGenericBridge.h>
 
 /////////////////////////////////////////////////////////////////////////////
 // CPierLayoutPage dialog
@@ -74,16 +75,21 @@ protected:
    afx_msg void OnUserEc();
    afx_msg void OnMoreProperties();
    afx_msg void OnPierModelTypeChanged();
+   afx_msg void OnPierLayoutTypeChanged();
+
+   void SwapDialogs();
 
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
    void FillPierModelTypeComboBox();
+   void FillPierLayoutTypeComboBox();
 
    CPierData2* m_pPier;
    PierIndexType m_PierIdx;
 
    pgsTypes::PierModelType m_PierModelType;
+   PierLayoutType m_PierLayoutType;
 
    // Embedded dialogs
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;
