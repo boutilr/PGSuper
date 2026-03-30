@@ -296,6 +296,14 @@ typedef struct pgsTypes
       pmtPhysical   // pier is modeled with a physical description
    } PierModelType;
 
+   typedef enum PierLayoutType
+   {
+       pltCommon,      // common pier layout
+	   pltHammerhead,  // hammerhead pier / single-column pier layout
+	   pltHaunched,    // pier layout based on haunch radius
+       pltCustom       // lower cross-beam manually defined by adding points
+   } PierLayoutType;
+
    // Bridge models can begin and/or end with a pier or an abutment starting with an arbitrary number (e.g., Pier 3)
    // This enum indicates what type of permanent support is at either end of the bridge
    typedef enum DisplayEndSupportType
