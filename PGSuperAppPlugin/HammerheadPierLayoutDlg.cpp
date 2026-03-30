@@ -20,7 +20,7 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 
-// CommonPierLayoutDlg.cpp : implementation file
+// HammerheadPierLayoutDlg.cpp : implementation file
 //
 
 ///////////////////////////////////////////////////////////////////////////
@@ -34,12 +34,13 @@
 // the other location.
 
 #include "stdafx.h"
-#include "CommonPierLayoutDlg.h"
+#include "HammerheadPierLayoutDlg.h"
 #include <EAF\EAFDisplayUnits.h>
 #include <IFace\Project.h>
 #include <IFace/Tools.h>
 
-CCommonPierLayoutDlg::CCommonPierLayoutDlg(CWnd* pParent)
+
+CHammerheadPierLayoutDlg::CHammerheadPierLayoutDlg(CWnd* pParent)
 	:CDialog(IDD_PIER_LAYOUT_COMMON, pParent)
 {
 
@@ -49,16 +50,16 @@ CCommonPierLayoutDlg::CCommonPierLayoutDlg(CWnd* pParent)
 
 }
 
-BEGIN_MESSAGE_MAP(CCommonPierLayoutDlg, CDialog)
+BEGIN_MESSAGE_MAP(CHammerheadPierLayoutDlg, CDialog)
     ON_CBN_SELCHANGE(IDC_HEIGHT_MEASURE, OnHeightMeasureChanged)
-    ON_BN_CLICKED(IDC_ADD_COLUMN, &CCommonPierLayoutDlg::OnAddColumn)
-    ON_BN_CLICKED(IDC_REMOVE_COLUMN, &CCommonPierLayoutDlg::OnRemoveColumns)
+    ON_BN_CLICKED(IDC_ADD_COLUMN, &CHammerheadPierLayoutDlg::OnAddColumn)
+    ON_BN_CLICKED(IDC_REMOVE_COLUMN, &CHammerheadPierLayoutDlg::OnRemoveColumns)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
-// CCommonPierLayoutDlg message handlers
+// CHammerheadPierLayoutDlg message handlers
 
-BOOL CCommonPierLayoutDlg::OnInitDialog()
+BOOL CHammerheadPierLayoutDlg::OnInitDialog()
 {
 
     m_ColumnLayoutGrid.SubclassDlgItem(IDC_COLUMN_GRID, this);
@@ -89,7 +90,7 @@ BOOL CCommonPierLayoutDlg::OnInitDialog()
 }
 
 
-void CCommonPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
+void CHammerheadPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 
@@ -254,7 +255,7 @@ void CCommonPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 
-void CCommonPierLayoutDlg::FillTransverseLocationComboBox()
+void CHammerheadPierLayoutDlg::FillTransverseLocationComboBox()
 {
    CComboBox* pcbMeasure = (CComboBox*)GetDlgItem(IDC_REFCOLUMN_MEASUREMENT);
    pcbMeasure->ResetContent();
@@ -264,7 +265,7 @@ void CCommonPierLayoutDlg::FillTransverseLocationComboBox()
    pcbMeasure->SetItemData(idx,(DWORD_PTR)pgsTypes::omtBridge);
 }
 
-void CCommonPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
+void CHammerheadPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
 {
    CComboBox* pcbRefColumn = (CComboBox*)GetDlgItem(IDC_REFCOLUMN);
    int curSel = pcbRefColumn->GetCurSel();
@@ -287,7 +288,7 @@ void CCommonPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
    }
 }
 
-void CCommonPierLayoutDlg::FillHeightMeasureComboBox()
+void CHammerheadPierLayoutDlg::FillHeightMeasureComboBox()
 {
    CComboBox* pcbHeightMeasure = (CComboBox*)GetDlgItem(IDC_HEIGHT_MEASURE);
    pcbHeightMeasure->ResetContent();
@@ -297,7 +298,7 @@ void CCommonPierLayoutDlg::FillHeightMeasureComboBox()
    pcbHeightMeasure->SetItemData(idx,(DWORD_PTR)CColumnData::chtBottomElevation);
 }
 
-void CCommonPierLayoutDlg::OnHeightMeasureChanged()
+void CHammerheadPierLayoutDlg::OnHeightMeasureChanged()
 {
    CComboBox* pcbHeightMeasure = (CComboBox*)GetDlgItem(IDC_HEIGHT_MEASURE);
    int curSel = pcbHeightMeasure->GetCurSel();
@@ -306,24 +307,24 @@ void CCommonPierLayoutDlg::OnHeightMeasureChanged()
 }
 
 
-void CCommonPierLayoutDlg::OnAddColumn()
+void CHammerheadPierLayoutDlg::OnAddColumn()
 {
    m_ColumnLayoutGrid.AddColumn();
    FillRefColumnComboBox();
 }
 
-void CCommonPierLayoutDlg::OnRemoveColumns()
+void CHammerheadPierLayoutDlg::OnRemoveColumns()
 {
    m_ColumnLayoutGrid.RemoveSelectedColumns();
    FillRefColumnComboBox();
 }
 
-void CCommonPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
+void CHammerheadPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
 {
     m_PierModelType = pierModelType;
 }
 
-void CCommonPierLayoutDlg::SetPierData(const CPierData2& pierData)
+void CHammerheadPierLayoutDlg::SetPierData(const CPierData2& pierData)
 {
     m_Pier = pierData;
 }

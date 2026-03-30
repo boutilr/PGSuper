@@ -25,7 +25,6 @@
 #include <PsgLib\PierData2.h>
 
 // ColumnLayoutGrid.h : header file
-//
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -60,6 +59,9 @@ public:
 // Implementation
 public:
    void CustomInit();
+
+   static void DDX_ColumnGrid(CDataExchange* pDX, CColumnLayoutGrid& grid, CPierData2* pPier);
+   static void DDV_ColumnGrid(CDataExchange* pDX, CColumnLayoutGrid& grid);
 
 	// Generated message map functions
 protected:
