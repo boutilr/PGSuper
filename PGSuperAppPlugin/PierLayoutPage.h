@@ -90,7 +90,7 @@ protected:
    PierIndexType m_PierIdx;
 
    pgsTypes::PierModelType m_PierModelType;
-   PierLayoutType m_PierLayoutType;
+   pgsTypes::PierLayoutType m_PierLayoutType;
 
    // Embedded dialogs
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;
