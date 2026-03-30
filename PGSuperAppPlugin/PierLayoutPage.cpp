@@ -113,7 +113,7 @@ BOOL CPierLayoutPage::OnInitDialog()
 {
 
    m_PierModelType = m_pPier->GetPierModelType();
-   m_PierLayoutType = pltCommon;
+   //m_PierLayoutType = pltCommon;
 
    FillPierModelTypeComboBox();
    FillPierLayoutTypeComboBox();
@@ -129,6 +129,12 @@ BOOL CPierLayoutPage::OnInitDialog()
    m_CommonPierLayoutDlg.SetPierData(*m_pPier);
    VERIFY(m_CommonPierLayoutDlg.Create(IDD_PIER_LAYOUT_COMMON, this));
    VERIFY(m_CommonPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
+
+   m_HammerheadPierLayoutDlg.SetPierModelType(m_PierModelType);
+   m_HammerheadPierLayoutDlg.SetPierData(*m_pPier);
+   VERIFY(m_HammerheadPierLayoutDlg.Create(IDD_PIER_LAYOUT_COMMON, this));
+   VERIFY(m_HammerheadPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
+
 
    CPropertyPage::OnInitDialog();
 
@@ -386,12 +392,17 @@ void CPierLayoutPage::SwapDialogs()
         if (m_PierLayoutType == pltCommon)
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_SHOW);
-            //m_KdotHaulingDlg.ShowWindow(SW_HIDE);
+            m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
+        }
+        else if (m_PierLayoutType == pltHammerhead)
+        {
+            m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_HammerheadPierLayoutDlg.ShowWindow(SW_SHOW);
         }
         else
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
-            //m_KdotHaulingDlg.ShowWindow(SW_SHOW);
+            m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
         }
     }
 }
