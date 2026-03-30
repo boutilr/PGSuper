@@ -21,13 +21,13 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
-
 #include "PsgLibLib.h"
 #include <PsgLib\GirderSpacing2.h>
 #include <PsgLib\ColumnData.h>
 #include <PsgLib\ConcreteMaterial.h>
 #include <PsgLib\BearingData2.h>
 #include <psgLib/ConnectionLibraryEntry.h>
+
 
 #include <MathEx.h>
 #include <StrData.h>
@@ -225,6 +225,10 @@ public:
    pgsTypes::PierModelType GetPierModelType() const;
    void SetPierModelType(pgsTypes::PierModelType modelType);
 
+   // Set/Get the pier layout type.
+   pgsTypes::PierLayoutType GetPierLayoutType() const;
+   void SetPierLayoutType(pgsTypes::PierLayoutType layoutType);
+
    void SetConcrete(const CConcreteMaterial& concrete);
    CConcreteMaterial& GetConcrete();
    const CConcreteMaterial& GetConcrete() const;
@@ -356,6 +360,7 @@ private:
 
 
    pgsTypes::PierModelType m_PierModelType; 
+   pgsTypes::PierLayoutType m_PierLayoutType; 
 
    CConcreteMaterial m_Concrete;
 
