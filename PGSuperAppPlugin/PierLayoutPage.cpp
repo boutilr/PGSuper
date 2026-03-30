@@ -91,6 +91,7 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
       // all of the data has been extracted from the dialog controls and it has been validated
       // set the values on the actual pier object
       m_pPier->SetPierModelType(m_PierModelType);
+      m_pPier->SetPierLayoutType(m_PierLayoutType);
 
    }
 }
@@ -113,7 +114,7 @@ BOOL CPierLayoutPage::OnInitDialog()
 {
 
    m_PierModelType = m_pPier->GetPierModelType();
-   //m_PierLayoutType = pltCommon;
+   m_PierLayoutType = m_pPier->GetPierLayoutType();
 
    FillPierModelTypeComboBox();
    FillPierLayoutTypeComboBox();
@@ -225,16 +226,16 @@ void CPierLayoutPage::FillPierLayoutTypeComboBox()
    pcbPierModel->ResetContent();
 
    int idx = pcbPierModel->AddString(_T("Common"));
-   pcbPierModel->SetItemData(idx, (DWORD_PTR)pltCommon);
+   pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pltCommon);
 
    idx = pcbPierModel->AddString(_T("Hammerhead"));
-   pcbPierModel->SetItemData(idx, (DWORD_PTR)pltHammerhead);
+   pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pltHammerhead);
 
    idx = pcbPierModel->AddString(_T("Haunched"));
-   pcbPierModel->SetItemData(idx, (DWORD_PTR)pltHaunched);
+   pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pltHaunched);
 
    idx = pcbPierModel->AddString(_T("Custom"));
-   pcbPierModel->SetItemData(idx, (DWORD_PTR)pltCustom);
+   pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pltCustom);
 
 }
 
@@ -380,7 +381,7 @@ void CPierLayoutPage::OnPierLayoutTypeChanged()
 {
     CComboBox* pcbPierModel = (CComboBox*)GetDlgItem(IDC_PIER_LAYOUT_TYPE);
     int curSel = pcbPierModel->GetCurSel();
-    m_PierLayoutType = (PierLayoutType)pcbPierModel->GetItemData(curSel);
+    m_PierLayoutType = (pgsTypes::PierLayoutType)pcbPierModel->GetItemData(curSel);
 
     SwapDialogs();
 }
@@ -389,12 +390,12 @@ void CPierLayoutPage::SwapDialogs()
 {
     if (m_PierModelType == pgsTypes::pmtPhysical)
     {
-        if (m_PierLayoutType == pltCommon)
+        if (m_PierLayoutType == pgsTypes::pltCommon)
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_SHOW);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
         }
-        else if (m_PierLayoutType == pltHammerhead)
+        else if (m_PierLayoutType == pgsTypes::pltHammerhead)
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_SHOW);
