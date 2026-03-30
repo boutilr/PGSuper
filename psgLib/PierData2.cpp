@@ -66,6 +66,7 @@ CPierData2::CPierData2()
    m_strOrientation = _T("Normal");
 
    m_PierModelType = pgsTypes::pmtIdealized;
+   m_PierLayoutType = pgsTypes::pltCommon;
 
    m_Concrete.bHasInitial = false;
    m_Concrete.Fc = WBFL::Units::ConvertToSysUnits(4,WBFL::Units::Measure::KSI);
@@ -219,6 +220,11 @@ bool CPierData2::operator==(const CPierData2& rOther) const
    
    if ( m_PierModelType == pgsTypes::pmtPhysical )
    {
+       if (m_PierLayoutType != rOther.m_PierLayoutType)
+       {
+           return false;
+       }
+
       if ( m_RefColumnIdx != rOther.m_RefColumnIdx )
       {
          return false;
@@ -258,32 +264,82 @@ bool CPierData2::operator==(const CPierData2& rOther) const
    {
       if ( m_PierModelType == pgsTypes::pmtPhysical )
       {
-         pgsTypes::SideType side = (pgsTypes::SideType)i;
 
-         if ( !IsEqual(m_XBeamHeight[side],rOther.m_XBeamHeight[side]) )
-         {
-            return false;
-         }
+          if (m_PierLayoutType == pgsTypes::pltCommon)
+          {
+              pgsTypes::SideType side = (pgsTypes::SideType)i;
 
-         if ( !IsEqual(m_XBeamTaperHeight[side],rOther.m_XBeamTaperHeight[side]) )
-         {
-            return false;
-         }
+              if (!IsEqual(m_XBeamHeight[side], rOther.m_XBeamHeight[side]))
+              {
+                  return false;
+              }
 
-         if ( !IsEqual(m_XBeamTaperLength[side],rOther.m_XBeamTaperLength[side]) )
-         {
-            return false;
-         }
+              if (!IsEqual(m_XBeamTaperHeight[side], rOther.m_XBeamTaperHeight[side]))
+              {
+                  return false;
+              }
 
-         if ( !IsEqual(m_XBeamEndSlopeOffset[side],rOther.m_XBeamEndSlopeOffset[side]) )
-         {
-            return false;
-         }
+              if (!IsEqual(m_XBeamTaperLength[side], rOther.m_XBeamTaperLength[side]))
+              {
+                  return false;
+              }
 
-         if ( !IsEqual(m_XBeamOverhang[side],rOther.m_XBeamOverhang[side]) )
-         {
-            return false;
-         }
+              if (!IsEqual(m_XBeamEndSlopeOffset[side], rOther.m_XBeamEndSlopeOffset[side]))
+              {
+                  return false;
+              }
+
+              if (!IsEqual(m_XBeamOverhang[side], rOther.m_XBeamOverhang[side]))
+              {
+                  return false;
+              }
+          }
+          else if (m_PierLayoutType == pgsTypes::pltHammerhead)
+          {
+              if (!IsEqual(m_XBeamHeight[pgsTypes::stLeft], rOther.m_XBeamHeight[pgsTypes::stLeft]))
+              {
+                  return false;
+              }
+              if (!IsEqual(m_XBeamTaperHeight[pgsTypes::stLeft], rOther.m_XBeamTaperHeight[pgsTypes::stLeft]))
+              {
+                  return false;
+              }
+              if (!IsEqual(m_XBeamTaperLength[pgsTypes::stLeft], rOther.m_XBeamTaperLength[pgsTypes::stLeft]))
+              {
+                  return false;
+              }
+              if (!IsEqual(m_XBeamEndSlopeOffset[pgsTypes::stLeft], rOther.m_XBeamEndSlopeOffset[pgsTypes::stLeft]))
+              {
+                  return false;
+              }
+              if (!IsEqual(m_XBeamOverhang[pgsTypes::stLeft], rOther.m_XBeamOverhang[pgsTypes::stLeft]))
+              {
+                  return false;
+			  }
+          }
+          else
+          {
+              if (!IsEqual(m_XBeamHeight[pgsTypes::stLeft], rOther.m_XBeamHeight[pgsTypes::stLeft]))
+              {
+                  return false;
+              }
+              if (!IsEqual(m_XBeamTaperHeight[pgsTypes::stLeft], rOther.m_XBeamTaperHeight[pgsTypes::stLeft]))
+              {
+                  return false;
+              }
+              if (!IsEqual(m_XBeamTaperLength[pgsTypes::stLeft], rOther.m_XBeamTaperLength[pgsTypes::stLeft]))
+              {
+                  return false;
+              }
+              if (!IsEqual(m_XBeamEndSlopeOffset[pgsTypes::stLeft], rOther.m_XBeamEndSlopeOffset[pgsTypes::stLeft]))
+              {
+                  return false;
+              }
+              if (!IsEqual(m_XBeamOverhang[pgsTypes::stLeft], rOther.m_XBeamOverhang[pgsTypes::stLeft]))
+              {
+                  return false;
+              }
+          }
       }
 
       if ( m_Concrete != rOther.m_Concrete )
@@ -480,7 +536,7 @@ HRESULT CPierData2::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress>
 
    // Make sure outside changes to the bridge haven't made our data out of sync
    ProtectBearingData();
-   pStrSave->BeginUnit(_T("PierDataDetails"),21.0);
+   pStrSave->BeginUnit(_T("PierDataDetails"),22.0);
    
    pStrSave->put_Property(_T("ID"),CComVariant(m_PierID));
 
@@ -510,6 +566,7 @@ HRESULT CPierData2::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress>
       //pStrSave->put_Property(_T("Ec"),CComVariant(m_Ec)); // removed in version 15
       m_Concrete.Save(pStrSave,pProgress); // added in version 15
 
+      pStrSave->put_Property(_T("PierLayoutType"),CComVariant(m_PierLayoutType)); //added in verion 22
       pStrSave->put_Property(_T("RefColumnIndex"),CComVariant(m_RefColumnIdx));
       pStrSave->put_Property(_T("TransverseOffset"),CComVariant(m_TransverseOffset));
       pStrSave->put_Property(_T("TransverseOffsetMeasurement"),CComVariant(m_TransverseOffsetMeasurement));
@@ -839,6 +896,14 @@ HRESULT CPierData2::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress>
             else
             {
                hr = m_Concrete.Load(pStrLoad,pProgress);
+            }
+
+            if (version > 21)
+            {
+                // added in version 22
+                var.vt = VT_I4;
+                hr = pStrLoad->get_Property(_T("PierLayoutType"), &var);
+                m_PierLayoutType = (pgsTypes::PierLayoutType)var.lVal;
             }
 
             var.vt = VT_INDEX;
@@ -1390,6 +1455,7 @@ void CPierData2::MakeCopy(const CPierData2& rOther,bool bCopyDataOnly)
    Angle                   = rOther.Angle;
 
    m_PierModelType = rOther.m_PierModelType;
+   m_PierLayoutType = rOther.m_PierLayoutType;
    m_RefColumnIdx = rOther.m_RefColumnIdx;
    m_TransverseOffset = rOther.m_TransverseOffset;
    m_TransverseOffsetMeasurement = rOther.m_TransverseOffsetMeasurement;
@@ -2093,6 +2159,16 @@ pgsTypes::PierModelType CPierData2::GetPierModelType() const
 void CPierData2::SetPierModelType(pgsTypes::PierModelType modelType)
 {
    m_PierModelType = modelType;
+}
+
+pgsTypes::PierLayoutType CPierData2::GetPierLayoutType() const
+{
+   return m_PierLayoutType;
+}
+
+void CPierData2::SetPierLayoutType(pgsTypes::PierLayoutType layoutType)
+{
+   m_PierLayoutType = layoutType;
 }
 
 void CPierData2::SetConcrete(const CConcreteMaterial& concrete)
