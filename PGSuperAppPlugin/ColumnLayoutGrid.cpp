@@ -32,6 +32,30 @@
 
 GRID_IMPLEMENT_REGISTER(CColumnLayoutGrid, CS_DBLCLKS, 0, 0, 0);
 
+void CColumnLayoutGrid::DDX_ColumnGrid(CDataExchange* pDX, CColumnLayoutGrid& grid, CPierData2* pPier)
+{
+    if (pDX->m_bSaveAndValidate)
+    {
+        grid.GetColumnData(*pPier);
+    }
+    else
+    {
+        grid.SetColumnData(*pPier);
+    }
+}
+
+void CColumnLayoutGrid::DDV_ColumnGrid(CDataExchange* pDX, CColumnLayoutGrid& grid)
+{
+    if (pDX->m_bSaveAndValidate)
+    {
+        if (grid.GetRowCount() == 0)
+        {
+            AfxMessageBox(_T("The pier must have at least one column"), MB_OK | MB_ICONEXCLAMATION);
+            pDX->Fail();
+        }
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CColumnLayoutGrid
 

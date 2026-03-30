@@ -32,6 +32,7 @@
 #include "resource.h"
 #include <PsgLib\PierData2.h>
 #include "CommonPierLayoutDlg.h"
+#include "HammerheadPierLayoutDlg.h"
 #include <WBFLGenericBridge.h>
 
 /////////////////////////////////////////////////////////////////////////////
@@ -93,6 +94,7 @@ protected:
 
    // Embedded dialogs
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;
+   CHammerheadPierLayoutDlg m_HammerheadPierLayoutDlg;
 
    void UpdateConcreteTypeLabel();
    void UpdateEc();

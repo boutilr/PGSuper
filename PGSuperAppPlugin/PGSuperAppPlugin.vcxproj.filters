@@ -334,9 +334,6 @@
     <ClCompile Include="ChildFrm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ColumnLayoutGrid.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ConnectionDisplayObjectEvents.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -877,6 +874,12 @@
     <ClCompile Include="CommonPierLayoutDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HammerheadPierLayoutDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ColumnLayoutGrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AboutDlg.h">
@@ -1285,9 +1288,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ChildFrm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ColumnLayoutGrid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConnectionDisplayObjectEvents.h">
@@ -1861,6 +1861,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CommonPierLayoutDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HammerheadPierLayoutDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ColumnLayoutGrid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

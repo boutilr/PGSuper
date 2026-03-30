@@ -213,6 +213,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClCompile Include="BridgeDescFramingGrid.cpp" />
     <ClCompile Include="BridgeDescFramingPage.cpp" />
     <ClCompile Include="BridgeDescGeneralPage.cpp" />
+    <ClCompile Include="ColumnLayoutGrid.cpp" />
     <ClCompile Include="CommonPierLayoutDlg.cpp" />
     <ClCompile Include="CopyBearingDlg.cpp" />
     <ClCompile Include="CopyPierDlg.cpp" />
@@ -245,7 +246,6 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClCompile Include="BridgeViewPane.cpp" />
     <ClCompile Include="BridgeViewPrintJob.cpp" />
     <ClCompile Include="ChildFrm.cpp" />
-    <ClCompile Include="ColumnLayoutGrid.cpp" />
     <ClCompile Include="ConnectionDisplayObjectEvents.cpp" />
     <ClCompile Include="ConstructionLoadDlg.cpp" />
     <ClCompile Include="convert.cpp" />
@@ -308,6 +308,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClCompile Include="GMDisplayMgrEventsImpl.cpp" />
     <ClCompile Include="GraphView.cpp" />
     <ClCompile Include="GraphViewChildFrame.cpp" />
+    <ClCompile Include="HammerheadPierLayoutDlg.cpp" />
     <ClCompile Include="HaunchDirectEntireBridgeGrid.cpp" />
     <ClCompile Include="HaunchDirectSameAsGrid.cpp" />
     <ClCompile Include="HaunchDirectSegmentGrid.cpp" />
@@ -610,6 +611,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClInclude Include="BridgeDescFramingPage.h" />
     <ClInclude Include="BridgeDescGeneralPage.h" />
     <ClInclude Include="CLSID.h" />
+    <ClInclude Include="ColumnLayoutGrid.h" />
     <ClInclude Include="CommonPierLayoutDlg.h" />
     <ClInclude Include="CopyBearingDlg.h" />
     <ClInclude Include="CopyPierDlg.h" />
@@ -643,7 +645,6 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClInclude Include="BridgeViewPane.h" />
     <ClInclude Include="BridgeViewPrintJob.h" />
     <ClInclude Include="ChildFrm.h" />
-    <ClInclude Include="ColumnLayoutGrid.h" />
     <ClInclude Include="ConnectionDisplayObjectEvents.h" />
     <ClInclude Include="ConstructionLoadDlg.h" />
     <ClInclude Include="convert.h" />
@@ -708,6 +709,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClInclude Include="GMDisplayMgrEventsImpl.h" />
     <ClInclude Include="GraphView.h" />
     <ClInclude Include="GraphViewChildFrame.h" />
+    <ClInclude Include="HammerheadPierLayoutDlg.h" />
     <ClInclude Include="HaunchDirectEntireBridgeGrid.h" />
     <ClInclude Include="HaunchDirectSameAsGrid.h" />
     <ClInclude Include="HaunchDirectSegmentGrid.h" />
