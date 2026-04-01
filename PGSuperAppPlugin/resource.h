@@ -318,7 +318,7 @@
 #define IDD_PIER_LAYOUT_COMMON          1117
 #define IDC_HPOFFSET_END_UNIT           1118
 #define IDC_LIFTING                     1118
-#define IDD_PIER_LAYOUT_HAMMERHEAD         1118
+#define IDD_PIER_LAYOUT_HAMMERHEAD      1118
 #define IDC_AFTER_XFER_TAG              1119
 #define IDC_HPOFFSET_HP1                1119
 #define IDC_LIFTING_TAG                 1120
@@ -1161,6 +1161,7 @@
 #define IDC_X1_UNIT                     1821
 #define IDC_X2_LABEL                    1822
 #define IDC_X3_LABEL                    1823
+#define IDC_COLUMN_HEIGHT_UNIT          1823
 #define IDC_X2_UNIT                     1824
 #define IDC_X4_LABEL                    1825
 #define IDC_W_UNIT                      1826
@@ -1184,14 +1185,21 @@
 #define IDC_GROUP_RANGE_LABEL2          1856
 #define IDC_FIXITY                      1857
 #define IDC_DIAPHRAGM_NOTE              1858
+#define IDC_COLUMN_SHAPE_LABEL          1858
 #define IDC_SERVICE_I_CR                1859
 #define IDC_CURING_UNIT                 1859
+#define IDC_COLUMN_SHAPE                1859
 #define IDC_SERVICE_I_SH                1860
+#define IDC_COLUMN_DEPTH_LABEL          1860
 #define IDC_SERVICE_I_PS                1861
+#define IDC_COLUMN_DEPTH                1861
 #define IDC_CHECK_YIELDING              1862
 #define IDC_TOP_COVER_LABEL             1862
+#define IDC_COLUMN_DIAMETER_LABEL       1862
 #define IDC_FY_LABEL                    1863
 #define IDC_BOTTOM_COVER_LABEL          1863
+#define IDC_COLUMN_WIDTH                1863
+#define IDC_COLUMN_DIAMETER             1863
 #define IDC_FY                          1864
 #define IDC_TOP_MAT_BAR_LABEL           1864
 #define IDC_SERVICE_III_CR_LABEL        1865
@@ -1324,6 +1332,7 @@
 #define IDC_STARTPIERNO                 1926
 #define IDC_NAME                        1926
 #define IDC_EDIT_BEARING_LENGTH         1926
+#define IDC_COLUMN_HEIGHT_EDIT          1926
 #define IDC_BRG_RECESS_LENGTH_UNIT      1927
 #define IDC_EDIT_BEARING_WIDTH          1927
 #define IDC_EDIT_INT_ELASTOMER_THICK    1928
@@ -1494,6 +1503,7 @@
 #define IDC_BUTTON_EDIT_BEARING_DETAIL_1 2067
 #define IDC_SELECT_BEARINGS             2068
 #define IDC_STATIC_BRG_NOTE             2069
+#define IDC_STATIC_BOUNDS               2070
 #define IDS_E_WRITE                     2500
 #define IDS_E_UNSAFESAVE                2501
 #define IDS_E_SAVERECOVER1              2502
