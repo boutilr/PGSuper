@@ -41,7 +41,7 @@
 
 
 CHammerheadPierLayoutDlg::CHammerheadPierLayoutDlg(CWnd* pParent)
-	:CDialog(IDD_PIER_LAYOUT_COMMON, pParent)
+	:CDialog(IDD_PIER_LAYOUT_HAMMERHEAD, pParent)
 {
 
      // only using the fixed option (no pinned at base of column,
