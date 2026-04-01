@@ -318,6 +318,7 @@
 #define IDD_PIER_LAYOUT_COMMON          1117
 #define IDC_HPOFFSET_END_UNIT           1118
 #define IDC_LIFTING                     1118
+#define IDD_PIER_LAYOUT_HAMMERHEAD         1118
 #define IDC_AFTER_XFER_TAG              1119
 #define IDC_HPOFFSET_HP1                1119
 #define IDC_LIFTING_TAG                 1120
