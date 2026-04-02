@@ -133,7 +133,7 @@ BOOL CPierLayoutPage::OnInitDialog()
 
    m_HammerheadPierLayoutDlg.SetPierModelType(m_PierModelType);
    m_HammerheadPierLayoutDlg.SetPierData(*m_pPier);
-   VERIFY(m_HammerheadPierLayoutDlg.Create(IDD_PIER_LAYOUT_COMMON, this));
+   VERIFY(m_HammerheadPierLayoutDlg.Create(IDD_PIER_LAYOUT_HAMMERHEAD, this));
    VERIFY(m_HammerheadPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
 
 
