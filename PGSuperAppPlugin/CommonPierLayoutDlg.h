@@ -33,8 +33,12 @@
 /////////////////////////////////////////////////////////////////////////////
 // CommonPierLayoutDlg dialog
 
+class CPierLayoutPage;
+
 class CCommonPierLayoutDlg : public CDialog
 {
+
+	friend class CPierLayoutPage;
 
 // Construction
 public:
@@ -64,6 +68,7 @@ protected:
 	CMetaFileStatic m_LayoutPicture;
 	CColumnLayoutGrid m_ColumnLayoutGrid;
 	CColumnFixityComboBox m_cbColumnFixity;
+	CColumnData::ColumnHeightMeasurementType m_ColumnHeightMeasurementType;
 
 	void FillRefColumnComboBox(ColumnIndexType nColumns=INVALID_INDEX);
 	void FillHeightMeasureComboBox();
