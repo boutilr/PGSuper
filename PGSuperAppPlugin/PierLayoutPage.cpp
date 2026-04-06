@@ -310,17 +310,25 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
 
                   CColumnData column = m_pPier->GetColumnData(0);
                   column.SetColumnHeightMeasurementType(m_HammerheadPierLayoutDlg.m_ColumnHeightMeasurementType);
-                  m_pPier->SetColumnData(0, column);
                   
+                  //DDX_CBItemData(pDX, IDC_COLUMN_SHAPE, m_HammerheadPierLayoutDlg.m_ColumnShapeType);
+				  column.SetColumnShape(m_HammerheadPierLayoutDlg.m_ColumnShapeType);
+
+                  DDV_UnitValueGreaterThanZero(pDX, IDC_COLUMN_HEIGHT_EDIT, m_HammerheadPierLayoutDlg.m_ColumnHeight, pDisplayUnits->GetSpanLengthUnit());
+                  column.SetColumnHeight(m_HammerheadPierLayoutDlg.m_ColumnHeight);
 
                   Float64 D1, D2;
                   // X5 must be >= diameter of first column
                   m_pPier->GetColumnData(0).GetColumnDimensions(&D1, &D2);
-                  DDV_UnitValueLimitOrMore(pDX, IDC_X5, m_HammerheadPierLayoutDlg.m_XBeamOverhang[pgsTypes::stLeft], D1 / 2, pDisplayUnits->GetSpanLengthUnit());
+                  DDV_UnitValueGreaterThanZero(pDX, IDC_COLUMN_WIDTH, m_HammerheadPierLayoutDlg.m_D1, pDisplayUnits->GetSpanLengthUnit());
+                  DDV_UnitValueGreaterThanZero(pDX, IDC_COLUMN_DEPTH, m_HammerheadPierLayoutDlg.m_D2, pDisplayUnits->GetSpanLengthUnit());
+				  column.SetColumnDimensions(m_HammerheadPierLayoutDlg.m_D1, m_HammerheadPierLayoutDlg.m_D2);
 
-                  // X6 must be >= diameter of first column
-                  m_pPier->GetColumnData(0).GetColumnDimensions(&D1, &D2);
+                  m_pPier->SetColumnData(0, column);
+
+                  DDV_UnitValueLimitOrMore(pDX, IDC_X5, m_HammerheadPierLayoutDlg.m_XBeamOverhang[pgsTypes::stLeft], D1 / 2, pDisplayUnits->GetSpanLengthUnit());
                   DDV_UnitValueLimitOrMore(pDX, IDC_X6, m_HammerheadPierLayoutDlg.m_XBeamOverhang[pgsTypes::stRight], D1 / 2, pDisplayUnits->GetSpanLengthUnit());
+
 
 
                   Float64 pierWidth = m_HammerheadPierLayoutDlg.m_XBeamOverhang[pgsTypes::stLeft] + m_HammerheadPierLayoutDlg.m_XBeamOverhang[pgsTypes::stRight];
@@ -331,6 +339,8 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
                       AfxMessageBox(_T("X1 + X3 cannot exceed the overall pier width (X5 + X6 + summation of S)"));
                       pDX->Fail();
                   }
+
+
 
               }
           }
