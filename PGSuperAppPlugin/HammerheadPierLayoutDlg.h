@@ -23,7 +23,7 @@
 #pragma once
 #include "resource.h"
 #include <PsgLib\PierData2.h>
-#include "ColumnLayoutGrid.h"
+#include <PsgLib\ColumnData.h>
 #include <PgsExt\ColumnFixityComboBox.h>
 
 
@@ -33,8 +33,12 @@
 /////////////////////////////////////////////////////////////////////////////
 // HammerheadPierLayoutDlg dialog
 
+class CPierLayoutPage;
+
 class CHammerheadPierLayoutDlg : public CDialog
 {
+
+friend class CPierLayoutPage;
 
 // Construction
 public:
@@ -50,11 +54,9 @@ protected:
 
 	virtual BOOL OnInitDialog() override;
 
-	afx_msg void OnColumnShapeChanged();
 	afx_msg void OnColumnCountChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnHeightMeasureChanged();
-	afx_msg void OnAddColumn();
-	afx_msg void OnRemoveColumns();
+	afx_msg void OnColumnShapeChanged();
 
 	DECLARE_MESSAGE_MAP()
 
@@ -62,11 +64,11 @@ protected:
 	CPierData2 m_Pier;
 
 	CMetaFileStatic m_LayoutPicture;
-	CColumnLayoutGrid m_ColumnLayoutGrid;
 	CColumnFixityComboBox m_cbColumnFixity;
 
-	void FillRefColumnComboBox(ColumnIndexType nColumns=INVALID_INDEX);
+	void FillRefColumnComboBox(ColumnIndexType nColumns = INVALID_INDEX);
 	void FillHeightMeasureComboBox();
+	void FillColumnShapeComboBox();
 	void FillTransverseLocationComboBox();
 
 	ColumnIndexType m_RefColumnIdx;
@@ -79,6 +81,15 @@ protected:
 	Float64 m_XBeamEndSlopeOffset[2];
 	Float64 m_XBeamOverhang[2];
 	pgsTypes::ColumnLongitudinalBaseFixityType m_ColumnFixity;
+
+	CColumnData::ColumnHeightMeasurementType m_ColumnHeightMeasurementType;
+
+	Float64 m_ColumnHeight;
+	CColumnData::ColumnShapeType m_ColumnShapeType;
+	Float64 m_D1, m_D2;
+
+	pgsTypes::ColumnTransverseFixityType m_TransverseFixity; // fixity used for pier analysis
+
 };
 
 
