@@ -1164,6 +1164,7 @@
 #define IDC_COLUMN_HEIGHT_UNIT          1823
 #define IDC_X2_UNIT                     1824
 #define IDC_X4_LABEL                    1825
+#define IDC_COLUMN_WIDTH_UNIT           1825
 #define IDC_W_UNIT                      1826
 #define IDC_X5_LABEL                    1827
 #define IDC_X5_UNIT                     1828
@@ -1172,6 +1173,7 @@
 #define IDC_X3_UNIT                     1831
 #define IDC_X4                          1832
 #define IDC_X4_UNIT                     1833
+#define IDC_COLUMN_DEPTH_UNIT           1834
 #define IDC_STRENGTH_I_SH               1843
 #define IDC_STRENGTH_I_PS               1844
 #define IDC_EC_LABEL                    1846
