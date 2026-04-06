@@ -218,6 +218,123 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
                   }
               }
           }
+          else if (m_PierLayoutType == pgsTypes::pltHammerhead)
+          {
+              if (!m_HammerheadPierLayoutDlg.UpdateData(TRUE))
+              {
+                  pDX->Fail();
+                  return;
+              }
+              else
+              {
+
+                  m_pPier->SetTransverseOffset(m_HammerheadPierLayoutDlg.m_RefColumnIdx, m_HammerheadPierLayoutDlg.m_TransverseOffset, m_HammerheadPierLayoutDlg.m_TransverseOffsetMeasurement);
+                  m_pPier->SetXBeamWidth(m_CommonPierLayoutDlg.m_XBeamWidth);
+
+                  for (int i = 0; i < 2; i++)
+                  {
+                      pgsTypes::SideType side = (pgsTypes::SideType)i;
+                      m_pPier->SetXBeamDimensions(side, m_HammerheadPierLayoutDlg.m_XBeamHeight[side], m_HammerheadPierLayoutDlg.m_XBeamTaperHeight[side], 
+                      m_HammerheadPierLayoutDlg.m_XBeamTaperLength[side], m_HammerheadPierLayoutDlg.m_XBeamEndSlopeOffset[side]);
+                      m_pPier->SetXBeamOverhang(side, m_HammerheadPierLayoutDlg.m_XBeamOverhang[side]);
+                  }
+
+                  m_pPier->SetXBeamWidth(m_HammerheadPierLayoutDlg.m_XBeamWidth);
+
+                  m_pPier->SetColumnFixity(m_HammerheadPierLayoutDlg.m_ColumnFixity);
+
+                  // XBeam width, W, must be greater than zeo
+                  DDV_UnitValueGreaterThanZero(pDX, IDC_W, m_HammerheadPierLayoutDlg.m_XBeamWidth, pDisplayUnits->GetSpanLengthUnit());
+
+                  // H1 and H3 must be > 0
+                  DDV_UnitValueGreaterThanZero(pDX, IDC_H1, m_HammerheadPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+                  DDV_UnitValueGreaterThanZero(pDX, IDC_H3, m_HammerheadPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+
+                  // X2 and X4 must be >= 0
+                  DDV_UnitValueZeroOrMore(pDX, IDC_X1, m_HammerheadPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+                  DDV_UnitValueZeroOrMore(pDX, IDC_X2, m_HammerheadPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+                  DDV_UnitValueZeroOrMore(pDX, IDC_X3, m_HammerheadPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+                  DDV_UnitValueZeroOrMore(pDX, IDC_X4, m_HammerheadPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+
+                  //Left end
+                  if (0 < m_HammerheadPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft])
+                  {
+                      // if H2 > 0, then X1 must be > 0
+                      if (IsZero(m_HammerheadPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft]))
+                      {
+                          pDX->PrepareCtrl(IDC_H2);
+                          AfxMessageBox(_T("H2 must be greater than zero when X1 is greater than zero."));
+                          pDX->Fail();
+                      }
+                      else if (m_HammerheadPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft] < m_HammerheadPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft])
+                      {
+                          pDX->PrepareCtrl(IDC_X1);
+                          AfxMessageBox(_T("X1 must be greater than X2 when X1 is greater than zero."));
+                          pDX->Fail();
+                      }
+                  }
+                  else if (!IsZero(m_HammerheadPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft]))
+                  {
+                      // if X1 is zero, then H2 must also be zero
+                      pDX->PrepareCtrl(IDC_H2);
+                      AfxMessageBox(_T("H2 must be zero when X1 is zero"));
+                      pDX->Fail();
+                  }
+
+                  // Right end
+                  if (0 < m_HammerheadPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight])
+                  {
+                      // if H4 > 0, then X3 must be > 0
+                      if (IsZero(m_HammerheadPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight]))
+                      {
+                          pDX->PrepareCtrl(IDC_H4);
+                          AfxMessageBox(_T("H4 must be greater than zero when X3 is greater than zero."));
+                          pDX->Fail();
+                      }
+                      else if (m_HammerheadPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight] < m_HammerheadPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight])
+                      {
+                          pDX->PrepareCtrl(IDC_X3);
+                          AfxMessageBox(_T("X3 must be greater than X4 when X3 is greater than zero."));
+                          pDX->Fail();
+                      }
+                  }
+                  else if (!IsZero(m_HammerheadPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight]))
+                  {
+                      // if X3 is zero, then H4 must also be zero
+                      pDX->PrepareCtrl(IDC_H4);
+                      AfxMessageBox(_T("H4 must be zero when X3 is zero"));
+                      pDX->Fail();
+                  }
+
+
+
+                  CColumnData column = m_pPier->GetColumnData(0);
+                  column.SetColumnHeightMeasurementType(m_HammerheadPierLayoutDlg.m_ColumnHeightMeasurementType);
+                  m_pPier->SetColumnData(0, column);
+                  
+
+                  Float64 D1, D2;
+                  // X5 must be >= diameter of first column
+                  m_pPier->GetColumnData(0).GetColumnDimensions(&D1, &D2);
+                  DDV_UnitValueLimitOrMore(pDX, IDC_X5, m_HammerheadPierLayoutDlg.m_XBeamOverhang[pgsTypes::stLeft], D1 / 2, pDisplayUnits->GetSpanLengthUnit());
+
+                  // X6 must be >= diameter of first column
+                  m_pPier->GetColumnData(0).GetColumnDimensions(&D1, &D2);
+                  DDV_UnitValueLimitOrMore(pDX, IDC_X6, m_HammerheadPierLayoutDlg.m_XBeamOverhang[pgsTypes::stRight], D1 / 2, pDisplayUnits->GetSpanLengthUnit());
+
+
+                  Float64 pierWidth = m_HammerheadPierLayoutDlg.m_XBeamOverhang[pgsTypes::stLeft] + m_HammerheadPierLayoutDlg.m_XBeamOverhang[pgsTypes::stRight];
+                  Float64 sumOverhangs = m_HammerheadPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft] + m_HammerheadPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight];
+                  if (pierWidth < sumOverhangs)
+                  {
+                      pDX->PrepareCtrl(IDC_X5);
+                      AfxMessageBox(_T("X1 + X3 cannot exceed the overall pier width (X5 + X6 + summation of S)"));
+                      pDX->Fail();
+                  }
+
+              }
+          }
+          
       }
 
    }
@@ -526,6 +643,7 @@ void CPierLayoutPage::SwapDialogs()
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_SHOW);
+            //m_HammerheadPierLayoutDlg.UpdateData(TRUE);
         }
         else
         {
