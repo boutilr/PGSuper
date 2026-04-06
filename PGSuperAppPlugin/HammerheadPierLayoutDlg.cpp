@@ -52,8 +52,7 @@ CHammerheadPierLayoutDlg::CHammerheadPierLayoutDlg(CWnd* pParent)
 
 BEGIN_MESSAGE_MAP(CHammerheadPierLayoutDlg, CDialog)
     ON_CBN_SELCHANGE(IDC_HEIGHT_MEASURE, OnHeightMeasureChanged)
-    ON_BN_CLICKED(IDC_ADD_COLUMN, &CHammerheadPierLayoutDlg::OnAddColumn)
-    ON_BN_CLICKED(IDC_REMOVE_COLUMN, &CHammerheadPierLayoutDlg::OnRemoveColumns)
+    ON_CBN_SELCHANGE(IDC_COLUMN_SHAPE, OnColumnShapeChanged)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -62,8 +61,8 @@ END_MESSAGE_MAP()
 BOOL CHammerheadPierLayoutDlg::OnInitDialog()
 {
 
-    m_ColumnLayoutGrid.SubclassDlgItem(IDC_COLUMN_GRID, this);
-    m_ColumnLayoutGrid.CustomInit();
+    //m_ColumnLayoutGrid.SubclassDlgItem(IDC_COLUMN_GRID, this);
+    //m_ColumnLayoutGrid.CustomInit();
 
     m_Pier.GetTransverseOffset(&m_RefColumnIdx,&m_TransverseOffset,&m_TransverseOffsetMeasurement);
     m_XBeamWidth = m_Pier.GetXBeamWidth();
@@ -78,12 +77,18 @@ BOOL CHammerheadPierLayoutDlg::OnInitDialog()
     m_ColumnFixity = m_Pier.GetColumnFixity();
 
     FillTransverseLocationComboBox();
-    FillRefColumnComboBox(m_Pier.GetColumnCount());
+
+    FillRefColumnComboBox(1);  /// hammerhead only has one column
+
     FillHeightMeasureComboBox();
+
+    FillColumnShapeComboBox();
 
 	CDialog::OnInitDialog();
 
     OnHeightMeasureChanged();
+
+    OnColumnShapeChanged();
 
 
     return TRUE;
@@ -122,29 +127,21 @@ void CHammerheadPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 
     DDX_CBItemData(pDX,IDC_FIXITY,m_ColumnFixity);
 
-    if (m_PierModelType == pgsTypes::pmtPhysical)
-    {
-        CColumnLayoutGrid::DDV_ColumnGrid(pDX,m_ColumnLayoutGrid);
-        CColumnLayoutGrid::DDX_ColumnGrid(pDX,m_ColumnLayoutGrid, &m_Pier);
-    }
+	const auto& columnData = m_Pier.GetColumnData(0);
 
-    if (pDX->m_bSaveAndValidate)
-    {
-        CColumnData::ColumnHeightMeasurementType measure;
-        DDX_CBItemData(pDX,IDC_HEIGHT_MEASURE,measure);
-        ColumnIndexType nColumns = m_Pier.GetColumnCount();
-        for ( ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++ )
-        {
-           CColumnData column = m_Pier.GetColumnData(colIdx);
-           column.SetColumnHeightMeasurementType(measure);
-           m_Pier.SetColumnData(colIdx,column);
-        }
-    }
-    else
-    {
-        CColumnData::ColumnHeightMeasurementType measure = m_Pier.GetColumnData(0).GetColumnHeightMeasurementType();
-        DDX_CBItemData(pDX,IDC_HEIGHT_MEASURE,measure);
-    }
+    m_ColumnHeightMeasurementType = columnData.GetColumnHeightMeasurementType();
+    DDX_CBItemData(pDX, IDC_HEIGHT_MEASURE, m_ColumnHeightMeasurementType);
+
+	m_ColumnHeight = columnData.GetColumnHeight();
+    DDX_UnitValueAndTag(pDX, IDC_COLUMN_HEIGHT_EDIT, IDC_COLUMN_HEIGHT_UNIT, m_ColumnHeight, pDisplayUnits->GetSpanLengthUnit());
+
+	m_ColumnShapeType = columnData.GetColumnShape();
+    DDX_CBItemData(pDX, IDC_COLUMN_SHAPE, m_ColumnShapeType);
+
+	columnData.GetColumnDimensions(&m_D1, &m_D2);
+    DDX_UnitValueAndTag(pDX, IDC_COLUMN_WIDTH, IDC_COLUMN_WIDTH_UNIT, m_D1, pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(pDX, IDC_COLUMN_DEPTH, IDC_COLUMN_DEPTH_UNIT, m_D2, pDisplayUnits->GetSpanLengthUnit());
+
 
     if (pDX->m_bSaveAndValidate)
     {
@@ -249,6 +246,21 @@ void CHammerheadPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
                AfxMessageBox(_T("X1 + X3 cannot exceed the overall pier width (X5 + X6 + summation of S)"));
                pDX->Fail();
             }
+
+            CColumnData column = m_Pier.GetColumnData(0);
+
+            DDV_UnitValueGreaterThanZero(pDX, IDC_COLUMN_HEIGHT_EDIT, m_ColumnHeight, pDisplayUnits->GetSpanLengthUnit());
+            column.SetColumnHeight(m_ColumnHeight);
+            DDX_CBItemData(pDX, IDC_HEIGHT_MEASURE, m_ColumnHeightMeasurementType);
+            column.SetColumnHeightMeasurementType(m_ColumnHeightMeasurementType);
+            DDX_CBItemData(pDX, IDC_COLUMN_SHAPE, m_ColumnShapeType);
+			column.SetColumnShape(m_ColumnShapeType);
+            DDV_UnitValueGreaterThanZero(pDX, IDC_COLUMN_WIDTH, m_D1, pDisplayUnits->GetSpanLengthUnit());
+            DDV_UnitValueGreaterThanZero(pDX, IDC_COLUMN_DEPTH, m_D2, pDisplayUnits->GetSpanLengthUnit());
+			column.SetColumnDimensions(m_D1, m_D2);
+
+            m_Pier.SetColumnData(0, column);
+
         }
     }
 
@@ -267,25 +279,25 @@ void CHammerheadPierLayoutDlg::FillTransverseLocationComboBox()
 
 void CHammerheadPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
 {
-   CComboBox* pcbRefColumn = (CComboBox*)GetDlgItem(IDC_REFCOLUMN);
-   int curSel = pcbRefColumn->GetCurSel();
-   pcbRefColumn->ResetContent();
-   if (nColumns == INVALID_INDEX)
-   {
-      nColumns = (ColumnIndexType)m_ColumnLayoutGrid.GetRowCount();
-   }
+    CComboBox* pcbRefColumn = (CComboBox*)GetDlgItem(IDC_REFCOLUMN);
+    int curSel = pcbRefColumn->GetCurSel();
+    pcbRefColumn->ResetContent();
+    if (nColumns == INVALID_INDEX)
+    {
+        nColumns = 1;
+    }
 
-   for ( ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++ )
-   {
-      CString strLabel;
-      strLabel.Format(_T("Column %d"),LABEL_COLUMN(colIdx));
-      pcbRefColumn->AddString(strLabel);
-   }
+    for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        CString strLabel;
+        strLabel.Format(_T("Column %d"), LABEL_COLUMN(colIdx));
+        pcbRefColumn->AddString(strLabel);
+    }
 
-   if ( pcbRefColumn->SetCurSel(curSel) == CB_ERR )
-   {
-      pcbRefColumn->SetCurSel(0);
-   }
+    if (pcbRefColumn->SetCurSel(curSel) == CB_ERR)
+    {
+        pcbRefColumn->SetCurSel(0);
+    }
 }
 
 void CHammerheadPierLayoutDlg::FillHeightMeasureComboBox()
@@ -298,25 +310,53 @@ void CHammerheadPierLayoutDlg::FillHeightMeasureComboBox()
    pcbHeightMeasure->SetItemData(idx,(DWORD_PTR)CColumnData::chtBottomElevation);
 }
 
+void CHammerheadPierLayoutDlg::FillColumnShapeComboBox()
+{
+    CComboBox* pcbColumnShape = (CComboBox*)GetDlgItem(IDC_COLUMN_SHAPE);
+    pcbColumnShape->ResetContent();
+    int idx = pcbColumnShape->AddString(_T("Circle"));
+    pcbColumnShape->SetItemData(idx, (DWORD_PTR)CColumnData::cstCircle);
+    idx = pcbColumnShape->AddString(_T("Rectangle"));
+    pcbColumnShape->SetItemData(idx, (DWORD_PTR)CColumnData::cstRectangle);
+}
+
 void CHammerheadPierLayoutDlg::OnHeightMeasureChanged()
 {
-   CComboBox* pcbHeightMeasure = (CComboBox*)GetDlgItem(IDC_HEIGHT_MEASURE);
-   int curSel = pcbHeightMeasure->GetCurSel();
-   CColumnData::ColumnHeightMeasurementType measure = (CColumnData::ColumnHeightMeasurementType)(pcbHeightMeasure->GetItemData(curSel));
-   m_ColumnLayoutGrid.SetHeightMeasurementType(measure);
+    CComboBox* pcbHeightMeasure = (CComboBox*)GetDlgItem(IDC_HEIGHT_MEASURE);
+    int curSel = pcbHeightMeasure->GetCurSel();
+    CColumnData::ColumnHeightMeasurementType measure = (CColumnData::ColumnHeightMeasurementType)(pcbHeightMeasure->GetItemData(curSel));
+    m_ColumnHeightMeasurementType = measure;
+
+    auto pBroker = EAFGetBroker();
+    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+    CString cv;
+    cv.Format(_T("%s\n(%s)"), (measure == CColumnData::chtHeight ? _T("Height") : _T("Bottom\nElev")), pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.UnitTag().c_str());
+
+    CWnd* pLabel = GetDlgItem(IDC_COLUMN_HEIGHT_TEXT);
+    pLabel->SetWindowTextW(cv);
+    //set caption for static text IDC_COLUMN_HEIGHT_LABEL
 }
 
-
-void CHammerheadPierLayoutDlg::OnAddColumn()
+void CHammerheadPierLayoutDlg::OnColumnShapeChanged()
 {
-   m_ColumnLayoutGrid.AddColumn();
-   FillRefColumnComboBox();
-}
+   CComboBox* pcbColumnShape = (CComboBox*)GetDlgItem(IDC_COLUMN_SHAPE);
+   int curSel = pcbColumnShape->GetCurSel();
+   CColumnData::ColumnShapeType shape = (CColumnData::ColumnShapeType)(pcbColumnShape->GetItemData(curSel));
+   m_ColumnShapeType = shape;
 
-void CHammerheadPierLayoutDlg::OnRemoveColumns()
-{
-   m_ColumnLayoutGrid.RemoveSelectedColumns();
-   FillRefColumnComboBox();
+   if (shape == CColumnData::cstCircle)
+   {
+      GetDlgItem(IDC_COLUMN_DEPTH_LABEL)->ShowWindow(SW_HIDE);
+      GetDlgItem(IDC_COLUMN_DEPTH)->ShowWindow(SW_HIDE);
+      GetDlgItem(IDC_COLUMN_DEPTH_UNIT)->ShowWindow(SW_HIDE);
+   }
+   else
+   {
+       GetDlgItem(IDC_COLUMN_DEPTH_LABEL)->ShowWindow(SW_SHOW);
+       GetDlgItem(IDC_COLUMN_DEPTH)->ShowWindow(SW_SHOW);
+       GetDlgItem(IDC_COLUMN_DEPTH_UNIT)->ShowWindow(SW_SHOW);
+   }
+
 }
 
 void CHammerheadPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
