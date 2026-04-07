@@ -61,6 +61,9 @@ END_MESSAGE_MAP()
 BOOL CCommonPierLayoutDlg::OnInitDialog()
 {
 
+    m_ctrlDrawXBeam.SubclassDlgItem(IDC_PIER_LAYOUT, this);
+    m_ctrlDrawXBeam.CustomInit(this);
+
     m_ColumnLayoutGrid.SubclassDlgItem(IDC_COLUMN_GRID, this);
     m_ColumnLayoutGrid.CustomInit();
 
@@ -97,7 +100,7 @@ void CCommonPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
     auto pBroker = EAFGetBroker();
     GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
-    DDX_MetaFileStatic(pDX, IDC_PIER_LAYOUT, m_LayoutPicture,_T("PIERLAYOUT"), _T("Metafile") );
+    //DDX_MetaFileStatic(pDX, IDC_PIER_LAYOUT, m_LayoutPicture,_T("PIERLAYOUT"), _T("Metafile") );
 
     DDX_UnitValueAndTag(pDX,IDC_H1,IDC_H1_UNIT,m_XBeamHeight[pgsTypes::stLeft],pDisplayUnits->GetSpanLengthUnit() );
     DDX_UnitValueAndTag(pDX,IDC_H2,IDC_H2_UNIT,m_XBeamTaperHeight[pgsTypes::stLeft],pDisplayUnits->GetSpanLengthUnit() );
@@ -201,4 +204,14 @@ void CCommonPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierM
 void CCommonPierLayoutDlg::SetPierData(const CPierData2& pierData)
 {
     m_Pier = pierData;
+}
+
+const CPierData2* CCommonPierLayoutDlg::GetPierData() const
+{
+    return &m_Pier;
+}
+
+pgsTypes::PierModelType CCommonPierLayoutDlg::GetPierModelType() const
+{
+    return m_PierModelType;
 }
