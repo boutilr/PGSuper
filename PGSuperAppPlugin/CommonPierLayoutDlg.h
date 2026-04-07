@@ -25,6 +25,7 @@
 #include <PsgLib\PierData2.h>
 #include "ColumnLayoutGrid.h"
 #include <PgsExt\ColumnFixityComboBox.h>
+#include "DrawPierLayoutControl.h"
 
 
 // CommonPierLayoutDlg.h : header file
@@ -35,7 +36,7 @@
 
 class CPierLayoutPage;
 
-class CCommonPierLayoutDlg : public CDialog
+class CCommonPierLayoutDlg : public CDialog, public IPierLayoutDataSource
 {
 
 	friend class CPierLayoutPage;
@@ -46,6 +47,10 @@ public:
 
 	void SetPierModelType(const pgsTypes::PierModelType& pierModelType);
 	void SetPierData(const CPierData2& pierData);
+
+	// IPierLayoutDataSource implementation
+	const CPierData2* GetPierData() const override;
+	pgsTypes::PierModelType GetPierModelType() const override;
 
    // Implementation
 protected:
@@ -65,7 +70,8 @@ protected:
 	pgsTypes::PierModelType m_PierModelType;
 	CPierData2 m_Pier;
 
-	CMetaFileStatic m_LayoutPicture;
+	CDrawPierLayoutControl m_ctrlDrawXBeam;
+
 	CColumnLayoutGrid m_ColumnLayoutGrid;
 	CColumnFixityComboBox m_cbColumnFixity;
 	CColumnData::ColumnHeightMeasurementType m_ColumnHeightMeasurementType;
