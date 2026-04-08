@@ -74,36 +74,38 @@ void CDrawPierLayoutControl::OnPaint()
     rClient.DeflateRect(1, 1, 1, 1);
     CSize sClient = rClient.Size();
 
-    // Get bounding box for all columns and xbeam
-    // For this example, we'll estimate bounds based on pier data
+    // Get bounding box dimensions
     Float64 xbeam_width = pPier->GetXBeamWidth();
     ColumnIndexType nColumns = pPier->GetColumnCount();
 
-    // Estimate column spacing (rough calculation)
-    Float64 col_spacing = xbeam_width / (nColumns > 0 ? (Float64)(nColumns - 1) : 1.0);
-    Float64 left = -xbeam_width / 2.0;
-    Float64 right = xbeam_width / 2.0;
-    Float64 top = 0.0;
-    Float64 bottom = -5.0; // rough estimate
-
     // Get maximum column height
-    Float64 max_height = 0.0;
+    Float64 max_column_height = 0.0;
     for (ColumnIndexType i = 0; i < nColumns; i++)
     {
         const CColumnData* pColumn = &pPier->GetColumnData(i);
         if (pColumn->GetColumnHeightMeasurementType() == CColumnData::chtHeight)
         {
-            max_height = max(max_height, pColumn->GetColumnHeight());
-        }
-        else
-        {
-            // For elevation measurement, use a reference value
-            max_height = max(max_height, 20.0); // placeholder
+            max_column_height = max(max_column_height, pColumn->GetColumnHeight());
         }
     }
-    bottom -= max_height;
 
-    WBFL::Graphing::Rect box(left, bottom, right, top);
+    // Get XBeam dimensions to determine max height
+    Float64 h_left, h2_left, x1_left, x2_left;
+    pPier->GetXBeamDimensions(pgsTypes::stLeft, &h_left, &h2_left, &x1_left, &x2_left);
+
+    Float64 h_right, h2_right, x1_right, x2_right;
+    pPier->GetXBeamDimensions(pgsTypes::stRight, &h_right, &h2_right, &x1_right, &x2_right);
+
+    Float64 max_xbeam_height = max(h_left, h_right);
+
+    // Calculate bounding box with padding
+    Float64 padding = max(xbeam_width, max_column_height) * 0.1; // 10% padding
+    Float64 left = -xbeam_width / 2.0 - padding;
+    Float64 right = xbeam_width / 2.0 + padding;
+    Float64 top = max_column_height + max_xbeam_height + padding;
+    Float64 bottom = -padding;
+
+    WBFL::Graphing::Rect box(left, -bottom, right, -top);
     WBFL::Graphing::Size size = box.Size();
     WBFL::Graphing::Point org = box.Center();
 
@@ -161,25 +163,25 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
             col_height = pColumn->GetColumnHeight();
         }
 
-        // Define column rectangle in world coordinates
-        WBFL::Graphing::Point pt_top_left(col_x - col_width / 2.0, col_height);
-        WBFL::Graphing::Point pt_top_right(col_x + col_width / 2.0, col_height);
+        // Define column rectangle in world coordinates (from bottom to top)
         WBFL::Graphing::Point pt_bottom_left(col_x - col_width / 2.0, 0.0);
         WBFL::Graphing::Point pt_bottom_right(col_x + col_width / 2.0, 0.0);
+        WBFL::Graphing::Point pt_top_left(col_x - col_width / 2.0, col_height);
+        WBFL::Graphing::Point pt_top_right(col_x + col_width / 2.0, col_height);
 
         // Convert to device coordinates
-        LONG dx_tl, dy_tl, dx_tr, dy_tr, dx_bl, dy_bl, dx_br, dy_br;
-        mapper.WPtoDP(pt_top_left, &dx_tl, &dy_tl);
-        mapper.WPtoDP(pt_top_right, &dx_tr, &dy_tr);
+        LONG dx_bl, dy_bl, dx_br, dy_br, dx_tl, dy_tl, dx_tr, dy_tr;
         mapper.WPtoDP(pt_bottom_left, &dx_bl, &dy_bl);
         mapper.WPtoDP(pt_bottom_right, &dx_br, &dy_br);
+        mapper.WPtoDP(pt_top_left, &dx_tl, &dy_tl);
+        mapper.WPtoDP(pt_top_right, &dx_tr, &dy_tr);
 
-        CPoint points[4] = { CPoint(dx_bl, dy_bl), CPoint(dx_tl, dy_tl),
-                              CPoint(dx_tr, dy_tr), CPoint(dx_br, dy_br) };
+        CPoint points[4] = { CPoint(dx_bl, dy_bl), CPoint(dx_br, dy_br),
+                              CPoint(dx_tr, dy_tr), CPoint(dx_tl, dy_tl) };
         pDC->Polygon(points, 4);
     }
 
-    // Draw XBeam (simplified as trapezoid)
+    // Draw XBeam (trapezoid)
     CPen xbeam_pen(PS_SOLID, 2, SEGMENT_BORDER_COLOR);
     CBrush xbeam_brush;
     xbeam_brush.CreateSolidBrush(RGB(200, 200, 200));
@@ -197,12 +199,11 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     Float64 overhang_left = pPier->GetXBeamOverhang(pgsTypes::stLeft);
     Float64 overhang_right = pPier->GetXBeamOverhang(pgsTypes::stRight);
 
-    // Create XBeam points (simplified)
     WBFL::Graphing::Point xbeam_points[4];
     xbeam_points[0] = WBFL::Graphing::Point(-xbeam_width / 2.0 - overhang_left, 0.0);
-    xbeam_points[1] = WBFL::Graphing::Point(-xbeam_width / 2.0, h_left);
+    xbeam_points[1] = WBFL::Graphing::Point(xbeam_width / 2.0 + overhang_right, 0.0);
     xbeam_points[2] = WBFL::Graphing::Point(xbeam_width / 2.0, h_right);
-    xbeam_points[3] = WBFL::Graphing::Point(xbeam_width / 2.0 + overhang_right, 0.0);
+    xbeam_points[3] = WBFL::Graphing::Point(-xbeam_width / 2.0, h_left);
 
     CPoint dev_points[4];
     for (int i = 0; i < 4; i++)
