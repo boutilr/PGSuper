@@ -105,7 +105,7 @@ void CDrawPierLayoutControl::OnPaint()
     Float64 top = max_column_height + max_xbeam_height + padding;
     Float64 bottom = -padding;
 
-    WBFL::Graphing::Rect box(left, -bottom, right, -top);
+    WBFL::Graphing::Rect box(left, bottom, right, top);
     WBFL::Graphing::Size size = box.Size();
     WBFL::Graphing::Point org = box.Center();
 
@@ -113,7 +113,7 @@ void CDrawPierLayoutControl::OnPaint()
     mapper.SetMappingMode(WBFL::Graphing::PointMapper::MapMode::Isotropic);
     mapper.SetWorldExt(size);
     mapper.SetWorldOrg(org);
-    mapper.SetDeviceExt(sClient.cx, sClient.cy);
+    mapper.SetDeviceExt(sClient.cx, -sClient.cy);  // Negate Y to flip axis
     mapper.SetDeviceOrg(sClient.cx / 2, sClient.cy / 2);
 
     // Draw the pier geometry
