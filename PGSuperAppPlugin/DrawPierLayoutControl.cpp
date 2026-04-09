@@ -99,7 +99,7 @@ void CDrawPierLayoutControl::OnPaint()
     Float64 max_xbeam_height = max(h_left, h_right);
 
     // Calculate bounding box with padding
-    Float64 padding = max(xbeam_width, max_column_height) * 0.1; // 10% padding
+    Float64 padding = max(xbeam_width, max_column_height) * 0.25; // 10% padding
     Float64 left = -xbeam_width / 2.0 - padding;
     Float64 right = xbeam_width / 2.0 + padding;
     Float64 top = max_column_height + max_xbeam_height + padding;
@@ -129,15 +129,29 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     if (pPier == nullptr)
         return;
 
-    // Draw columns
+    // Get XBeam and overhang dimensions
+    Float64 H1, H2, H3, H4;
+    Float64 X1, X2, X3, X4, W;
+    pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1, &H2, &X1, &X2);
+    pPier->GetXBeamDimensions(pgsTypes::stRight, &H3, &H4, &X3, &X4);
+    W = pPier->GetXBeamWidth();
+
+    Float64 X5 = pPier->GetXBeamOverhang(pgsTypes::stLeft);
+    Float64 X6 = pPier->GetXBeamOverhang(pgsTypes::stRight);
+
     ColumnIndexType nColumns = pPier->GetColumnCount();
-    Float64 xbeam_width = pPier->GetXBeamWidth();
-    Float64 col_spacing = xbeam_width / (nColumns > 0 ? (Float64)(nColumns - 1) : 1.0);
 
-    // Column dimensions (simplified)
-    Float64 col_width = 2.0; // placeholder
-    Float64 col_depth = 2.0; // placeholder
+    // Calculate total column spacing
+    Float64 S = 0.0;
+    for (SpacingIndexType spaIdx = 0; spaIdx < nColumns - 1; spaIdx++)
+    {
+        S += pPier->GetColumnSpacing(spaIdx);
+    }
 
+    // Total width at base: X5 + S + X6
+    Float64 pierWidth = X5 + S + X6;
+
+    // Draw columns
     CPen column_pen(PS_SOLID, 1, SEGMENT_BORDER_COLOR);
     CBrush column_brush;
     column_brush.CreateSolidBrush(SEGMENT_FILL_COLOR);
@@ -148,13 +162,13 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     pDC->SelectObject(&column_pen);
     pDC->SelectObject(&column_brush);
 
+    // Calculate column positions starting from left edge
+    Float64 col_x = -pierWidth / 2.0 + X5; // Start at first column position
+
     // Draw each column
     for (ColumnIndexType i = 0; i < nColumns; i++)
     {
         const CColumnData* pColumn = &pPier->GetColumnData(i);
-
-        // Calculate column position (centered)
-        Float64 col_x = -xbeam_width / 2.0 + i * col_spacing;
 
         // Get column height
         Float64 col_height = 0.0;
@@ -162,6 +176,14 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
         {
             col_height = pColumn->GetColumnHeight();
         }
+
+        // Get column dimensions
+        Float64 col_d1, col_d2;
+        pColumn->GetColumnDimensions(&col_d1, &col_d2);
+
+        // Use average for width/depth visualization (simplified)
+        Float64 col_width = col_d1;
+        Float64 col_depth = col_d2;
 
         // Define column rectangle in world coordinates (from bottom to top)
         WBFL::Graphing::Point pt_bottom_left(col_x - col_width / 2.0, 0.0);
@@ -179,9 +201,15 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
         CPoint points[4] = { CPoint(dx_bl, dy_bl), CPoint(dx_br, dy_br),
                               CPoint(dx_tr, dy_tr), CPoint(dx_tl, dy_tl) };
         pDC->Polygon(points, 4);
+
+        // Move to next column position
+        if (i < nColumns - 1)
+        {
+            col_x += pPier->GetColumnSpacing((SpacingIndexType)i);
+        }
     }
 
-    // Draw XBeam (trapezoid)
+    // Draw XBeam (trapezoid with 7 points)
     CPen xbeam_pen(PS_SOLID, 2, SEGMENT_BORDER_COLOR);
     CBrush xbeam_brush;
     xbeam_brush.CreateSolidBrush(RGB(200, 200, 200));
@@ -189,43 +217,44 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     pDC->SelectObject(&xbeam_pen);
     pDC->SelectObject(&xbeam_brush);
 
-    // Get XBeam dimensions
-    Float64 h_left, h2_left, x1_left, x2_left;
-    pPier->GetXBeamDimensions(pgsTypes::stLeft, &h_left, &h2_left, &x1_left, &x2_left);
+    WBFL::Graphing::Point xbeam_points[7];
+    xbeam_points[0] = WBFL::Graphing::Point(-pierWidth / 2.0, 0.0);
+    xbeam_points[1] = WBFL::Graphing::Point(-pierWidth / 2.0 + X2, H1);
+    xbeam_points[2] = WBFL::Graphing::Point(-pierWidth / 2.0 + X2 + X1, H1 + H2);
+    xbeam_points[3] = WBFL::Graphing::Point(pierWidth / 2.0 - X2 - X3, H3 + H4);
+    xbeam_points[4] = WBFL::Graphing::Point(pierWidth / 2.0 - X2, H3);
+    xbeam_points[5] = WBFL::Graphing::Point(pierWidth / 2.0, 0.0);
 
-    Float64 h_right, h2_right, x1_right, x2_right;
-    pPier->GetXBeamDimensions(pgsTypes::stRight, &h_right, &h2_right, &x1_right, &x2_right);
+    CPoint dev_points[7];
+    IndexType nPoints = 6;  // We have 6 points for the xbeam polygon
 
-    Float64 overhang_left = pPier->GetXBeamOverhang(pgsTypes::stLeft);
-    Float64 overhang_right = pPier->GetXBeamOverhang(pgsTypes::stRight);
-
-    WBFL::Graphing::Point xbeam_points[4];
-    xbeam_points[0] = WBFL::Graphing::Point(-xbeam_width / 2.0 - overhang_left, 0.0);
-    xbeam_points[1] = WBFL::Graphing::Point(xbeam_width / 2.0 + overhang_right, 0.0);
-    xbeam_points[2] = WBFL::Graphing::Point(xbeam_width / 2.0, h_right);
-    xbeam_points[3] = WBFL::Graphing::Point(-xbeam_width / 2.0, h_left);
-
-    CPoint dev_points[4];
-    for (int i = 0; i < 4; i++)
+    for (IndexType i = 0; i < nPoints; i++)
     {
         LONG dx, dy;
         mapper.WPtoDP(xbeam_points[i], &dx, &dy);
         dev_points[i] = CPoint(dx, dy);
     }
 
-    pDC->Polygon(dev_points, 4);
+    pDC->Polygon(dev_points, (int)nPoints);
 
     pDC->SelectObject(pOldPen);
     pDC->SelectObject(pOldBrush);
 
     // Draw symbolic dimensions
-    DrawSymbolicDimensions(pDC, mapper, h_left, h2_left, x1_left, x2_left, h_right, h2_right, x1_right, x2_right);
+    DrawSymbolicDimensions(pDC, mapper, H1, H2, X1, X2, H3, H4, X3, X4);
 }
 
 void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
     Float64 h_left, Float64 h2_left, Float64 x1_left, Float64 x2_left,
     Float64 h_right, Float64 h2_right, Float64 x1_right, Float64 x2_right)
 {
+    if (m_pSource == nullptr)
+        return;
+
+    const CPierData2* pPier = m_pSource->GetPierData();
+    if (pPier == nullptr)
+        return;
+
     CPen dim_pen(PS_SOLID, 1, RGB(0, 0, 0));
     CPen* pOldPen = pDC->SelectObject(&dim_pen);
 
@@ -239,56 +268,60 @@ void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::Po
 
     // Constants for dimension line placement
     const Float64 DIM_OFFSET = 0.5;
-    const Float64 ARROW_SIZE = 0.2;
-
-
-    const CPierData2* pPier = m_pSource->GetPierData();
-    if (pPier == nullptr)
-        return;
 
     Float64 xbeam_width = pPier->GetXBeamWidth();
+    Float64 X5 = pPier->GetXBeamOverhang(pgsTypes::stLeft);
+    Float64 X6 = pPier->GetXBeamOverhang(pgsTypes::stRight);
+
+    ColumnIndexType nColumns = pPier->GetColumnCount();
+    Float64 S = 0.0;
+    for (SpacingIndexType spaIdx = 0; spaIdx < nColumns - 1; spaIdx++)
+    {
+        S += pPier->GetColumnSpacing(spaIdx);
+    }
+    Float64 pierWidth = X5 + S + X6;
 
     // H1 dimension (left xbeam height)
-    DrawVerticalDimension(pDC, mapper, -xbeam_width / 2.0 - DIM_OFFSET, 0.0, h_left, _T("H1"));
+    DrawVerticalDimension(pDC, mapper, -pierWidth / 2.0 - DIM_OFFSET, 0.0, h_left, _T("H1"));
 
     // H3 dimension (right xbeam height)
-    DrawVerticalDimension(pDC, mapper, xbeam_width / 2.0 + DIM_OFFSET, 0.0, h_right, _T("H3"));
+    DrawVerticalDimension(pDC, mapper, pierWidth / 2.0 + DIM_OFFSET, 0.0, h_right, _T("H3"));
 
     // W dimension (xbeam width at top)
     DrawHorizontalDimension(pDC, mapper, -xbeam_width / 2.0, h_left + DIM_OFFSET, xbeam_width / 2.0, _T("W"));
 
     // X5 dimension (left overhang)
-    Float64 overhang_left = m_pSource->GetPierData()->GetXBeamOverhang(pgsTypes::stLeft);
-    Float64 left_edge = -xbeam_width / 2.0 - overhang_left;
-    DrawHorizontalDimension(pDC, mapper, left_edge, -DIM_OFFSET, -xbeam_width / 2.0, _T("X5"));
+    Float64 left_edge = -pierWidth / 2.0;
+    DrawHorizontalDimension(pDC, mapper, left_edge, -DIM_OFFSET, left_edge + X5, _T("X5"));
 
     // X6 dimension (right overhang)
-    Float64 overhang_right = m_pSource->GetPierData()->GetXBeamOverhang(pgsTypes::stRight);
-    Float64 right_edge = xbeam_width / 2.0 + overhang_right;
-    DrawHorizontalDimension(pDC, mapper, xbeam_width / 2.0, -DIM_OFFSET, right_edge, _T("X6"));
+    Float64 right_edge = pierWidth / 2.0;
+    DrawHorizontalDimension(pDC, mapper, right_edge - X6, -DIM_OFFSET, right_edge, _T("X6"));
 
     // H2 dimension (left taper height) - if non-zero
     if (::IsGT(h2_left, 0.0))
     {
-        DrawVerticalDimension(pDC, mapper, -xbeam_width / 2.0 - DIM_OFFSET * 2, h_left - h2_left, h_left, _T("H2"));
+        DrawVerticalDimension(pDC, mapper, -xbeam_width / 2.0 - DIM_OFFSET * 2, h_left, h_left + h2_left, _T("H2"));
     }
 
     // H4 dimension (right taper height) - if non-zero
     if (::IsGT(h2_right, 0.0))
     {
-        DrawVerticalDimension(pDC, mapper, xbeam_width / 2.0 + DIM_OFFSET * 2, h_right - h2_right, h_right, _T("H4"));
+        DrawVerticalDimension(pDC, mapper, xbeam_width / 2.0 + DIM_OFFSET * 2, h_right, h_right + h2_right, _T("H4"));
     }
 
     // X1 dimension (left taper length) - if non-zero
     if (::IsGT(x1_left, 0.0))
     {
-        DrawHorizontalDimension(pDC, mapper, -xbeam_width / 2.0 - x1_left, h_left + DIM_OFFSET * 2, -xbeam_width / 2.0, _T("X1"));
+        DrawHorizontalDimension(pDC, mapper, -xbeam_width / 2.0 + x2_left, h_left + DIM_OFFSET * 2,
+            -xbeam_width / 2.0 + x2_left + x1_left, _T("X1"));
     }
 
     // X3 dimension (right taper length) - if non-zero
     if (::IsGT(x1_right, 0.0))
     {
-        DrawHorizontalDimension(pDC, mapper, xbeam_width / 2.0, h_right + DIM_OFFSET * 2, xbeam_width / 2.0 + x1_right, _T("X3"));
+        DrawHorizontalDimension(pDC, mapper, xbeam_width / 2.0 - x2_right - x1_right, h_right + DIM_OFFSET * 2,
+            xbeam_width / 2.0 - x2_right, _T("X3"));
     }
 
     pDC->SetTextAlign(oldTA);
