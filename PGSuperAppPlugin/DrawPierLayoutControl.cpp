@@ -217,6 +217,138 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
 
     pDC->SelectObject(pOldPen);
     pDC->SelectObject(pOldBrush);
+
+    // Draw symbolic dimensions
+    DrawSymbolicDimensions(pDC, mapper, h_left, h2_left, x1_left, x2_left, h_right, h2_right, x1_right, x2_right);
+}
+
+void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
+    Float64 h_left, Float64 h2_left, Float64 x1_left, Float64 x2_left,
+    Float64 h_right, Float64 h2_right, Float64 x1_right, Float64 x2_right)
+{
+    CPen dim_pen(PS_SOLID, 1, RGB(0, 0, 0));
+    CPen* pOldPen = pDC->SelectObject(&dim_pen);
+
+    CFont font;
+    font.CreatePointFont(80, _T("Arial"));  // 8pt font
+    CFont* pOldFont = pDC->SelectObject(&font);
+
+    pDC->SetTextColor(RGB(0, 0, 0));
+    pDC->SetBkMode(TRANSPARENT);
+    int oldTA = pDC->SetTextAlign(TA_CENTER | TA_BOTTOM);
+
+    // Constants for dimension line placement
+    const Float64 DIM_OFFSET = 0.5;
+    const Float64 ARROW_SIZE = 0.2;
+
+
+    const CPierData2* pPier = m_pSource->GetPierData();
+    if (pPier == nullptr)
+        return;
+
+    Float64 xbeam_width = pPier->GetXBeamWidth();
+
+    // H1 dimension (left xbeam height)
+    DrawVerticalDimension(pDC, mapper, -xbeam_width / 2.0 - DIM_OFFSET, 0.0, h_left, _T("H1"));
+
+    // H3 dimension (right xbeam height)
+    DrawVerticalDimension(pDC, mapper, xbeam_width / 2.0 + DIM_OFFSET, 0.0, h_right, _T("H3"));
+
+    // W dimension (xbeam width at top)
+    DrawHorizontalDimension(pDC, mapper, -xbeam_width / 2.0, h_left + DIM_OFFSET, xbeam_width / 2.0, _T("W"));
+
+    // X5 dimension (left overhang)
+    Float64 overhang_left = m_pSource->GetPierData()->GetXBeamOverhang(pgsTypes::stLeft);
+    Float64 left_edge = -xbeam_width / 2.0 - overhang_left;
+    DrawHorizontalDimension(pDC, mapper, left_edge, -DIM_OFFSET, -xbeam_width / 2.0, _T("X5"));
+
+    // X6 dimension (right overhang)
+    Float64 overhang_right = m_pSource->GetPierData()->GetXBeamOverhang(pgsTypes::stRight);
+    Float64 right_edge = xbeam_width / 2.0 + overhang_right;
+    DrawHorizontalDimension(pDC, mapper, xbeam_width / 2.0, -DIM_OFFSET, right_edge, _T("X6"));
+
+    // H2 dimension (left taper height) - if non-zero
+    if (::IsGT(h2_left, 0.0))
+    {
+        DrawVerticalDimension(pDC, mapper, -xbeam_width / 2.0 - DIM_OFFSET * 2, h_left - h2_left, h_left, _T("H2"));
+    }
+
+    // H4 dimension (right taper height) - if non-zero
+    if (::IsGT(h2_right, 0.0))
+    {
+        DrawVerticalDimension(pDC, mapper, xbeam_width / 2.0 + DIM_OFFSET * 2, h_right - h2_right, h_right, _T("H4"));
+    }
+
+    // X1 dimension (left taper length) - if non-zero
+    if (::IsGT(x1_left, 0.0))
+    {
+        DrawHorizontalDimension(pDC, mapper, -xbeam_width / 2.0 - x1_left, h_left + DIM_OFFSET * 2, -xbeam_width / 2.0, _T("X1"));
+    }
+
+    // X3 dimension (right taper length) - if non-zero
+    if (::IsGT(x1_right, 0.0))
+    {
+        DrawHorizontalDimension(pDC, mapper, xbeam_width / 2.0, h_right + DIM_OFFSET * 2, xbeam_width / 2.0 + x1_right, _T("X3"));
+    }
+
+    pDC->SetTextAlign(oldTA);
+    pDC->SelectObject(pOldFont);
+    pDC->SelectObject(pOldPen);
+    font.DeleteObject();
+}
+
+void CDrawPierLayoutControl::DrawVerticalDimension(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
+    Float64 x, Float64 y1, Float64 y2, LPCTSTR pszLabel)
+{
+    WBFL::Graphing::Point pt_start(x, y1);
+    WBFL::Graphing::Point pt_end(x, y2);
+
+    LONG dx_start, dy_start, dx_end, dy_end;
+    mapper.WPtoDP(pt_start, &dx_start, &dy_start);
+    mapper.WPtoDP(pt_end, &dx_end, &dy_end);
+
+    // Draw dimension line
+    pDC->MoveTo(dx_start, dy_start);
+    pDC->LineTo(dx_end, dy_end);
+
+    // Draw tick marks at start and end
+    const int TICK_SIZE = 3;
+    pDC->MoveTo(dx_start - TICK_SIZE, dy_start);
+    pDC->LineTo(dx_start + TICK_SIZE, dy_start);
+    pDC->MoveTo(dx_end - TICK_SIZE, dy_end);
+    pDC->LineTo(dx_end + TICK_SIZE, dy_end);
+
+    // Draw label at midpoint
+    int mid_x = (dx_start + dx_end) / 2;
+    int mid_y = (dy_start + dy_end) / 2;
+    pDC->TextOutW(mid_x - 10, mid_y, pszLabel);
+}
+
+void CDrawPierLayoutControl::DrawHorizontalDimension(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
+    Float64 x1, Float64 y, Float64 x2, LPCTSTR pszLabel)
+{
+    WBFL::Graphing::Point pt_start(x1, y);
+    WBFL::Graphing::Point pt_end(x2, y);
+
+    LONG dx_start, dy_start, dx_end, dy_end;
+    mapper.WPtoDP(pt_start, &dx_start, &dy_start);
+    mapper.WPtoDP(pt_end, &dx_end, &dy_end);
+
+    // Draw dimension line
+    pDC->MoveTo(dx_start, dy_start);
+    pDC->LineTo(dx_end, dy_end);
+
+    // Draw tick marks at start and end
+    const int TICK_SIZE = 3;
+    pDC->MoveTo(dx_start, dy_start - TICK_SIZE);
+    pDC->LineTo(dx_start, dy_start + TICK_SIZE);
+    pDC->MoveTo(dx_end, dy_end - TICK_SIZE);
+    pDC->LineTo(dx_end, dy_end + TICK_SIZE);
+
+    // Draw label at midpoint
+    int mid_x = (dx_start + dx_end) / 2;
+    int mid_y = (dy_start + dy_end) / 2 - 5;
+    pDC->TextOutW(mid_x - 5, mid_y, pszLabel);
 }
 
 BOOL CDrawPierLayoutControl::OnEraseBkgnd(CDC* pDC)
