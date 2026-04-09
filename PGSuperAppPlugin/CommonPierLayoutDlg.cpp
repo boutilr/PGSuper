@@ -53,6 +53,19 @@ BEGIN_MESSAGE_MAP(CCommonPierLayoutDlg, CDialog)
     ON_CBN_SELCHANGE(IDC_HEIGHT_MEASURE, OnHeightMeasureChanged)
     ON_BN_CLICKED(IDC_ADD_COLUMN, &CCommonPierLayoutDlg::OnAddColumn)
     ON_BN_CLICKED(IDC_REMOVE_COLUMN, &CCommonPierLayoutDlg::OnRemoveColumns)
+
+    ON_EN_CHANGE(IDC_W,  &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_H1, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_H2, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_H3, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_H4, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X1, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X2, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X3, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X4, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X5, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X6, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -214,4 +227,46 @@ const CPierData2* CCommonPierLayoutDlg::GetPierData() const
 pgsTypes::PierModelType CCommonPierLayoutDlg::GetPierModelType() const
 {
     return m_PierModelType;
+}
+
+
+void CCommonPierLayoutDlg::OnPierLayoutChanged()
+{
+    // Get the current values from the edit controls into member variables
+    CDataExchange dx(this, TRUE);
+
+    auto pBroker = EAFGetBroker();
+    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+
+    // Exchange XBeam dimensions
+    DDX_UnitValueAndTag(&dx, IDC_H1, IDC_H1_UNIT, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_H2, IDC_H2_UNIT, m_XBeamTaperHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_X1, IDC_X1_UNIT, m_XBeamTaperLength[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_X2, IDC_X2_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+
+    DDX_UnitValueAndTag(&dx, IDC_H3, IDC_H3_UNIT, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_H4, IDC_H4_UNIT, m_XBeamTaperHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_X3, IDC_X3_UNIT, m_XBeamTaperLength[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_X4, IDC_X4_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+
+    DDX_UnitValueAndTag(&dx, IDC_W, IDC_W_UNIT, m_XBeamWidth, pDisplayUnits->GetSpanLengthUnit());
+
+    DDX_UnitValueAndTag(&dx, IDC_X5, IDC_X5_UNIT, m_XBeamOverhang[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_X6, IDC_X6_UNIT, m_XBeamOverhang[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+
+    // Update the pier data with the current values
+    m_Pier.SetXBeamDimensions(pgsTypes::stLeft, m_XBeamHeight[pgsTypes::stLeft], m_XBeamTaperHeight[pgsTypes::stLeft],
+        m_XBeamTaperLength[pgsTypes::stLeft], m_XBeamEndSlopeOffset[pgsTypes::stLeft]);
+
+    m_Pier.SetXBeamDimensions(pgsTypes::stRight, m_XBeamHeight[pgsTypes::stRight], m_XBeamTaperHeight[pgsTypes::stRight],
+        m_XBeamTaperLength[pgsTypes::stRight], m_XBeamEndSlopeOffset[pgsTypes::stRight]);
+
+    m_Pier.SetXBeamWidth(m_XBeamWidth);
+
+    m_Pier.SetXBeamOverhang(pgsTypes::stLeft, m_XBeamOverhang[pgsTypes::stLeft]);
+    m_Pier.SetXBeamOverhang(pgsTypes::stRight, m_XBeamOverhang[pgsTypes::stRight]);
+
+    // Invalidate and update the drawing control to reflect the changes
+    m_ctrlDrawXBeam.Invalidate();
+    m_ctrlDrawXBeam.UpdateWindow();
 }
