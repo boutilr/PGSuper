@@ -270,3 +270,5 @@ void CCommonPierLayoutDlg::OnPierLayoutChanged()
     m_ctrlDrawXBeam.Invalidate();
     m_ctrlDrawXBeam.UpdateWindow();
 }
+
+
