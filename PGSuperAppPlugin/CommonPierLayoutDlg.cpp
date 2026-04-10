@@ -49,12 +49,13 @@ CCommonPierLayoutDlg::CCommonPierLayoutDlg(CWnd* pParent)
 
 }
 
+// Add to message map
 BEGIN_MESSAGE_MAP(CCommonPierLayoutDlg, CDialog)
     ON_CBN_SELCHANGE(IDC_HEIGHT_MEASURE, OnHeightMeasureChanged)
     ON_BN_CLICKED(IDC_ADD_COLUMN, &CCommonPierLayoutDlg::OnAddColumn)
     ON_BN_CLICKED(IDC_REMOVE_COLUMN, &CCommonPierLayoutDlg::OnRemoveColumns)
 
-    ON_EN_CHANGE(IDC_W,  &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_W, &CCommonPierLayoutDlg::OnPierLayoutChanged)
     ON_EN_CHANGE(IDC_H1, &CCommonPierLayoutDlg::OnPierLayoutChanged)
     ON_EN_CHANGE(IDC_H2, &CCommonPierLayoutDlg::OnPierLayoutChanged)
     ON_EN_CHANGE(IDC_H3, &CCommonPierLayoutDlg::OnPierLayoutChanged)
@@ -66,7 +67,73 @@ BEGIN_MESSAGE_MAP(CCommonPierLayoutDlg, CDialog)
     ON_EN_CHANGE(IDC_X5, &CCommonPierLayoutDlg::OnPierLayoutChanged)
     ON_EN_CHANGE(IDC_X6, &CCommonPierLayoutDlg::OnPierLayoutChanged)
 
+    ON_WM_LBUTTONDOWN()
+    ON_WM_LBUTTONUP()
+    ON_WM_MOUSEMOVE()
+    ON_WM_LBUTTONDBLCLK()
+
 END_MESSAGE_MAP()
+
+// Add these handler implementations at the end of the file
+void CCommonPierLayoutDlg::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    CRect rcControl;
+    m_ctrlDrawXBeam.GetWindowRect(&rcControl);
+    ScreenToClient(&rcControl);
+
+    if (rcControl.PtInRect(point))
+    {
+        m_ctrlDrawXBeam.SendMessage(WM_LBUTTONDOWN, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
+        return;
+    }
+
+    CDialog::OnLButtonDown(nFlags, point);
+}
+
+void CCommonPierLayoutDlg::OnLButtonUp(UINT nFlags, CPoint point)
+{
+    CRect rcControl;
+    m_ctrlDrawXBeam.GetWindowRect(&rcControl);
+    ScreenToClient(&rcControl);
+
+    if (rcControl.PtInRect(point))
+    {
+        m_ctrlDrawXBeam.SendMessage(WM_LBUTTONUP, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
+        return;
+    }
+
+    CDialog::OnLButtonUp(nFlags, point);
+}
+
+void CCommonPierLayoutDlg::OnMouseMove(UINT nFlags, CPoint point)
+{
+    CRect rcControl;
+    m_ctrlDrawXBeam.GetWindowRect(&rcControl);
+    ScreenToClient(&rcControl);
+
+    if (rcControl.PtInRect(point))
+    {
+        m_ctrlDrawXBeam.SendMessage(WM_MOUSEMOVE, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
+        return;
+    }
+
+    CDialog::OnMouseMove(nFlags, point);
+}
+
+void CCommonPierLayoutDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+    CRect rcControl;
+    m_ctrlDrawXBeam.GetWindowRect(&rcControl);
+    ScreenToClient(&rcControl);
+
+    if (rcControl.PtInRect(point))
+    {
+        m_ctrlDrawXBeam.SendMessage(WM_LBUTTONDBLCLK, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
+        return;
+    }
+
+    CDialog::OnLButtonDblClk(nFlags, point);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // CCommonPierLayoutDlg message handlers
