@@ -36,6 +36,12 @@ IMPLEMENT_DYNAMIC(CDrawPierLayoutControl, CWnd)
 CDrawPierLayoutControl::CDrawPierLayoutControl()
 {
     m_pSource = nullptr;
+    m_bInitialized = FALSE;
+    m_bDragging = FALSE;
+    m_initialExtFront = WBFL::Graphing::Size(0, 0);
+    m_initialExtSide = WBFL::Graphing::Size(0, 0);
+    m_currentExtFront = WBFL::Graphing::Size(0, 0);
+    m_currentExtSide = WBFL::Graphing::Size(0, 0);
 }
 
 CDrawPierLayoutControl::~CDrawPierLayoutControl()
@@ -45,6 +51,10 @@ CDrawPierLayoutControl::~CDrawPierLayoutControl()
 BEGIN_MESSAGE_MAP(CDrawPierLayoutControl, CWnd)
     ON_WM_PAINT()
     ON_WM_ERASEBKGND()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_LBUTTONUP()
+    ON_WM_MOUSEMOVE()
+    ON_WM_LBUTTONDBLCLK()
 END_MESSAGE_MAP()
 
 void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
@@ -52,11 +62,131 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
     m_pSource = pSource;
 }
 
+void CDrawPierLayoutControl::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    m_bDragging = TRUE;
+    m_dragStart = point;
+    m_dragEnd = point;
+    SetCapture();
+}
+
+void CDrawPierLayoutControl::OnMouseMove(UINT nFlags, CPoint point)
+{
+    if (m_bDragging)
+    {
+        // Use XOR to erase the old box and draw the new one
+        CClientDC dc(this);
+        CPen pen(PS_DASH, 1, RGB(0, 0, 255));
+        CPen* pOldPen = dc.SelectObject(&pen);
+        int oldRop = dc.SetROP2(R2_XORPEN);
+
+        // Erase old box by drawing it again with XOR
+        dc.MoveTo(m_dragStart);
+        dc.LineTo(m_dragEnd.x, m_dragStart.y);
+        dc.LineTo(m_dragEnd);
+        dc.LineTo(m_dragStart.x, m_dragEnd.y);
+        dc.LineTo(m_dragStart);
+
+        // Update to new position
+        m_dragEnd = point;
+
+        // Draw new box with XOR
+        dc.MoveTo(m_dragStart);
+        dc.LineTo(m_dragEnd.x, m_dragStart.y);
+        dc.LineTo(m_dragEnd);
+        dc.LineTo(m_dragStart.x, m_dragEnd.y);
+        dc.LineTo(m_dragStart);
+
+        dc.SetROP2(oldRop);
+        dc.SelectObject(pOldPen);
+    }
+}
+
+void CDrawPierLayoutControl::OnLButtonUp(UINT nFlags, CPoint point)
+{
+    ReleaseCapture();
+    m_bDragging = FALSE;
+
+    if (m_dragStart == m_dragEnd)
+        return;  // No meaningful drag
+
+    CRect rClient;
+    GetClientRect(&rClient);
+    int view_split = (rClient.Width() * 3) / 4;
+
+    // Determine which view was dragged in
+    CRect rLeftView(rClient.left, rClient.top, rClient.left + view_split, rClient.bottom);
+    CRect rRightView(rClient.left + view_split, rClient.top, rClient.right, rClient.bottom);
+
+    if (rLeftView.PtInRect(m_dragStart))
+    {
+        // Zoom front view - drag box becomes the new view
+        int minX = min(m_dragStart.x, m_dragEnd.x) - rLeftView.left;
+        int maxX = max(m_dragStart.x, m_dragEnd.x) - rLeftView.left;
+        int minY = min(m_dragStart.y, m_dragEnd.y) - rLeftView.top;
+        int maxY = max(m_dragStart.y, m_dragEnd.y) - rLeftView.top;
+
+        CSize dragSize(abs(maxX - minX), abs(maxY - minY));
+        if (dragSize.cx > 20 && dragSize.cy > 20)
+        {
+            // Calculate the world region covered by the drag box
+            Float64 worldWidthOfDrag = dragSize.cx * m_currentExtFront.Dx() / rLeftView.Width();
+            Float64 worldHeightOfDrag = dragSize.cy * m_currentExtFront.Dy() / rLeftView.Height();
+
+            // Center of drag box in device coords relative to view center
+            int dragCenterDeviceX = (minX + maxX) / 2 - rLeftView.Width() / 2;
+            int dragCenterDeviceY = (minY + maxY) / 2 - rLeftView.Height() / 2;
+
+            // Convert drag center to world coordinates
+            Float64 dragCenterWorldX = (dragCenterDeviceX * m_currentExtFront.Dx()) / rLeftView.Width();
+            Float64 dragCenterWorldY = -(dragCenterDeviceY * m_currentExtFront.Dy()) / rLeftView.Height();
+
+            // Update origin to center on the drag box
+            m_currentOrgFront = WBFL::Graphing::Point(
+                m_currentOrgFront.X() + dragCenterWorldX,
+                m_currentOrgFront.Y() + dragCenterWorldY
+            );
+
+            // Update extent to match the drag box size
+            m_currentExtFront = WBFL::Graphing::Size(worldWidthOfDrag, worldHeightOfDrag);
+        }
+    }
+    else if (rRightView.PtInRect(m_dragStart))
+    {
+        // Zoom side view (same logic)
+        int minX = min(m_dragStart.x, m_dragEnd.x) - rRightView.left;
+        int maxX = max(m_dragStart.x, m_dragEnd.x) - rRightView.left;
+        int minY = min(m_dragStart.y, m_dragEnd.y) - rRightView.top;
+        int maxY = max(m_dragStart.y, m_dragEnd.y) - rRightView.top;
+
+        CSize dragSize(abs(maxX - minX), abs(maxY - minY));
+        if (dragSize.cx > 20 && dragSize.cy > 20)
+        {
+            Float64 worldWidthOfDrag = dragSize.cx * m_currentExtSide.Dx() / rRightView.Width();
+            Float64 worldHeightOfDrag = dragSize.cy * m_currentExtSide.Dy() / rRightView.Height();
+
+            int dragCenterDeviceX = (minX + maxX) / 2 - rRightView.Width() / 2;
+            int dragCenterDeviceY = (minY + maxY) / 2 - rRightView.Height() / 2;
+
+            Float64 dragCenterWorldX = (dragCenterDeviceX * m_currentExtSide.Dx()) / rRightView.Width();
+            Float64 dragCenterWorldY = -(dragCenterDeviceY * m_currentExtSide.Dy()) / rRightView.Height();
+
+            m_currentOrgSide = WBFL::Graphing::Point(
+                m_currentOrgSide.X() + dragCenterWorldX,
+                m_currentOrgSide.Y() + dragCenterWorldY
+            );
+
+            m_currentExtSide = WBFL::Graphing::Size(worldWidthOfDrag, worldHeightOfDrag);
+        }
+    }
+
+    InvalidateRect(NULL, TRUE);  // TRUE = erase background and force complete repaint
+}
+
 void CDrawPierLayoutControl::OnPaint()
 {
-    CPaintDC dc(this); // device context for painting
+    CPaintDC dc(this);
 
-    // set up the clipping region so we don't draw outside of the client rect
     CRect rClient;
     GetClientRect(&rClient);
     CRgn rgn;
@@ -70,35 +200,67 @@ void CDrawPierLayoutControl::OnPaint()
     if (pPier == nullptr)
         return;
 
-    // Split the drawing area: left side for front view, right side for side view
     int total_width = rClient.Width();
-    int view_split = (total_width * 3) / 4;   // Split at 75%
+    int view_split = (total_width * 3) / 4;
 
-    // ===== LEFT SIDE: FRONT VIEW (Elevation) =====
+    // LEFT SIDE: FRONT VIEW
     CRect rLeftView(rClient.left, rClient.top, rClient.left + view_split, rClient.bottom);
     rLeftView.DeflateRect(1, 1, 1, 1);
     CSize sLeftClient = rLeftView.Size();
 
-    // Calculate bounding box for front view
     WBFL::Graphing::PointMapper mapper;
     CalculateFrontViewBoundingBox(pPier, mapper, sLeftClient);
+
+    // On first paint, store FRONT VIEW initial extents
+    if (!m_bInitialized)
+    {
+        m_initialExtFront = mapper.GetWorldExt();
+        m_initialOrgFront = mapper.GetWorldOrg();
+        m_currentExtFront = m_initialExtFront;
+        m_currentOrgFront = m_initialOrgFront;
+        m_bInitialized = TRUE;  // Set this early
+    }
+
+    // Apply current zoom level
+    mapper.SetWorldExt(m_currentExtFront);
+    mapper.SetWorldOrg(m_currentOrgFront);
     mapper.SetDeviceOrg(rLeftView.left + sLeftClient.cx / 2, rLeftView.top + sLeftClient.cy / 2);
 
-    // Draw the pier geometry on the left
     DrawPierGeometry(&dc, mapper);
 
-    // ===== RIGHT SIDE: SIDE VIEW =====
+    // RIGHT SIDE: SIDE VIEW
     CRect rRightView(rClient.left + view_split, rClient.top, rClient.right, rClient.bottom);
     rRightView.DeflateRect(1, 1, 1, 1);
     CSize sRightClient = rRightView.Size();
 
-    // Calculate bounding box for side view
     WBFL::Graphing::PointMapper side_mapper;
     CalculateSideViewBoundingBox(pPier, side_mapper, sRightClient);
+
+    // Store SIDE VIEW initial extents only if not already set
+    if (m_initialExtSide.Dx() == 0 || m_initialExtSide.Dy() == 0)
+    {
+        m_initialExtSide = side_mapper.GetWorldExt();
+        m_initialOrgSide = side_mapper.GetWorldOrg();
+        m_currentExtSide = m_initialExtSide;
+        m_currentOrgSide = m_initialOrgSide;
+    }
+
+    side_mapper.SetWorldExt(m_currentExtSide);
+    side_mapper.SetWorldOrg(m_currentOrgSide);
     side_mapper.SetDeviceOrg(rRightView.left + sRightClient.cx / 2, rRightView.top + sRightClient.cy / 2);
 
-    // Draw the side view on the right
     DrawSideView(&dc, side_mapper);
+}
+
+void CDrawPierLayoutControl::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+    // Reset to initial zoom
+    m_currentExtFront = m_initialExtFront;
+    m_currentOrgFront = m_initialOrgFront;
+    m_currentExtSide = m_initialExtSide;
+    m_currentOrgSide = m_initialOrgSide;
+
+    InvalidateRect(NULL, TRUE);  // TRUE = erase background and force complete repaint
 }
 
 void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(const CPierData2* pPier,
