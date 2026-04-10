@@ -45,11 +45,31 @@ public:
 protected:
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 
 	DECLARE_MESSAGE_MAP()
 
 private:
 	IPierLayoutDataSource* m_pSource;
+
+	// Zoom state - store initial bounds for reset
+	WBFL::Graphing::Point m_initialOrgFront;
+	WBFL::Graphing::Size m_initialExtFront;
+	WBFL::Graphing::Point m_currentOrgFront;
+	WBFL::Graphing::Size m_currentExtFront;
+
+	WBFL::Graphing::Point m_initialOrgSide;
+	WBFL::Graphing::Size m_initialExtSide;
+	WBFL::Graphing::Point m_currentOrgSide;
+	WBFL::Graphing::Size m_currentExtSide;
+
+	BOOL m_bInitialized;
+	BOOL m_bDragging;
+	CPoint m_dragStart;
+	CPoint m_dragEnd;
 
 	void CalculateFrontViewBoundingBox(const CPierData2* pPier,
 		WBFL::Graphing::PointMapper& mapper, CSize sDeviceClient);
