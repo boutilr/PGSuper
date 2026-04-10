@@ -79,9 +79,52 @@ void CDrawPierLayoutControl::OnPaint()
     rLeftView.DeflateRect(1, 1, 1, 1);
     CSize sLeftClient = rLeftView.Size();
 
-    // Get bounding box dimensions for front view
-    Float64 xbeam_width = pPier->GetXBeamWidth();
+    // Calculate bounding box for front view
+    WBFL::Graphing::PointMapper mapper;
+    CalculateFrontViewBoundingBox(pPier, mapper, sLeftClient);
+    mapper.SetDeviceOrg(rLeftView.left + sLeftClient.cx / 2, rLeftView.top + sLeftClient.cy / 2);
+
+    // Draw the pier geometry on the left
+    DrawPierGeometry(&dc, mapper);
+
+    // ===== RIGHT SIDE: SIDE VIEW =====
+    CRect rRightView(rClient.left + view_split, rClient.top, rClient.right, rClient.bottom);
+    rRightView.DeflateRect(1, 1, 1, 1);
+    CSize sRightClient = rRightView.Size();
+
+    // Calculate bounding box for side view
+    WBFL::Graphing::PointMapper side_mapper;
+    CalculateSideViewBoundingBox(pPier, side_mapper, sRightClient);
+    side_mapper.SetDeviceOrg(rRightView.left + sRightClient.cx / 2, rRightView.top + sRightClient.cy / 2);
+
+    // Draw the side view on the right
+    DrawSideView(&dc, side_mapper);
+}
+
+void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(const CPierData2* pPier,
+    WBFL::Graphing::PointMapper& mapper, CSize sDeviceClient)
+{
+    // Get pier dimensions
     ColumnIndexType nColumns = pPier->GetColumnCount();
+
+    // Calculate column spacing sum
+    Float64 S = 0.0;
+    for (SpacingIndexType spaIdx = 0; spaIdx < nColumns - 1; spaIdx++)
+    {
+        S += pPier->GetColumnSpacing(spaIdx);
+    }
+
+    Float64 X5 = pPier->GetXBeamOverhang(pgsTypes::stLeft);
+    Float64 X6 = pPier->GetXBeamOverhang(pgsTypes::stRight);
+    Float64 pierWidth = X5 + S + X6;
+
+    // Get XBeam dimensions
+    Float64 H1, H2, X1, X2;
+    Float64 H3, H4, X3, X4;
+    pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1, &H2, &X1, &X2);
+    pPier->GetXBeamDimensions(pgsTypes::stRight, &H3, &H4, &X3, &X4);
+
+    Float64 max_xbeam_height = max(H1 + H2, H3 + H4);
 
     // Get maximum column height
     Float64 max_column_height = 0.0;
@@ -94,73 +137,97 @@ void CDrawPierLayoutControl::OnPaint()
         }
     }
 
-    // Get XBeam dimensions to determine max height
-    Float64 h_left, h2_left, x1_left, x2_left;
-    pPier->GetXBeamDimensions(pgsTypes::stLeft, &h_left, &h2_left, &x1_left, &x2_left);
+    // Calculate world bounding box with 10% margin
+    Float64 world_width = pierWidth;
+    Float64 world_height = max_column_height + max_xbeam_height;
 
-    Float64 h_right, h2_right, x1_right, x2_right;
-    pPier->GetXBeamDimensions(pgsTypes::stRight, &h_right, &h2_right, &x1_right, &x2_right);
+    Float64 margin_h = world_width * 0.10;
+    Float64 margin_v = world_height * 0.10;
 
-    Float64 max_xbeam_height = max(h_left, h_right);
-
-    // Calculate bounding box with padding
-    Float64 padding = max(xbeam_width, max_column_height) * 0.25;
-    Float64 left = -xbeam_width / 2.0 - padding * 4;
-    Float64 right = xbeam_width / 2.0 + padding;
-    Float64 top = max_column_height + max_xbeam_height + padding;
-    Float64 bottom = -padding;
+    Float64 left = -pierWidth / 2.0 - margin_h;
+    Float64 right = pierWidth / 2.0 + margin_h;
+    Float64 bottom = -margin_v;
+    Float64 top = world_height + margin_v;
 
     WBFL::Graphing::Rect box(left, bottom, right, top);
     WBFL::Graphing::Size size = box.Size();
     WBFL::Graphing::Point org = box.Center();
 
-    WBFL::Graphing::PointMapper mapper;
     mapper.SetMappingMode(WBFL::Graphing::PointMapper::MapMode::Isotropic);
     mapper.SetWorldExt(size);
     mapper.SetWorldOrg(org);
-    mapper.SetDeviceExt(sLeftClient.cx, -sLeftClient.cy);  // Negate Y to flip axis
-    mapper.SetDeviceOrg(rLeftView.left + sLeftClient.cx / 2, rLeftView.top + sLeftClient.cy / 2);
+    mapper.SetDeviceExt(sDeviceClient.cx, -sDeviceClient.cy);  // Negate Y to flip axis
+}
 
-    // Draw the pier geometry on the left
-    DrawPierGeometry(&dc, mapper);
+void CDrawPierLayoutControl::CalculateSideViewBoundingBox(const CPierData2* pPier,
+    WBFL::Graphing::PointMapper& mapper, CSize sDeviceClient)
+{
+    // Get pier dimensions
+    ColumnIndexType nColumns = pPier->GetColumnCount();
 
-    // ===== RIGHT SIDE: SIDE VIEW =====
-    CRect rRightView(rClient.left + view_split, rClient.top, rClient.right, rClient.bottom);
-    rRightView.DeflateRect(1, 1, 1, 1);
-    CSize sRightClient = rRightView.Size();
+    Float64 W = pPier->GetXBeamWidth();
 
-    // Create mapper for side view
-    Float64 w = pPier->GetXBeamWidth();
-    Float64 max_col_depth = 0.0;
+    // Get XBeam dimensions
+    Float64 H1, H2, X1, X2;
+    Float64 H3, H4, X3, X4;
+    pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1, &H2, &X1, &X2);
+    pPier->GetXBeamDimensions(pgsTypes::stRight, &H3, &H4, &X3, &X4);
 
-    // Get maximum column depth (D2)
+    Float64 max_xbeam_height = max(H1 + H2, H3 + H4);
+
+    // Get maximum column height
+    Float64 max_column_height = 0.0;
     for (ColumnIndexType i = 0; i < nColumns; i++)
     {
         const CColumnData* pColumn = &pPier->GetColumnData(i);
-        Float64 col_d1, col_d2;
-        pColumn->GetColumnDimensions(&col_d1, &col_d2);
-        max_col_depth = max(max_col_depth, col_d2);
+        if (pColumn->GetColumnHeightMeasurementType() == CColumnData::chtHeight)
+        {
+            max_column_height = max(max_column_height, pColumn->GetColumnHeight());
+        }
     }
 
-    // Bounding box for side view
-    Float64 side_left = -w / 2.0 - padding;
-    Float64 side_right = w / 2.0 + padding;
-    Float64 side_top = max_column_height + max_xbeam_height + padding;
-    Float64 side_bottom = -padding;
+    // Calculate front view bounding box width to scale side view
+    Float64 X5 = pPier->GetXBeamOverhang(pgsTypes::stLeft);
+    Float64 X6 = pPier->GetXBeamOverhang(pgsTypes::stRight);
+    Float64 S = 0.0;
+    for (SpacingIndexType spaIdx = 0; spaIdx < nColumns - 1; spaIdx++)
+    {
+        S += pPier->GetColumnSpacing(spaIdx);
+    }
+    Float64 pierWidth = X5 + S + X6;
 
-    WBFL::Graphing::Rect side_box(side_left, side_bottom, side_right, side_top);
-    WBFL::Graphing::Size side_size = side_box.Size();
-    WBFL::Graphing::Point side_org = side_box.Center();
+    // Front view width = pierWidth + 2 * (10% margin)
+    Float64 front_world_width = pierWidth * 1.2;
 
-    WBFL::Graphing::PointMapper side_mapper;
-    side_mapper.SetMappingMode(WBFL::Graphing::PointMapper::MapMode::Isotropic);
-    side_mapper.SetWorldExt(side_size);
-    side_mapper.SetWorldOrg(side_org);
-    side_mapper.SetDeviceExt(sRightClient.cx, -sRightClient.cy);
-    side_mapper.SetDeviceOrg(rRightView.left + sRightClient.cx / 2, rRightView.top + sRightClient.cy / 2);
+    // Side view width should be 25% of front view
+    Float64 target_side_world_width = front_world_width * 0.25;
 
-    // Draw the side view on the right
-    DrawSideView(&dc, side_mapper);
+    // Calculate margins needed to achieve target width
+    Float64 margin_h = (target_side_world_width - W) / 2.0;
+
+    // Ensure margins don't go negative (minimum 5% margin)
+    Float64 min_margin = W * 0.05;
+    if (margin_h < min_margin)
+    {
+        margin_h = min_margin;
+    }
+
+    Float64 world_height = max_column_height + max_xbeam_height;
+    Float64 margin_v = world_height * 0.10;
+
+    Float64 left = -W / 2.0 - margin_h;
+    Float64 right = W / 2.0 + margin_h;
+    Float64 bottom = -margin_v;
+    Float64 top = world_height + margin_v;
+
+    WBFL::Graphing::Rect box(left, bottom, right, top);
+    WBFL::Graphing::Size size = box.Size();
+    WBFL::Graphing::Point org = box.Center();
+
+    mapper.SetMappingMode(WBFL::Graphing::PointMapper::MapMode::Isotropic);
+    mapper.SetWorldExt(size);
+    mapper.SetWorldOrg(org);
+    mapper.SetDeviceExt(sDeviceClient.cx, -sDeviceClient.cy);
 }
 
 void CDrawPierLayoutControl::DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper& mapper)
