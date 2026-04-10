@@ -472,6 +472,24 @@ void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::Po
     if (pPier == nullptr)
         return;
 
+    const CColumnData* pFirstColumn = &pPier->GetColumnData(0);
+
+    // Get column height
+    Float64 first_col_height = 0.0;
+    if (pFirstColumn->GetColumnHeightMeasurementType() == CColumnData::chtHeight)
+    {
+        first_col_height = pFirstColumn->GetColumnHeight();
+    }
+
+    const CColumnData* pLastColumn = &pPier->GetColumnData(pPier->GetColumnCount()-1);
+
+    // Get column height
+    Float64 last_col_height = 0.0;
+    if (pLastColumn->GetColumnHeightMeasurementType() == CColumnData::chtHeight)
+    {
+        last_col_height = pLastColumn->GetColumnHeight();
+    }
+
     CPen dim_pen(PS_SOLID, 1, RGB(0, 0, 0));
     CPen* pOldPen = pDC->SelectObject(&dim_pen);
 
@@ -514,14 +532,14 @@ void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::Po
     Float64 left_edge = -pierWidth / 2.0;
 	if (::IsGT(0.0, X5))
     {
-        DrawHorizontalDimension(pDC, mapper, left_edge, H1 + H2 + DIM_OFFSET * 4, left_edge + X5, _T("X5"));
+        DrawHorizontalDimension(pDC, mapper, left_edge, first_col_height + DIM_OFFSET, left_edge + X5, _T("X5"));
     }
 
     // X6 dimension (right overhang)
     Float64 right_edge = pierWidth / 2.0;
 	if (::IsGT(0.0, X6))
     {
-        DrawHorizontalDimension(pDC, mapper, right_edge - X6, H3 + H4 + DIM_OFFSET * 4, right_edge, _T("X6"));
+        DrawHorizontalDimension(pDC, mapper, right_edge - X6, last_col_height + DIM_OFFSET, right_edge, _T("X6"));
     }
 
     // H2 dimension (left taper height) - if non-zero
