@@ -199,14 +199,28 @@ void CCommonPierLayoutDlg::OnHeightMeasureChanged()
 
 void CCommonPierLayoutDlg::OnAddColumn()
 {
-   m_ColumnLayoutGrid.AddColumn();
-   FillRefColumnComboBox();
+    m_ColumnLayoutGrid.AddColumn();
+    FillRefColumnComboBox();
+
+    // Update pier data with current column data
+    m_ColumnLayoutGrid.GetColumnData(m_Pier);
+
+    // Invalidate and update the drawing control to reflect the changes
+    m_ctrlDrawXBeam.Invalidate();
+    m_ctrlDrawXBeam.UpdateWindow();
 }
 
 void CCommonPierLayoutDlg::OnRemoveColumns()
 {
-   m_ColumnLayoutGrid.RemoveSelectedColumns();
-   FillRefColumnComboBox();
+    m_ColumnLayoutGrid.RemoveSelectedColumns();
+    FillRefColumnComboBox();
+
+    // Update pier data with current column data
+    m_ColumnLayoutGrid.GetColumnData(m_Pier);
+
+    // Invalidate and update the drawing control to reflect the changes
+    m_ctrlDrawXBeam.Invalidate();
+    m_ctrlDrawXBeam.UpdateWindow();
 }
 
 void CCommonPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
