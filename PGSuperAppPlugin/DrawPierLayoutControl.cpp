@@ -245,8 +245,8 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
 }
 
 void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
-    Float64 h_left, Float64 h2_left, Float64 x1_left, Float64 x2_left,
-    Float64 h_right, Float64 h2_right, Float64 x1_right, Float64 x2_right)
+    Float64 H1, Float64 H2, Float64 X1, Float64 X2,
+    Float64 H3, Float64 H4, Float64 X3, Float64 X4)
 {
     if (m_pSource == nullptr)
         return;
@@ -269,7 +269,7 @@ void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::Po
     // Constants for dimension line placement
     const Float64 DIM_OFFSET = 0.5;
 
-    Float64 xbeam_width = pPier->GetXBeamWidth();
+    //Float64 xbeam_width = pPier->GetXBeamWidth();
     Float64 X5 = pPier->GetXBeamOverhang(pgsTypes::stLeft);
     Float64 X6 = pPier->GetXBeamOverhang(pgsTypes::stRight);
 
@@ -282,46 +282,69 @@ void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::Po
     Float64 pierWidth = X5 + S + X6;
 
     // H1 dimension (left xbeam height)
-    DrawVerticalDimension(pDC, mapper, -pierWidth / 2.0 - DIM_OFFSET, 0.0, h_left, _T("H1"));
+    if (::IsGT(0.0, H1))
+    {
+        DrawVerticalDimension(pDC, mapper, -pierWidth / 2.0 - DIM_OFFSET * 2, 0.0, H1, _T("H1"));
+    }
 
     // H3 dimension (right xbeam height)
-    DrawVerticalDimension(pDC, mapper, pierWidth / 2.0 + DIM_OFFSET, 0.0, h_right, _T("H3"));
-
-    // W dimension (xbeam width at top)
-    DrawHorizontalDimension(pDC, mapper, -xbeam_width / 2.0, h_left + DIM_OFFSET, xbeam_width / 2.0, _T("W"));
+    if (::IsGT(0.0, H3))
+    {
+        DrawVerticalDimension(pDC, mapper, pierWidth / 2.0 + DIM_OFFSET * 3, 0.0, H3, _T("H3"));
+    }
 
     // X5 dimension (left overhang)
     Float64 left_edge = -pierWidth / 2.0;
-    DrawHorizontalDimension(pDC, mapper, left_edge, -DIM_OFFSET, left_edge + X5, _T("X5"));
+	if (::IsGT(0.0, X5))
+    {
+        DrawHorizontalDimension(pDC, mapper, left_edge, H1 + H2 + DIM_OFFSET * 3, left_edge + X5, _T("X5"));
+    }
 
     // X6 dimension (right overhang)
     Float64 right_edge = pierWidth / 2.0;
-    DrawHorizontalDimension(pDC, mapper, right_edge - X6, -DIM_OFFSET, right_edge, _T("X6"));
+	if (::IsGT(0.0, X6))
+    {
+        DrawHorizontalDimension(pDC, mapper, right_edge - X6, H3 + H4 + DIM_OFFSET * 3, right_edge, _T("X6"));
+    }
 
     // H2 dimension (left taper height) - if non-zero
-    if (::IsGT(h2_left, 0.0))
+    if (::IsGT(0.0, H2))
     {
-        DrawVerticalDimension(pDC, mapper, -xbeam_width / 2.0 - DIM_OFFSET * 2, h_left, h_left + h2_left, _T("H2"));
+        DrawVerticalDimension(pDC, mapper, -pierWidth / 2.0 - DIM_OFFSET * 2, H1, H1 + H2, _T("H2"));
     }
 
     // H4 dimension (right taper height) - if non-zero
-    if (::IsGT(h2_right, 0.0))
+    if (::IsGT(0.0, H4))
     {
-        DrawVerticalDimension(pDC, mapper, xbeam_width / 2.0 + DIM_OFFSET * 2, h_right, h_right + h2_right, _T("H4"));
+        DrawVerticalDimension(pDC, mapper, pierWidth / 2.0 + DIM_OFFSET * 3, H3, H3 + H4, _T("H4"));
     }
 
     // X1 dimension (left taper length) - if non-zero
-    if (::IsGT(x1_left, 0.0))
+    if (::IsGT(0.0, X1))
     {
-        DrawHorizontalDimension(pDC, mapper, -xbeam_width / 2.0 + x2_left, h_left + DIM_OFFSET * 2,
-            -xbeam_width / 2.0 + x2_left + x1_left, _T("X1"));
+        DrawHorizontalDimension(pDC, mapper, -pierWidth / 2.0 + X2, H1 + H2 + DIM_OFFSET,
+            -pierWidth / 2.0 + X2 + X1, _T("X1"));
+    }
+
+    // X2 dimension - if non-zero
+    if (::IsGT(0.0, X2))
+    {
+        DrawHorizontalDimension(pDC, mapper, -pierWidth / 2.0, H1 + H2 + DIM_OFFSET,
+            -pierWidth / 2.0 + X2, _T("X2"));
     }
 
     // X3 dimension (right taper length) - if non-zero
-    if (::IsGT(x1_right, 0.0))
+    if (::IsGT(0.0, X3))
     {
-        DrawHorizontalDimension(pDC, mapper, xbeam_width / 2.0 - x2_right - x1_right, h_right + DIM_OFFSET * 2,
-            xbeam_width / 2.0 - x2_right, _T("X3"));
+        DrawHorizontalDimension(pDC, mapper, pierWidth / 2.0 - X4 - X3, H3 + H4 + DIM_OFFSET,
+            pierWidth / 2.0 - X4, _T("X3"));
+    }
+
+    // X4 dimension (right taper length) - if non-zero
+    if (::IsGT(0.0, X4))
+    {
+        DrawHorizontalDimension(pDC, mapper, pierWidth / 2.0 - X4, H3 + H4 + DIM_OFFSET,
+            pierWidth / 2.0, _T("X4"));
     }
 
     pDC->SetTextAlign(oldTA);
