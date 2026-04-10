@@ -139,7 +139,7 @@ void CDrawPierLayoutControl::OnLButtonUp(UINT nFlags, CPoint point)
 
             // Convert drag center to world coordinates
             Float64 dragCenterWorldX = (dragCenterDeviceX * m_currentExtFront.Dx()) / rLeftView.Width();
-            Float64 dragCenterWorldY = -(dragCenterDeviceY * m_currentExtFront.Dy()) / rLeftView.Height();
+            Float64 dragCenterWorldY = (dragCenterDeviceY * m_currentExtFront.Dy()) / rLeftView.Height();
 
             // Update origin to center on the drag box
             m_currentOrgFront = WBFL::Graphing::Point(
@@ -169,7 +169,7 @@ void CDrawPierLayoutControl::OnLButtonUp(UINT nFlags, CPoint point)
             int dragCenterDeviceY = (minY + maxY) / 2 - rRightView.Height() / 2;
 
             Float64 dragCenterWorldX = (dragCenterDeviceX * m_currentExtSide.Dx()) / rRightView.Width();
-            Float64 dragCenterWorldY = -(dragCenterDeviceY * m_currentExtSide.Dy()) / rRightView.Height();
+            Float64 dragCenterWorldY = (dragCenterDeviceY * m_currentExtSide.Dy()) / rRightView.Height();
 
             m_currentOrgSide = WBFL::Graphing::Point(
                 m_currentOrgSide.X() + dragCenterWorldX,
@@ -189,9 +189,6 @@ void CDrawPierLayoutControl::OnPaint()
 
     CRect rClient;
     GetClientRect(&rClient);
-    CRgn rgn;
-    rgn.CreateRectRgnIndirect(&rClient);
-    dc.SelectClipRgn(&rgn);
 
     if (m_pSource == nullptr)
         return;
@@ -207,6 +204,11 @@ void CDrawPierLayoutControl::OnPaint()
     CRect rLeftView(rClient.left, rClient.top, rClient.left + view_split, rClient.bottom);
     rLeftView.DeflateRect(1, 1, 1, 1);
     CSize sLeftClient = rLeftView.Size();
+
+    // Set clipping region for left view
+    CRgn rgnLeft;
+    rgnLeft.CreateRectRgnIndirect(&rLeftView);
+    dc.SelectClipRgn(&rgnLeft);
 
     WBFL::Graphing::PointMapper mapper;
     CalculateFrontViewBoundingBox(pPier, mapper, sLeftClient);
@@ -233,6 +235,15 @@ void CDrawPierLayoutControl::OnPaint()
     rRightView.DeflateRect(1, 1, 1, 1);
     CSize sRightClient = rRightView.Size();
 
+    // Set clipping region for right view
+    CRgn rgnRight;
+    rgnRight.CreateRectRgnIndirect(&rRightView);
+    dc.SelectClipRgn(&rgnRight);
+
+    // Erase background for right view
+    CBrush brushBkgnd(::GetSysColor(COLOR_WINDOW));
+    dc.FillRect(&rRightView, &brushBkgnd);
+
     WBFL::Graphing::PointMapper side_mapper;
     CalculateSideViewBoundingBox(pPier, side_mapper, sRightClient);
 
@@ -250,6 +261,9 @@ void CDrawPierLayoutControl::OnPaint()
     side_mapper.SetDeviceOrg(rRightView.left + sRightClient.cx / 2, rRightView.top + sRightClient.cy / 2);
 
     DrawSideView(&dc, side_mapper);
+
+    // Clear clipping region
+    dc.SelectClipRgn(NULL);
 }
 
 void CDrawPierLayoutControl::OnLButtonDblClk(UINT nFlags, CPoint point)
