@@ -72,7 +72,7 @@ void CDrawPierLayoutControl::OnPaint()
 
     // Split the drawing area: left side for front view, right side for side view
     int total_width = rClient.Width();
-    int view_split = total_width / 2;  // Split at midpoint
+    int view_split = (total_width * 3) / 4;   // Split at 75%
 
     // ===== LEFT SIDE: FRONT VIEW (Elevation) =====
     CRect rLeftView(rClient.left, rClient.top, rClient.left + view_split, rClient.bottom);
@@ -186,33 +186,11 @@ void CDrawPierLayoutControl::CalculateSideViewBoundingBox(const CPierData2* pPie
         }
     }
 
-    // Calculate front view bounding box width to scale side view
-    Float64 X5 = pPier->GetXBeamOverhang(pgsTypes::stLeft);
-    Float64 X6 = pPier->GetXBeamOverhang(pgsTypes::stRight);
-    Float64 S = 0.0;
-    for (SpacingIndexType spaIdx = 0; spaIdx < nColumns - 1; spaIdx++)
-    {
-        S += pPier->GetColumnSpacing(spaIdx);
-    }
-    Float64 pierWidth = X5 + S + X6;
-
-    // Front view width = pierWidth + 2 * (10% margin)
-    Float64 front_world_width = pierWidth * 1.2;
-
-    // Side view width should be 25% of front view
-    Float64 target_side_world_width = front_world_width * 0.25;
-
-    // Calculate margins needed to achieve target width
-    Float64 margin_h = (target_side_world_width - W) / 2.0;
-
-    // Ensure margins don't go negative (minimum 5% margin)
-    Float64 min_margin = W * 0.05;
-    if (margin_h < min_margin)
-    {
-        margin_h = min_margin;
-    }
-
+    // Calculate world bounding box with 10% margin
+    Float64 world_width = W;
     Float64 world_height = max_column_height + max_xbeam_height;
+
+    Float64 margin_h = world_width * 0.10;
     Float64 margin_v = world_height * 0.10;
 
     Float64 left = -W / 2.0 - margin_h;
