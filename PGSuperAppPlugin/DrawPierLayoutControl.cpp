@@ -70,11 +70,16 @@ void CDrawPierLayoutControl::OnPaint()
     if (pPier == nullptr)
         return;
 
-    // Deflate rect and create coordinate mapper
-    rClient.DeflateRect(1, 1, 1, 1);
-    CSize sClient = rClient.Size();
+    // Split the drawing area: left side for front view, right side for side view
+    int total_width = rClient.Width();
+    int view_split = total_width / 2;  // Split at midpoint
 
-    // Get bounding box dimensions
+    // ===== LEFT SIDE: FRONT VIEW (Elevation) =====
+    CRect rLeftView(rClient.left, rClient.top, rClient.left + view_split, rClient.bottom);
+    rLeftView.DeflateRect(1, 1, 1, 1);
+    CSize sLeftClient = rLeftView.Size();
+
+    // Get bounding box dimensions for front view
     Float64 xbeam_width = pPier->GetXBeamWidth();
     ColumnIndexType nColumns = pPier->GetColumnCount();
 
@@ -99,7 +104,7 @@ void CDrawPierLayoutControl::OnPaint()
     Float64 max_xbeam_height = max(h_left, h_right);
 
     // Calculate bounding box with padding
-    Float64 padding = max(xbeam_width, max_column_height) * 0.25; // 10% padding
+    Float64 padding = max(xbeam_width, max_column_height) * 0.25;
     Float64 left = -xbeam_width / 2.0 - padding;
     Float64 right = xbeam_width / 2.0 + padding;
     Float64 top = max_column_height + max_xbeam_height + padding;
@@ -113,11 +118,175 @@ void CDrawPierLayoutControl::OnPaint()
     mapper.SetMappingMode(WBFL::Graphing::PointMapper::MapMode::Isotropic);
     mapper.SetWorldExt(size);
     mapper.SetWorldOrg(org);
-    mapper.SetDeviceExt(sClient.cx, -sClient.cy);  // Negate Y to flip axis
-    mapper.SetDeviceOrg(sClient.cx / 2, sClient.cy / 2);
+    mapper.SetDeviceExt(sLeftClient.cx, -sLeftClient.cy);  // Negate Y to flip axis
+    mapper.SetDeviceOrg(rLeftView.left + sLeftClient.cx / 2, rLeftView.top + sLeftClient.cy / 2);
 
-    // Draw the pier geometry
+    // Draw the pier geometry on the left
     DrawPierGeometry(&dc, mapper);
+
+    // ===== RIGHT SIDE: SIDE VIEW =====
+    CRect rRightView(rClient.left + view_split, rClient.top, rClient.right, rClient.bottom);
+    rRightView.DeflateRect(1, 1, 1, 1);
+    CSize sRightClient = rRightView.Size();
+
+    // Create mapper for side view
+    Float64 w = pPier->GetXBeamWidth();
+    Float64 max_col_depth = 0.0;
+
+    // Get maximum column depth (D2)
+    for (ColumnIndexType i = 0; i < nColumns; i++)
+    {
+        const CColumnData* pColumn = &pPier->GetColumnData(i);
+        Float64 col_d1, col_d2;
+        pColumn->GetColumnDimensions(&col_d1, &col_d2);
+        max_col_depth = max(max_col_depth, col_d2);
+    }
+
+    // Bounding box for side view
+    Float64 side_left = -w / 2.0 - padding;
+    Float64 side_right = w / 2.0 + padding;
+    Float64 side_top = max_column_height + max_xbeam_height + padding;
+    Float64 side_bottom = -padding;
+
+    WBFL::Graphing::Rect side_box(side_left, side_bottom, side_right, side_top);
+    WBFL::Graphing::Size side_size = side_box.Size();
+    WBFL::Graphing::Point side_org = side_box.Center();
+
+    WBFL::Graphing::PointMapper side_mapper;
+    side_mapper.SetMappingMode(WBFL::Graphing::PointMapper::MapMode::Isotropic);
+    side_mapper.SetWorldExt(side_size);
+    side_mapper.SetWorldOrg(side_org);
+    side_mapper.SetDeviceExt(sRightClient.cx, -sRightClient.cy);
+    side_mapper.SetDeviceOrg(rRightView.left + sRightClient.cx / 2, rRightView.top + sRightClient.cy / 2);
+
+    // Draw the side view on the right
+    DrawSideView(&dc, side_mapper);
+}
+
+void CDrawPierLayoutControl::DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper& mapper)
+{
+    if (m_pSource == nullptr)
+        return;
+
+    const CPierData2* pPier = m_pSource->GetPierData();
+    if (pPier == nullptr)
+        return;
+
+    ColumnIndexType nColumns = pPier->GetColumnCount();
+
+    // Get cross beam width (W)
+    Float64 W = pPier->GetXBeamWidth();
+
+    // Get XBeam heights for reference
+    Float64 h_left, h2_left, x1_left, x2_left;
+    pPier->GetXBeamDimensions(pgsTypes::stLeft, &h_left, &h2_left, &x1_left, &x2_left);
+
+    Float64 h_right, h2_right, x1_right, x2_right;
+    pPier->GetXBeamDimensions(pgsTypes::stRight, &h_right, &h2_right, &x1_right, &x2_right);
+
+    Float64 max_xbeam_height = max(h_left, h_right);
+
+    // Get maximum column height
+    Float64 max_column_height = 0.0;
+    for (ColumnIndexType i = 0; i < nColumns; i++)
+    {
+        const CColumnData* pColumn = &pPier->GetColumnData(i);
+        if (pColumn->GetColumnHeightMeasurementType() == CColumnData::chtHeight)
+        {
+            max_column_height = max(max_column_height, pColumn->GetColumnHeight());
+        }
+    }
+
+    // Draw cross beam rectangle (side view - showing width W)
+    CPen xbeam_pen(PS_SOLID, 2, SEGMENT_BORDER_COLOR);
+    CBrush xbeam_brush;
+    xbeam_brush.CreateSolidBrush(RGB(200, 200, 200));
+
+    CPen* pOldPen = pDC->GetCurrentPen();
+    CBrush* pOldBrush = pDC->GetCurrentBrush();
+
+    pDC->SelectObject(&xbeam_pen);
+    pDC->SelectObject(&xbeam_brush);
+
+    // Draw cross beam as rectangle from -W/2 to W/2, at top height
+    WBFL::Graphing::Point xbeam_tl(-W / 2.0, max_column_height + max_xbeam_height);
+    WBFL::Graphing::Point xbeam_tr(W / 2.0, max_column_height + max_xbeam_height);
+    WBFL::Graphing::Point xbeam_br(W / 2.0, max_column_height);
+    WBFL::Graphing::Point xbeam_bl(-W / 2.0, max_column_height);
+
+    LONG dx_tl, dy_tl, dx_tr, dy_tr, dx_br, dy_br, dx_bl, dy_bl;
+    mapper.WPtoDP(xbeam_tl, &dx_tl, &dy_tl);
+    mapper.WPtoDP(xbeam_tr, &dx_tr, &dy_tr);
+    mapper.WPtoDP(xbeam_br, &dx_br, &dy_br);
+    mapper.WPtoDP(xbeam_bl, &dx_bl, &dy_bl);
+
+    CPoint xbeam_points[4] = { CPoint(dx_bl, dy_bl), CPoint(dx_br, dy_br),
+                                CPoint(dx_tr, dy_tr), CPoint(dx_tl, dy_tl) };
+    pDC->Polygon(xbeam_points, 4);
+
+    // Draw columns (from side view perspective - as simple rectangles)
+    CPen column_pen(PS_SOLID, 1, SEGMENT_BORDER_COLOR);
+    CBrush column_brush;
+    column_brush.CreateSolidBrush(SEGMENT_FILL_COLOR);
+
+    pDC->SelectObject(&column_pen);
+    pDC->SelectObject(&column_brush);
+
+    // Draw columns centered under the cross beam
+    Float64 col_spacing_total = 0.0;
+    if (nColumns > 1)
+    {
+        for (SpacingIndexType i = 0; i < nColumns - 1; i++)
+        {
+            col_spacing_total += pPier->GetColumnSpacing(i);
+        }
+    }
+
+    Float64 col_x_start = -col_spacing_total / 2.0;
+
+    for (ColumnIndexType i = 0; i < nColumns; i++)
+    {
+        const CColumnData* pColumn = &pPier->GetColumnData(i);
+
+        Float64 col_d1, col_d2;
+        pColumn->GetColumnDimensions(&col_d1, &col_d2);
+
+        Float64 col_height = 0.0;
+        if (pColumn->GetColumnHeightMeasurementType() == CColumnData::chtHeight)
+        {
+            col_height = pColumn->GetColumnHeight();
+        }
+
+        // In side view, show the depth (D2) as the width and height as height
+        Float64 col_x = col_x_start;
+
+        WBFL::Graphing::Point col_bl(col_x - col_d1 / 2.0, 0.0);
+        WBFL::Graphing::Point col_br(col_x + col_d1 / 2.0, 0.0);
+        WBFL::Graphing::Point col_tr(col_x + col_d1 / 2.0, col_height);
+        WBFL::Graphing::Point col_tl(col_x - col_d1 / 2.0, col_height);
+
+        LONG dx_bl, dy_bl, dx_br, dy_br, dx_tr, dy_tr, dx_tl, dy_tl;
+        mapper.WPtoDP(col_bl, &dx_bl, &dy_bl);
+        mapper.WPtoDP(col_br, &dx_br, &dy_br);
+        mapper.WPtoDP(col_tr, &dx_tr, &dy_tr);
+        mapper.WPtoDP(col_tl, &dx_tl, &dy_tl);
+
+        CPoint col_points[4] = { CPoint(dx_bl, dy_bl), CPoint(dx_br, dy_br),
+                                  CPoint(dx_tr, dy_tr), CPoint(dx_tl, dy_tl) };
+        pDC->Polygon(col_points, 4);
+
+        // Move to next column
+        if (i < nColumns - 1)
+        {
+            col_x_start += pPier->GetColumnSpacing((SpacingIndexType)i);
+        }
+    }
+
+    // Draw dimension for width (W)
+    DrawHorizontalDimension(pDC, mapper, -W / 2.0, max_column_height + max_xbeam_height + 1.0, W / 2.0, _T("W"));
+
+    pDC->SelectObject(pOldPen);
+    pDC->SelectObject(pOldBrush);
 }
 
 void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMapper& mapper)

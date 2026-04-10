@@ -51,13 +51,13 @@ protected:
 private:
 	IPierLayoutDataSource* m_pSource;
 
-	void DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMapper& mapper);
-
-	void DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
-		Float64 h_left, Float64 h2_left, Float64 x1_left, Float64 x2_left,
-		Float64 h_right, Float64 h2_right, Float64 x1_right, Float64 x2_right);
-	void DrawVerticalDimension(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
-		Float64 x, Float64 y1, Float64 y2, LPCTSTR pszLabel);
-	void DrawHorizontalDimension(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
-		Float64 x1, Float64 y, Float64 x2, LPCTSTR pszLabel);
+    void DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMapper& mapper);
+    void DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper& mapper);
+    void DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
+        Float64 H1, Float64 H2, Float64 X1, Float64 X2,
+        Float64 H3, Float64 H4, Float64 X3, Float64 X4);
+    void DrawVerticalDimension(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
+        Float64 x, Float64 y1, Float64 y2, LPCTSTR pszLabel);
+    void DrawHorizontalDimension(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
+        Float64 x1, Float64 y, Float64 x2, LPCTSTR pszLabel);
 };
