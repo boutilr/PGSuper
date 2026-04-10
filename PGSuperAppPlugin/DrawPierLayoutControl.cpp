@@ -105,7 +105,7 @@ void CDrawPierLayoutControl::OnPaint()
 
     // Calculate bounding box with padding
     Float64 padding = max(xbeam_width, max_column_height) * 0.25;
-    Float64 left = -xbeam_width / 2.0 - padding;
+    Float64 left = -xbeam_width / 2.0 - padding * 4;
     Float64 right = xbeam_width / 2.0 + padding;
     Float64 top = max_column_height + max_xbeam_height + padding;
     Float64 bottom = -padding;
@@ -184,7 +184,8 @@ void CDrawPierLayoutControl::DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper&
     Float64 h_right, h2_right, x1_right, x2_right;
     pPier->GetXBeamDimensions(pgsTypes::stRight, &h_right, &h2_right, &x1_right, &x2_right);
 
-    Float64 max_xbeam_height = max(h_left, h_right);
+    // Maximum height of xbeam in side view: max(H1+H2, H3+H4)
+    Float64 max_xbeam_height = max(h_left + h2_left, h_right + h2_right);
 
     // Get maximum column height
     Float64 max_column_height = 0.0;
@@ -197,34 +198,9 @@ void CDrawPierLayoutControl::DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper&
         }
     }
 
-    // Draw cross beam rectangle (side view - showing width W)
-    CPen xbeam_pen(PS_SOLID, 2, SEGMENT_BORDER_COLOR);
-    CBrush xbeam_brush;
-    xbeam_brush.CreateSolidBrush(RGB(200, 200, 200));
-
-    CPen* pOldPen = pDC->GetCurrentPen();
-    CBrush* pOldBrush = pDC->GetCurrentBrush();
-
-    pDC->SelectObject(&xbeam_pen);
-    pDC->SelectObject(&xbeam_brush);
-
-    // Draw cross beam as rectangle from -W/2 to W/2, at top height
-    WBFL::Graphing::Point xbeam_tl(-W / 2.0, max_column_height + max_xbeam_height);
-    WBFL::Graphing::Point xbeam_tr(W / 2.0, max_column_height + max_xbeam_height);
-    WBFL::Graphing::Point xbeam_br(W / 2.0, max_column_height);
-    WBFL::Graphing::Point xbeam_bl(-W / 2.0, max_column_height);
-
-    LONG dx_tl, dy_tl, dx_tr, dy_tr, dx_br, dy_br, dx_bl, dy_bl;
-    mapper.WPtoDP(xbeam_tl, &dx_tl, &dy_tl);
-    mapper.WPtoDP(xbeam_tr, &dx_tr, &dy_tr);
-    mapper.WPtoDP(xbeam_br, &dx_br, &dy_br);
-    mapper.WPtoDP(xbeam_bl, &dx_bl, &dy_bl);
-
-    CPoint xbeam_points[4] = { CPoint(dx_bl, dy_bl), CPoint(dx_br, dy_br),
-                                CPoint(dx_tr, dy_tr), CPoint(dx_tl, dy_tl) };
-    pDC->Polygon(xbeam_points, 4);
 
     // Draw columns (from side view perspective - as simple rectangles)
+    // Only draw the FIRST column
     CPen column_pen(PS_SOLID, 1, SEGMENT_BORDER_COLOR);
     CBrush column_brush;
     column_brush.CreateSolidBrush(SEGMENT_FILL_COLOR);
@@ -232,21 +208,9 @@ void CDrawPierLayoutControl::DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper&
     pDC->SelectObject(&column_pen);
     pDC->SelectObject(&column_brush);
 
-    // Draw columns centered under the cross beam
-    Float64 col_spacing_total = 0.0;
-    if (nColumns > 1)
+    if (nColumns > 0)
     {
-        for (SpacingIndexType i = 0; i < nColumns - 1; i++)
-        {
-            col_spacing_total += pPier->GetColumnSpacing(i);
-        }
-    }
-
-    Float64 col_x_start = -col_spacing_total / 2.0;
-
-    for (ColumnIndexType i = 0; i < nColumns; i++)
-    {
-        const CColumnData* pColumn = &pPier->GetColumnData(i);
+        const CColumnData* pColumn = &pPier->GetColumnData(0);
 
         Float64 col_d1, col_d2;
         pColumn->GetColumnDimensions(&col_d1, &col_d2);
@@ -257,36 +221,75 @@ void CDrawPierLayoutControl::DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper&
             col_height = pColumn->GetColumnHeight();
         }
 
-        // In side view, show the depth (D2) as the width and height as height
-        Float64 col_x = col_x_start;
+        // In side view, center the column at origin (x = 0)
+        Float64 col_x = 0.0;
 
         WBFL::Graphing::Point col_bl(col_x - col_d1 / 2.0, 0.0);
         WBFL::Graphing::Point col_br(col_x + col_d1 / 2.0, 0.0);
         WBFL::Graphing::Point col_tr(col_x + col_d1 / 2.0, col_height);
         WBFL::Graphing::Point col_tl(col_x - col_d1 / 2.0, col_height);
 
-        LONG dx_bl, dy_bl, dx_br, dy_br, dx_tr, dy_tr, dx_tl, dy_tl;
-        mapper.WPtoDP(col_bl, &dx_bl, &dy_bl);
-        mapper.WPtoDP(col_br, &dx_br, &dy_br);
-        mapper.WPtoDP(col_tr, &dx_tr, &dy_tr);
-        mapper.WPtoDP(col_tl, &dx_tl, &dy_tl);
+        LONG dx_col_bl, dy_col_bl, dx_col_br, dy_col_br, dx_col_tr, dy_col_tr, dx_col_tl, dy_col_tl;
+        mapper.WPtoDP(col_bl, &dx_col_bl, &dy_col_bl);
+        mapper.WPtoDP(col_br, &dx_col_br, &dy_col_br);
+        mapper.WPtoDP(col_tr, &dx_col_tr, &dy_col_tr);
+        mapper.WPtoDP(col_tl, &dx_col_tl, &dy_col_tl);
 
-        CPoint col_points[4] = { CPoint(dx_bl, dy_bl), CPoint(dx_br, dy_br),
-                                  CPoint(dx_tr, dy_tr), CPoint(dx_tl, dy_tl) };
+        CPoint col_points[4] = { CPoint(dx_col_bl, dy_col_bl), CPoint(dx_col_br, dy_col_br),
+                                  CPoint(dx_col_tr, dy_col_tr), CPoint(dx_col_tl, dy_col_tl) };
         pDC->Polygon(col_points, 4);
 
-        // Move to next column
-        if (i < nColumns - 1)
-        {
-            col_x_start += pPier->GetColumnSpacing((SpacingIndexType)i);
-        }
     }
 
-    // Draw dimension for width (W)
-    DrawHorizontalDimension(pDC, mapper, -W / 2.0, max_column_height + max_xbeam_height + 1.0, W / 2.0, _T("W"));
 
-    pDC->SelectObject(pOldPen);
+    // Draw cross beam rectangle (side view - showing width W)
+    // Positioned at top of columns
+    CPen xbeam_pen(PS_SOLID, 2, SEGMENT_BORDER_COLOR);
+    CBrush xbeam_brush;
+    xbeam_brush.CreateSolidBrush(RGB(200, 200, 200));
+
+    CPen* pOldPen = pDC->GetCurrentPen();
+    CBrush* pOldBrush = pDC->GetCurrentBrush();
+
+    pDC->SelectObject(&xbeam_pen);
+    pDC->SelectObject(&xbeam_brush);
+
+    // Draw cross beam as rectangle from -W/2 to W/2, at top of columns
+    WBFL::Graphing::Point xbeam_bl(-W / 2.0, 0.0);
+    WBFL::Graphing::Point xbeam_br(W / 2.0, 0.0);
+    WBFL::Graphing::Point xbeam_tr(W / 2.0, max_xbeam_height);
+    WBFL::Graphing::Point xbeam_tl(-W / 2.0, max_xbeam_height);
+
+    LONG dx_bl, dy_bl, dx_br, dy_br, dx_tr, dy_tr, dx_tl, dy_tl;
+    mapper.WPtoDP(xbeam_bl, &dx_bl, &dy_bl);
+    mapper.WPtoDP(xbeam_br, &dx_br, &dy_br);
+    mapper.WPtoDP(xbeam_tr, &dx_tr, &dy_tr);
+    mapper.WPtoDP(xbeam_tl, &dx_tl, &dy_tl);
+
+    CPoint xbeam_points[4] = { CPoint(dx_bl, dy_bl), CPoint(dx_br, dy_br),
+                                CPoint(dx_tr, dy_tr), CPoint(dx_tl, dy_tl) };
+    pDC->Polygon(xbeam_points, 4);
+
+    CFont font;
+    font.CreatePointFont(80, _T("Arial"));  // 8pt font
+    CFont* pOldFont = pDC->SelectObject(&font);
+
+    pDC->SetTextColor(RGB(0, 0, 0));
+    pDC->SetBkMode(OPAQUE);
+    int oldTA = pDC->SetTextAlign(TA_CENTER | TA_BOTTOM);
+
+    // Constants for dimension line placement
+    const Float64 DIM_OFFSET = 0.5;
+
+    // Draw dimension for width (W)
+    DrawHorizontalDimension(pDC, mapper, -W / 2.0, max_xbeam_height + DIM_OFFSET, W / 2.0, _T("W"));
+
+    pDC->SetTextAlign(oldTA);
+    pDC->SelectObject(pOldFont);
     pDC->SelectObject(pOldBrush);
+    pDC->SelectObject(pOldPen);
+    font.DeleteObject();
+
 }
 
 void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMapper& mapper)
@@ -432,7 +435,7 @@ void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::Po
     CFont* pOldFont = pDC->SelectObject(&font);
 
     pDC->SetTextColor(RGB(0, 0, 0));
-    pDC->SetBkMode(TRANSPARENT);
+    pDC->SetBkMode(OPAQUE);
     int oldTA = pDC->SetTextAlign(TA_CENTER | TA_BOTTOM);
 
     // Constants for dimension line placement
@@ -466,14 +469,14 @@ void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::Po
     Float64 left_edge = -pierWidth / 2.0;
 	if (::IsGT(0.0, X5))
     {
-        DrawHorizontalDimension(pDC, mapper, left_edge, H1 + H2 + DIM_OFFSET * 3, left_edge + X5, _T("X5"));
+        DrawHorizontalDimension(pDC, mapper, left_edge, H1 + H2 + DIM_OFFSET * 4, left_edge + X5, _T("X5"));
     }
 
     // X6 dimension (right overhang)
     Float64 right_edge = pierWidth / 2.0;
 	if (::IsGT(0.0, X6))
     {
-        DrawHorizontalDimension(pDC, mapper, right_edge - X6, H3 + H4 + DIM_OFFSET * 3, right_edge, _T("X6"));
+        DrawHorizontalDimension(pDC, mapper, right_edge - X6, H3 + H4 + DIM_OFFSET * 4, right_edge, _T("X6"));
     }
 
     // H2 dimension (left taper height) - if non-zero
@@ -522,33 +525,6 @@ void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::Po
     font.DeleteObject();
 }
 
-void CDrawPierLayoutControl::DrawVerticalDimension(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
-    Float64 x, Float64 y1, Float64 y2, LPCTSTR pszLabel)
-{
-    WBFL::Graphing::Point pt_start(x, y1);
-    WBFL::Graphing::Point pt_end(x, y2);
-
-    LONG dx_start, dy_start, dx_end, dy_end;
-    mapper.WPtoDP(pt_start, &dx_start, &dy_start);
-    mapper.WPtoDP(pt_end, &dx_end, &dy_end);
-
-    // Draw dimension line
-    pDC->MoveTo(dx_start, dy_start);
-    pDC->LineTo(dx_end, dy_end);
-
-    // Draw tick marks at start and end
-    const int TICK_SIZE = 3;
-    pDC->MoveTo(dx_start - TICK_SIZE, dy_start);
-    pDC->LineTo(dx_start + TICK_SIZE, dy_start);
-    pDC->MoveTo(dx_end - TICK_SIZE, dy_end);
-    pDC->LineTo(dx_end + TICK_SIZE, dy_end);
-
-    // Draw label at midpoint
-    int mid_x = (dx_start + dx_end) / 2;
-    int mid_y = (dy_start + dy_end) / 2;
-    pDC->TextOutW(mid_x - 10, mid_y, pszLabel);
-}
-
 void CDrawPierLayoutControl::DrawHorizontalDimension(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
     Float64 x1, Float64 y, Float64 x2, LPCTSTR pszLabel)
 {
@@ -570,10 +546,37 @@ void CDrawPierLayoutControl::DrawHorizontalDimension(CDC* pDC, WBFL::Graphing::P
     pDC->MoveTo(dx_end, dy_end - TICK_SIZE);
     pDC->LineTo(dx_end, dy_end + TICK_SIZE);
 
-    // Draw label at midpoint
+    // Draw label at midpoint - let TA_CENTER do the centering
     int mid_x = (dx_start + dx_end) / 2;
-    int mid_y = (dy_start + dy_end) / 2 - 5;
-    pDC->TextOutW(mid_x - 5, mid_y, pszLabel);
+    int mid_y = (dy_start + dy_end) / 2 - 10;  // Only offset for vertical spacing
+    pDC->TextOutW(mid_x, mid_y, pszLabel);
+}
+
+void CDrawPierLayoutControl::DrawVerticalDimension(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
+    Float64 x, Float64 y1, Float64 y2, LPCTSTR pszLabel)
+{
+    WBFL::Graphing::Point pt_start(x, y1);
+    WBFL::Graphing::Point pt_end(x, y2);
+
+    LONG dx_start, dy_start, dx_end, dy_end;
+    mapper.WPtoDP(pt_start, &dx_start, &dy_start);
+    mapper.WPtoDP(pt_end, &dx_end, &dy_end);
+
+    // Draw dimension line
+    pDC->MoveTo(dx_start, dy_start);
+    pDC->LineTo(dx_end, dy_end);
+
+    // Draw tick marks at start and end
+    const int TICK_SIZE = 3;
+    pDC->MoveTo(dx_start - TICK_SIZE, dy_start);
+    pDC->LineTo(dx_start + TICK_SIZE, dy_start);
+    pDC->MoveTo(dx_end - TICK_SIZE, dy_end);
+    pDC->LineTo(dx_end + TICK_SIZE, dy_end);
+
+    // Draw label at midpoint - let TA_CENTER do the centering
+    int mid_x = (dx_start + dx_end) / 2 - 15;  // Only offset for horizontal spacing
+    int mid_y = (dy_start + dy_end) / 2;
+    pDC->TextOutW(mid_x, mid_y, pszLabel);
 }
 
 BOOL CDrawPierLayoutControl::OnEraseBkgnd(CDC* pDC)
