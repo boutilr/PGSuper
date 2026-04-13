@@ -475,14 +475,21 @@ void CPierLayoutPage::OnPierModelTypeChanged()
     int curSel = pcbPierModel->GetCurSel();
     m_PierModelType = (pgsTypes::PierModelType)pcbPierModel->GetItemData(curSel);
 
-    int nShow = (m_PierModelType == pgsTypes::pmtIdealized ? SW_HIDE : SW_SHOW);
+    const bool bPhysical = (m_PierModelType == pgsTypes::pmtPhysical);
+    int nShow = bPhysical ? SW_SHOW : SW_HIDE;
 
-    // enable/disable all the controls, except pier model type selector
     CWnd* pWnd = pcbPierModel->GetNextWindow(GW_HWNDNEXT);
     while (pWnd)
     {
         int nID = pWnd->GetDlgCtrlID();
-        if (nID != IDC_PIER_MODEL_LABEL && nID != IDC_PIER_MODEL_TYPE)
+
+        bool bIsEmbeddedPierDlg =
+            (pWnd->GetSafeHwnd() == m_CommonPierLayoutDlg.GetSafeHwnd()) ||
+            (pWnd->GetSafeHwnd() == m_HammerheadPierLayoutDlg.GetSafeHwnd());
+
+        if (!bIsEmbeddedPierDlg &&
+            nID != IDC_PIER_MODEL_LABEL &&
+            nID != IDC_PIER_MODEL_TYPE)
         {
             if (nID == IDC_EC_LABEL)
             {
@@ -493,9 +500,24 @@ void CPierLayoutPage::OnPierModelTypeChanged()
                 pWnd->ShowWindow(nShow);
             }
         }
+
         pWnd = pWnd->GetNextWindow(GW_HWNDNEXT);
     }
+
+    // Manage embedded dialogs explicitly
+    if (bPhysical)
+    {
+        SwapDialogs(); // show only the selected physical layout dialog
+    }
+    else
+    {
+        m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
+        m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
+    }
+
+    SetModified(TRUE);
 }
+
 
 
 void CPierLayoutPage::OnPierLayoutTypeChanged()
