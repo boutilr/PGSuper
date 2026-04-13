@@ -432,6 +432,7 @@ void CDrawPierLayoutControl::DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper&
     if (nColumns > 0)
     {
         const CColumnData* pColumn = &pPier->GetColumnData(0);
+		const auto& colShape = pColumn->GetColumnShape();
 
         Float64 col_d1, col_d2;
         pColumn->GetColumnDimensions(&col_d1, &col_d2);
@@ -445,10 +446,11 @@ void CDrawPierLayoutControl::DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper&
         // In side view, center the column at origin (x = 0)
         Float64 col_x = 0.0;
 
-        WBFL::Graphing::Point col_bl(col_x - col_d1 / 2.0, 0.0);
-        WBFL::Graphing::Point col_br(col_x + col_d1 / 2.0, 0.0);
-        WBFL::Graphing::Point col_tr(col_x + col_d1 / 2.0, col_height);
-        WBFL::Graphing::Point col_tl(col_x - col_d1 / 2.0, col_height);
+        Float64 side_width = (colShape == CColumnData::ColumnShapeType::cstCircle? side_width = col_d1 : col_d2);
+        WBFL::Graphing::Point col_bl(col_x - side_width / 2.0, 0.0);
+        WBFL::Graphing::Point col_br(col_x + side_width / 2.0, 0.0);
+        WBFL::Graphing::Point col_tr(col_x + side_width / 2.0, col_height);
+        WBFL::Graphing::Point col_tl(col_x - side_width / 2.0, col_height);
 
         LONG dx_col_bl, dy_col_bl, dx_col_br, dy_col_br, dx_col_tr, dy_col_tr, dx_col_tl, dy_col_tl;
         mapper.WPtoDP(col_bl, &dx_col_bl, &dy_col_bl);
