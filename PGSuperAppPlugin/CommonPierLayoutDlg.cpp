@@ -51,6 +51,8 @@ CCommonPierLayoutDlg::CCommonPierLayoutDlg(CWnd* pParent)
 
 // Add to message map
 BEGIN_MESSAGE_MAP(CCommonPierLayoutDlg, CDialog)
+    ON_MESSAGE(WM_USER + 100, OnColumnGridCellChanged)
+
     ON_CBN_SELCHANGE(IDC_HEIGHT_MEASURE, OnHeightMeasureChanged)
     ON_BN_CLICKED(IDC_ADD_COLUMN, &CCommonPierLayoutDlg::OnAddColumn)
     ON_BN_CLICKED(IDC_REMOVE_COLUMN, &CCommonPierLayoutDlg::OnRemoveColumns)
@@ -263,6 +265,20 @@ void CCommonPierLayoutDlg::OnHeightMeasureChanged()
    m_ColumnLayoutGrid.SetHeightMeasurementType(measure);
 }
 
+LRESULT CCommonPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM lParam)
+{
+
+    FillRefColumnComboBox();
+
+    // Update pier data with current column data
+    m_ColumnLayoutGrid.GetColumnData(m_Pier);
+
+    // Invalidate and update the drawing control to reflect the changes
+    m_ctrlDrawXBeam.Invalidate();
+    m_ctrlDrawXBeam.UpdateWindow();
+
+    return 0;
+}
 
 void CCommonPierLayoutDlg::OnAddColumn()
 {
@@ -275,6 +291,7 @@ void CCommonPierLayoutDlg::OnAddColumn()
     // Invalidate and update the drawing control to reflect the changes
     m_ctrlDrawXBeam.Invalidate();
     m_ctrlDrawXBeam.UpdateWindow();
+
 }
 
 void CCommonPierLayoutDlg::OnRemoveColumns()
