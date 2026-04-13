@@ -96,6 +96,13 @@ protected:
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;
    CHammerheadPierLayoutDlg m_HammerheadPierLayoutDlg;
 
+   bool CommitCommonPierLayout();
+   bool CommitHammerheadPierLayout();
+
+   BOOL OnKillActive();
+
+   BOOL OnApply();
+
    void UpdateConcreteTypeLabel();
    void UpdateEc();
 
