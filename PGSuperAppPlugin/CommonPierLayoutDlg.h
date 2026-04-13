@@ -59,8 +59,7 @@ protected:
 
 	virtual BOOL OnInitDialog() override;
 
-	afx_msg void OnColumnShapeChanged();
-	afx_msg void OnColumnCountChanged(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg LRESULT OnColumnGridCellChanged(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnHeightMeasureChanged();
 	afx_msg void OnAddColumn();
 	afx_msg void OnRemoveColumns();
