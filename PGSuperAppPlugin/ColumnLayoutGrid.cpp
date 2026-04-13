@@ -495,6 +495,9 @@ void CColumnLayoutGrid::OnClickedButtonRowCol(ROWCOL nRow,ROWCOL nCol)
 
 void CColumnLayoutGrid::OnModifyCell(ROWCOL nRow,ROWCOL nCol)
 {
+   if (GetParent())
+		GetParent()->SendMessage(WM_USER + 100, (WPARAM)nRow, (LPARAM)nCol);
+
    if ( nCol == 3 )
    {
       GetParam()->EnableUndo(FALSE);
