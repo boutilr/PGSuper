@@ -684,7 +684,7 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     int oldTA = pDC->SetTextAlign(TA_CENTER | TA_BOTTOM);
 
     CString str;
-    str.Format((refColOffset == 0.0? _T("%s") : _T("%s offset")), (refColOffsetMeasure == pgsTypes::omtAlignment ? _T("alignment") : _T("bridge line")));
+    str.Format((refColOffset == 0.0? _T("%s") : _T("%s offset")), (refColOffsetMeasure == pgsTypes::omtAlignment ? _T("alignment") : _T("bridgeline")));
     DrawHorizontalDimension(pDC, mapper, refCol_x - refColOffset, (H1 + H3) / 2.0 + pRefColumn->GetColumnHeight() / 2.0, refCol_x, str);
 }
 
