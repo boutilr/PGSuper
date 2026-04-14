@@ -318,7 +318,7 @@ void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(const CPierData2* pPi
     Float64 world_height = max_column_height + max_xbeam_height;
 
     Float64 margin_h = world_width * 0.10;
-    Float64 margin_v = world_height * 0.10;
+    Float64 margin_v = world_height * 0.15;
 
     Float64 left = -pierWidth / 2.0 - margin_h;
     Float64 right = pierWidth / 2.0 + margin_h;
@@ -637,6 +637,55 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
 
     // Draw symbolic dimensions
     DrawSymbolicDimensions(pDC, mapper, H1, H2, X1, X2, H3, H4, X3, X4);
+
+
+    //Draw reference column offset line
+    CPen ref_column_pen(PS_DASHDOT, 2, ALIGNMENT_COLOR);
+    pDC->SelectObject(&ref_column_pen);
+
+    ColumnIndexType refColIdx;
+    Float64 refColOffset;
+    pgsTypes::OffsetMeasurementType refColOffsetMeasure;
+    pPier->GetTransverseOffset(&refColIdx, &refColOffset, &refColOffsetMeasure);
+
+    const CColumnData* pRefColumn = &pPier->GetColumnData(refColIdx);
+
+    // Calculate total column spacing
+    S = 0.0;
+    if (refColIdx > 0)
+    {
+        for (SpacingIndexType spaIdx = 0; spaIdx < refColIdx; spaIdx++)
+        {
+            S += pPier->GetColumnSpacing(spaIdx);
+        }
+    }
+
+    Float64 refCol_x = -pierWidth / 2.0 + S + X5;
+
+    WBFL::Graphing::Point pt_start(refCol_x - refColOffset, -0.5);
+    WBFL::Graphing::Point pt_end(refCol_x - refColOffset, pRefColumn->GetColumnHeight() - 0.5);
+
+    LONG dx_start, dy_start, dx_end, dy_end;
+    mapper.WPtoDP(pt_start, &dx_start, &dy_start);
+    mapper.WPtoDP(pt_end, &dx_end, &dy_end);
+
+    pDC->MoveTo(dx_start, dy_start);
+    pDC->LineTo(dx_end, dy_end);
+
+    CPen dim_pen(PS_SOLID, 1, RGB(0, 0, 0));
+    pOldPen = pDC->SelectObject(&dim_pen);
+
+    CFont font;
+    font.CreatePointFont(80, _T("Arial"));  // 8pt font
+    CFont* pOldFont = pDC->SelectObject(&font);
+
+    pDC->SetTextColor(RGB(0, 0, 0));
+    pDC->SetBkMode(OPAQUE);
+    int oldTA = pDC->SetTextAlign(TA_CENTER | TA_BOTTOM);
+
+    CString str;
+    str.Format((refColOffset == 0.0? _T("%s") : _T("%s offset")), (refColOffsetMeasure == pgsTypes::omtAlignment ? _T("alignment") : _T("bridge line")));
+    DrawHorizontalDimension(pDC, mapper, refCol_x - refColOffset, (H1 + H3) / 2.0 + pRefColumn->GetColumnHeight() / 2.0, refCol_x, str);
 }
 
 void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
