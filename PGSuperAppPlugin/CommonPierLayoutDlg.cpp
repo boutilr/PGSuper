@@ -69,6 +69,10 @@ BEGIN_MESSAGE_MAP(CCommonPierLayoutDlg, CDialog)
     ON_EN_CHANGE(IDC_X5, &CCommonPierLayoutDlg::OnPierLayoutChanged)
     ON_EN_CHANGE(IDC_X6, &CCommonPierLayoutDlg::OnPierLayoutChanged)
 
+    ON_CBN_SELCHANGE(IDC_REFCOLUMN, &CCommonPierLayoutDlg::OnRefColumnChanged)
+    ON_EN_CHANGE(IDC_REFCOLUMN_OFFSET, &CCommonPierLayoutDlg::OnRefColumnChanged)
+    ON_CBN_SELCHANGE(IDC_REFCOLUMN_MEASUREMENT, &CCommonPierLayoutDlg::OnRefColumnChanged)
+
     ON_WM_LBUTTONDOWN()
     ON_WM_LBUTTONUP()
     ON_WM_MOUSEMOVE()
@@ -455,4 +459,21 @@ void CCommonPierLayoutDlg::OnPierLayoutChanged()
     m_ctrlDrawXBeam.UpdateWindow();
 }
 
+void CCommonPierLayoutDlg::OnRefColumnChanged()
+{
+    // Get the current values from the edit controls into member variables
+    CDataExchange dx(this, TRUE);
 
+    auto pBroker = EAFGetBroker();
+    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+
+    DDX_CBIndex(&dx, IDC_REFCOLUMN, m_RefColumnIdx);
+    DDX_OffsetAndTag(&dx, IDC_REFCOLUMN_OFFSET, IDC_REFCOLUMN_OFFSET_UNIT, m_TransverseOffset, pDisplayUnits->GetSpanLengthUnit());
+    DDX_CBItemData(&dx, IDC_REFCOLUMN_MEASUREMENT, m_TransverseOffsetMeasurement);
+
+	m_Pier.SetTransverseOffset(m_RefColumnIdx, m_TransverseOffset, m_TransverseOffsetMeasurement);
+
+    // Invalidate and update the drawing control to reflect the changes
+    m_ctrlDrawXBeam.Invalidate();
+    m_ctrlDrawXBeam.UpdateWindow();
+}
