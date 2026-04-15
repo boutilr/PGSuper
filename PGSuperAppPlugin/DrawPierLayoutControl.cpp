@@ -184,6 +184,11 @@ void CDrawPierLayoutControl::OnLButtonUp(UINT nFlags, CPoint point)
     InvalidateRect(NULL, TRUE);  // TRUE = erase background and force complete repaint
 }
 
+void CDrawPierLayoutControl::ResetExtents()
+{
+	m_bInitialized = FALSE;
+}
+
 void CDrawPierLayoutControl::OnPaint()
 {
     CPaintDC dc(this);
