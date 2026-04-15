@@ -364,6 +364,7 @@ LRESULT CCommonPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM lPar
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
 
     // Invalidate and update the drawing control to reflect the changes
+    m_ctrlDrawXBeam.ResetExtents();
     m_ctrlDrawXBeam.Invalidate();
     m_ctrlDrawXBeam.UpdateWindow();
 
@@ -379,6 +380,7 @@ void CCommonPierLayoutDlg::OnAddColumn()
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
 
     // Invalidate and update the drawing control to reflect the changes
+    m_ctrlDrawXBeam.ResetExtents();
     m_ctrlDrawXBeam.Invalidate();
     m_ctrlDrawXBeam.UpdateWindow();
 
@@ -393,6 +395,7 @@ void CCommonPierLayoutDlg::OnRemoveColumns()
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
 
     // Invalidate and update the drawing control to reflect the changes
+    m_ctrlDrawXBeam.ResetExtents();
     m_ctrlDrawXBeam.Invalidate();
     m_ctrlDrawXBeam.UpdateWindow();
 }
@@ -455,6 +458,7 @@ void CCommonPierLayoutDlg::OnPierLayoutChanged()
     m_Pier.SetXBeamOverhang(pgsTypes::stRight, m_XBeamOverhang[pgsTypes::stRight]);
 
     // Invalidate and update the drawing control to reflect the changes
+    m_ctrlDrawXBeam.ResetExtents();
     m_ctrlDrawXBeam.Invalidate();
     m_ctrlDrawXBeam.UpdateWindow();
 }
@@ -474,6 +478,7 @@ void CCommonPierLayoutDlg::OnRefColumnChanged()
 	m_Pier.SetTransverseOffset(m_RefColumnIdx, m_TransverseOffset, m_TransverseOffsetMeasurement);
 
     // Invalidate and update the drawing control to reflect the changes
+    m_ctrlDrawXBeam.ResetExtents();
     m_ctrlDrawXBeam.Invalidate();
     m_ctrlDrawXBeam.UpdateWindow();
 }
