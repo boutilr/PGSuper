@@ -99,6 +99,7 @@ void CDrawPierLayoutControl::OnMouseMove(UINT nFlags, CPoint point)
 
         dc.SetROP2(oldRop);
         dc.SelectObject(pOldPen);
+
     }
 }
 
@@ -277,6 +278,41 @@ void CDrawPierLayoutControl::OnLButtonDblClk(UINT nFlags, CPoint point)
     InvalidateRect(NULL, TRUE);  // TRUE = erase background and force complete repaint
 }
 
+void CDrawPierLayoutControl::GetUpperXBeamDimensions(const CPierData2* pPier, Float64* pH, Float64* pW)
+{
+    auto pBroker = EAFGetBroker();
+    GET_IFACE2(pBroker, IBridge, pBridge);
+    auto pierIdx = pPier->GetIndex();
+
+    // Draw Upper Cross Beam Diaphragm. Basically, this is vertical distance from top of lower cross beam to bottom of slab
+    // Take max of diaphragm depth and max girder bearing deducts
+    // (don't use the pPier object here... use the pBridge interface... it resolves
+    // diaphragm dimensions that are computed based on bridge component geometry)
+    Float64 Wback, Hback;
+    pBridge->GetPierDiaphragmSize(pierIdx, pgsTypes::Back, &Wback, &Hback);
+    Float64 Wahead, Hahead;
+    pBridge->GetPierDiaphragmSize(pierIdx, pgsTypes::Ahead, &Wahead, &Hahead);
+    *pW = Wback + Wahead;
+    Float64 Hdiap = Max(Hback, Hahead);
+
+    Float64 Hbd = 0;
+
+    // Compute elevation ignoring effects on non-recoverable deformations. We don't need to perform a full structural analysis to get the values we want
+    std::vector<BearingElevationDetails> vBackElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Back, ALL_GIRDERS, true);
+    for (const auto& elevdet : vBackElevDetails)
+    {
+        Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
+    }
+
+    std::vector<BearingElevationDetails> vAheadElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Ahead, ALL_GIRDERS, true);
+    for (const auto& elevdet : vAheadElevDetails)
+    {
+        Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
+    }
+
+    *pH = max(Hdiap, Hbd);
+}
+
 void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(const CPierData2* pPier,
     WBFL::Graphing::PointMapper& mapper, CSize sDeviceClient)
 {
@@ -294,11 +330,15 @@ void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(const CPierData2* pPi
     Float64 X6 = pPier->GetXBeamOverhang(pgsTypes::stRight);
     Float64 pierWidth = X5 + S + X6;
 
-    // Get XBeam dimensions
+    // Get lower XBeam dimensions
     Float64 H1, H2, X1, X2;
     Float64 H3, H4, X3, X4;
     pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1, &H2, &X1, &X2);
     pPier->GetXBeamDimensions(pgsTypes::stRight, &H3, &H4, &X3, &X4);
+
+    // Get upper XBeam dimensions
+    Float64 Hdiaph, Wdiaph;
+    GetUpperXBeamDimensions(pPier, &Hdiaph, &Wdiaph);
 
     Float64 max_xbeam_height = max(H1 + H2, H3 + H4);
 
@@ -318,11 +358,11 @@ void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(const CPierData2* pPi
     Float64 world_height = max_column_height + max_xbeam_height;
 
     Float64 margin_h = world_width * 0.10;
-    Float64 margin_v = world_height * 0.15;
+    Float64 margin_v = world_height * 0.10;
 
     Float64 left = -pierWidth / 2.0 - margin_h;
     Float64 right = pierWidth / 2.0 + margin_h;
-    Float64 bottom = -margin_v;
+    Float64 bottom = -Hdiaph - margin_v;
     Float64 top = world_height + margin_v;
 
     WBFL::Graphing::Rect box(left, bottom, right, top);
@@ -362,6 +402,10 @@ void CDrawPierLayoutControl::CalculateSideViewBoundingBox(const CPierData2* pPie
         }
     }
 
+    // Get upper XBeam dimensions
+    Float64 Hdiaph, Wdiaph;
+    GetUpperXBeamDimensions(pPier, &Hdiaph, &Wdiaph);
+
     // Calculate world bounding box with 10% margin
     Float64 world_width = W;
     Float64 world_height = max_column_height + max_xbeam_height;
@@ -371,7 +415,7 @@ void CDrawPierLayoutControl::CalculateSideViewBoundingBox(const CPierData2* pPie
 
     Float64 left = -W / 2.0 - margin_h;
     Float64 right = W / 2.0 + margin_h;
-    Float64 bottom = -margin_v;
+    Float64 bottom = -Hdiaph - margin_v;
     Float64 top = world_height + margin_v;
 
     WBFL::Graphing::Rect box(left, bottom, right, top);
@@ -513,6 +557,30 @@ void CDrawPierLayoutControl::DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper&
     pDC->SelectObject(pOldPen);
     font.DeleteObject();
 
+    // Draw upper cross beam
+    CPen upper_xbeam_pen(PS_DOT, 1, SEGMENT_BORDER_COLOR);
+    CBrush upper_xbeam_brush(HS_BDIAGONAL, BLACK);
+
+    pDC->SelectObject(&upper_xbeam_pen);
+    pDC->SelectObject(&upper_xbeam_brush);
+
+    Float64 Hdiaph, Wdiaph;
+    GetUpperXBeamDimensions(pPier, &Hdiaph, &Wdiaph);
+
+    WBFL::Graphing::Point upper_xbeam_bl(-W / 2.0, -Hdiaph);
+    WBFL::Graphing::Point upper_xbeam_br(W / 2.0, -Hdiaph);
+    WBFL::Graphing::Point upper_xbeam_tr(W / 2.0, 0.0);
+    WBFL::Graphing::Point upper_xbeam_tl(-W / 2.0, 0.0);
+
+    mapper.WPtoDP(upper_xbeam_bl, &dx_bl, &dy_bl);
+    mapper.WPtoDP(upper_xbeam_br, &dx_br, &dy_br);
+    mapper.WPtoDP(upper_xbeam_tr, &dx_tr, &dy_tr);
+    mapper.WPtoDP(upper_xbeam_tl, &dx_tl, &dy_tl);
+
+    CPoint upper_xbeam_points[4] = { CPoint(dx_bl, dy_bl), CPoint(dx_br, dy_br),
+                                CPoint(dx_tr, dy_tr), CPoint(dx_tl, dy_tl) };
+    pDC->Polygon(upper_xbeam_points, 4);
+
 }
 
 void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMapper& mapper)
@@ -638,6 +706,33 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     // Draw symbolic dimensions
     DrawSymbolicDimensions(pDC, mapper, H1, H2, X1, X2, H3, H4, X3, X4);
 
+    // Draw upper cross beam
+    CPen upper_xbeam_pen(PS_DOT, 1, SEGMENT_BORDER_COLOR);
+    CBrush upper_xbeam_brush(HS_BDIAGONAL, BLACK);
+
+    pDC->SelectObject(&upper_xbeam_pen);
+    pDC->SelectObject(&upper_xbeam_brush);
+
+    Float64 Hdiaph, Wdiaph;
+    GetUpperXBeamDimensions(pPier, &Hdiaph, &Wdiaph);
+
+    WBFL::Graphing::Point upper_xbeam_points[4];
+    upper_xbeam_points[0] = WBFL::Graphing::Point(-pierWidth / 2.0 - X2 / H1 * Hdiaph, -Hdiaph);
+    upper_xbeam_points[1] = WBFL::Graphing::Point(-pierWidth / 2.0, 0);
+    upper_xbeam_points[2] = WBFL::Graphing::Point(pierWidth / 2.0, 0.0);
+    upper_xbeam_points[3] = WBFL::Graphing::Point(pierWidth / 2.0 + X4 / H3 * Hdiaph, -Hdiaph);
+
+    CPoint upper_dev_points[4];
+    IndexType nUpperPoints = 4;
+
+    for (IndexType i = 0; i < nUpperPoints; i++)
+    {
+        LONG dx, dy;
+        mapper.WPtoDP(upper_xbeam_points[i], &dx, &dy);
+        upper_dev_points[i] = CPoint(dx, dy);
+    }
+
+    pDC->Polygon(upper_dev_points, (int)nUpperPoints);
 
     //Draw reference column offset line
     CPen ref_column_pen(PS_DASHDOT, 2, ALIGNMENT_COLOR);
@@ -686,6 +781,8 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     CString str;
     str.Format((refColOffset == 0.0? _T("%s") : _T("%s offset")), (refColOffsetMeasure == pgsTypes::omtAlignment ? _T("alignment") : _T("bridgeline")));
     DrawHorizontalDimension(pDC, mapper, refCol_x - refColOffset, (H1 + H3) / 2.0 + pRefColumn->GetColumnHeight() / 2.0, refCol_x, str);
+
+
 }
 
 void CDrawPierLayoutControl::DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
