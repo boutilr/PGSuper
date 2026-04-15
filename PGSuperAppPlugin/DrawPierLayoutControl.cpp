@@ -685,16 +685,40 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     pDC->SelectObject(&xbeam_pen);
     pDC->SelectObject(&xbeam_brush);
 
-    WBFL::Graphing::Point xbeam_points[7];
-    xbeam_points[0] = WBFL::Graphing::Point(-pierWidth / 2.0, 0.0);
-    xbeam_points[1] = WBFL::Graphing::Point(-pierWidth / 2.0 + X2, H1);
-    xbeam_points[2] = WBFL::Graphing::Point(-pierWidth / 2.0 + X2 + X1, H1 + H2);
-    xbeam_points[3] = WBFL::Graphing::Point(pierWidth / 2.0 - X2 - X3, H3 + H4);
-    xbeam_points[4] = WBFL::Graphing::Point(pierWidth / 2.0 - X2, H3);
-    xbeam_points[5] = WBFL::Graphing::Point(pierWidth / 2.0, 0.0);
+    ColumnIndexType refColIdx;
+    Float64 refColOffset;
+    pgsTypes::OffsetMeasurementType refColOffsetMeasure;
+    pPier->GetTransverseOffset(&refColIdx, &refColOffset, &refColOffsetMeasure);
 
-    CPoint dev_points[7];
-    IndexType nPoints = 6;  // We have 6 points for the xbeam polygon
+    Float64 Sref = 0.0;
+    if (refColIdx > 0)
+    {
+        for (SpacingIndexType spaIdx = 0; spaIdx < refColIdx; spaIdx++)
+        {
+            Sref += pPier->GetColumnSpacing(spaIdx);
+        }
+    }
+
+    Float64 refCol_x = -pierWidth / 2.0 + Sref + X5;
+
+    WBFL::Graphing::Point xbeam_points[8];
+    if (abs(refCol_x - refColOffset) <= pierWidth / 2.0)
+    {
+        xbeam_points[0] = WBFL::Graphing::Point(refCol_x - refColOffset, 0.02 * (refCol_x - refColOffset - pierWidth / 2.0));
+    }
+    else
+    {
+        xbeam_points[0] = WBFL::Graphing::Point(0.0, -0.02 * pierWidth / 2.0);
+    }
+    xbeam_points[1] = WBFL::Graphing::Point(-pierWidth / 2.0, 0.0);
+    xbeam_points[2] = WBFL::Graphing::Point(-pierWidth / 2.0 + X2, H1);
+    xbeam_points[3] = WBFL::Graphing::Point(-pierWidth / 2.0 + X2 + X1, H1 + H2);
+    xbeam_points[4] = WBFL::Graphing::Point(pierWidth / 2.0 - X2 - X3, H3 + H4);
+    xbeam_points[5] = WBFL::Graphing::Point(pierWidth / 2.0 - X2, H3);
+    xbeam_points[6] = WBFL::Graphing::Point(pierWidth / 2.0, 0.0);
+
+    CPoint dev_points[8];
+    IndexType nPoints = 7;
 
     for (IndexType i = 0; i < nPoints; i++)
     {
@@ -721,14 +745,31 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     Float64 Hdiaph, Wdiaph;
     GetUpperXBeamDimensions(pPier, &Hdiaph, &Wdiaph);
 
-    WBFL::Graphing::Point upper_xbeam_points[4];
-    upper_xbeam_points[0] = WBFL::Graphing::Point(-pierWidth / 2.0 - X2 / H1 * Hdiaph, -Hdiaph);
-    upper_xbeam_points[1] = WBFL::Graphing::Point(-pierWidth / 2.0, 0);
-    upper_xbeam_points[2] = WBFL::Graphing::Point(pierWidth / 2.0, 0.0);
-    upper_xbeam_points[3] = WBFL::Graphing::Point(pierWidth / 2.0 + X4 / H3 * Hdiaph, -Hdiaph);
+    WBFL::Graphing::Point upper_xbeam_points[6];
 
-    CPoint upper_dev_points[4];
-    IndexType nUpperPoints = 4;
+    if (abs(refCol_x - refColOffset) <= pierWidth / 2.0)
+    {
+        upper_xbeam_points[0] = WBFL::Graphing::Point(refCol_x - refColOffset, -Hdiaph + (refCol_x - refColOffset - pierWidth / 2.0) * 0.02);
+    }
+    else
+    {
+        upper_xbeam_points[0] = WBFL::Graphing::Point(0.0, -Hdiaph - 0.02 * pierWidth / 2.0);
+    }
+    upper_xbeam_points[1] = WBFL::Graphing::Point(-pierWidth / 2.0 - X2 / H1 * Hdiaph, -Hdiaph);
+    upper_xbeam_points[2] = WBFL::Graphing::Point(-pierWidth / 2.0, 0.0);
+    if (abs(refCol_x - refColOffset) <= pierWidth / 2.0)
+    {
+        upper_xbeam_points[3] = WBFL::Graphing::Point(refCol_x - refColOffset, 0.02 * (refCol_x - refColOffset - pierWidth / 2.0));
+    }
+    else
+    {
+        upper_xbeam_points[3] = WBFL::Graphing::Point(0.0, -0.02 * pierWidth / 2.0);
+    }
+    upper_xbeam_points[4] = WBFL::Graphing::Point(pierWidth / 2.0, 0.0);
+    upper_xbeam_points[5] = WBFL::Graphing::Point(pierWidth / 2.0 + X4 / H3 * Hdiaph, -Hdiaph);
+
+    CPoint upper_dev_points[6];
+    IndexType nUpperPoints = 6;
 
     for (IndexType i = 0; i < nUpperPoints; i++)
     {
@@ -743,24 +784,7 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     CPen ref_column_pen(PS_DASHDOT, 2, ALIGNMENT_COLOR);
     pDC->SelectObject(&ref_column_pen);
 
-    ColumnIndexType refColIdx;
-    Float64 refColOffset;
-    pgsTypes::OffsetMeasurementType refColOffsetMeasure;
-    pPier->GetTransverseOffset(&refColIdx, &refColOffset, &refColOffsetMeasure);
-
     const CColumnData* pRefColumn = &pPier->GetColumnData(refColIdx);
-
-    // Calculate total column spacing
-    S = 0.0;
-    if (refColIdx > 0)
-    {
-        for (SpacingIndexType spaIdx = 0; spaIdx < refColIdx; spaIdx++)
-        {
-            S += pPier->GetColumnSpacing(spaIdx);
-        }
-    }
-
-    Float64 refCol_x = -pierWidth / 2.0 + S + X5;
 
     WBFL::Graphing::Point pt_start(refCol_x - refColOffset, -0.5);
     WBFL::Graphing::Point pt_end(refCol_x - refColOffset, pRefColumn->GetColumnHeight() - 0.5);
