@@ -42,6 +42,8 @@ public:
 
 	void CustomInit(IPierLayoutDataSource* pSource);
 
+	void ResetExtents();
+
 protected:
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
