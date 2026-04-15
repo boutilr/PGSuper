@@ -360,7 +360,7 @@ void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(const CPierData2* pPi
 
     // Calculate world bounding box with 10% margin
     Float64 world_width = pierWidth;
-    Float64 world_height = max_column_height + max_xbeam_height;
+    Float64 world_height = max_column_height;
 
     Float64 margin_h = world_width * 0.10;
     Float64 margin_v = world_height * 0.10;
@@ -413,7 +413,7 @@ void CDrawPierLayoutControl::CalculateSideViewBoundingBox(const CPierData2* pPie
 
     // Calculate world bounding box with 10% margin
     Float64 world_width = W;
-    Float64 world_height = max_column_height + max_xbeam_height;
+    Float64 world_height = max_column_height;
 
     Float64 margin_h = world_width * 0.10;
     Float64 margin_v = world_height * 0.10;
