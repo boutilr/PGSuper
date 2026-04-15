@@ -71,6 +71,8 @@ private:
 	CPoint m_dragStart;
 	CPoint m_dragEnd;
 
+	void GetUpperXBeamDimensions(const CPierData2* pPier, Float64* H, Float64* W);
+
 	void CalculateFrontViewBoundingBox(const CPierData2* pPier,
 		WBFL::Graphing::PointMapper& mapper, CSize sDeviceClient);
 	void CalculateSideViewBoundingBox(const CPierData2* pPier,
