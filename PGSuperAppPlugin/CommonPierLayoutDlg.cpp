@@ -334,6 +334,7 @@ void CCommonPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
     if (pcbRefColumn->SetCurSel(curSel) == CB_ERR)
     {
         pcbRefColumn->SetCurSel(0);
+        OnRefColumnChanged();
     }
 }
 
