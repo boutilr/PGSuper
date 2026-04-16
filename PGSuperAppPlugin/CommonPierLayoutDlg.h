@@ -75,6 +75,7 @@ protected:
 	pgsTypes::PierModelType m_PierModelType;
 	CPierData2 m_Pier;
 
+	CMetaFileStatic m_LayoutPicture;
 	CDrawPierLayoutControl m_ctrlDrawXBeam;
 
 	CColumnLayoutGrid m_ColumnLayoutGrid;

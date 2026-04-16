@@ -302,6 +302,7 @@
 #define IDC_TENSION_MAX_UNIT            1102
 #define IDD_PIER_LAYOUT                 1112
 #define IDC_FINAL                       1112
+#define IDC_PIER_LAYOUT_GUIDE           1113
 #define IDC_TEMP_STRAND_SIZE            1113
 #define IDC_BEFORE_TEMP_STRAND_REMOVAL  1113
 #define IDD_COPY_PIER_PROPERTIES        1113
@@ -1267,6 +1268,7 @@
 #define IDC_HELP                        1904
 #define IDC_VIEW_TIMELINE_SUMMARY       1904
 #define IDC_BUTTON_EDIT_BEARING         1904
+#define IDC_LAYOUT_GRAPHIC              1904
 #define IDC_LABELS                      1905
 #define IDC_BUTTON2                     1905
 #define IDC_EDIT                        1905
