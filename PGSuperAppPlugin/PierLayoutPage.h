@@ -77,6 +77,7 @@ protected:
    afx_msg void OnMoreProperties();
    afx_msg void OnPierModelTypeChanged();
    afx_msg void OnPierLayoutTypeChanged();
+   afx_msg void OnLayoutGraphicChanged();
 
    void SwapDialogs();
 
@@ -91,6 +92,8 @@ protected:
 
    pgsTypes::PierModelType m_PierModelType;
    pgsTypes::PierLayoutType m_PierLayoutType;
+
+   bool m_bShowGuide{ false };
 
    // Embedded dialogs
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;

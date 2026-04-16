@@ -60,6 +60,7 @@ void CPierLayoutPage::Init(CPierData2* pPier)
     m_pPier = pPier;
 
     m_PierIdx = pPier->GetIndex();
+    
 }
 
 void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
@@ -224,6 +225,7 @@ BEGIN_MESSAGE_MAP(CPierLayoutPage, CPropertyPage)
     ON_BN_CLICKED(IDC_MORE_PROPERTIES, OnMoreProperties)
     ON_CBN_SELCHANGE(IDC_PIER_MODEL_TYPE, OnPierModelTypeChanged)
     ON_CBN_SELCHANGE(IDC_PIER_LAYOUT_TYPE, OnPierLayoutTypeChanged)
+    ON_BN_CLICKED(IDC_LAYOUT_GRAPHIC, OnLayoutGraphicChanged)
     ON_COMMAND(ID_HELP, OnHelp)
     //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -269,6 +271,7 @@ BOOL CPierLayoutPage::OnInitDialog()
 
     OnPierModelTypeChanged();
     OnPierLayoutTypeChanged();
+    OnLayoutGraphicChanged();
 
 
     return TRUE;  // return TRUE unless you set the focus to a control
@@ -551,4 +554,24 @@ void CPierLayoutPage::SwapDialogs()
         }
     }
 }
+
+void CPierLayoutPage::OnLayoutGraphicChanged()
+{
+    if (m_bShowGuide)
+    {
+		GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_HIDE);
+		SetDlgItemTextW(IDC_LAYOUT_GRAPHIC, _T("Show Live"));
+		m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_SHOW);
+		m_bShowGuide = false;
+    }
+    else
+    {
+        GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_SHOW);
+        SetDlgItemTextW(IDC_LAYOUT_GRAPHIC, _T("Show Guide"));
+        m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_HIDE);
+        m_bShowGuide = true;
+    }
+}
+
+
 
