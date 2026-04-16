@@ -390,10 +390,15 @@ void CCommonPierLayoutDlg::OnAddColumn()
 void CCommonPierLayoutDlg::OnRemoveColumns()
 {
     m_ColumnLayoutGrid.RemoveSelectedColumns();
+
     FillRefColumnComboBox();
 
     // Update pier data with current column data
-    m_ColumnLayoutGrid.GetColumnData(m_Pier);
+	const auto nCols = m_Pier.GetColumnCount();
+	if (nCols > 1)
+    {
+        m_ColumnLayoutGrid.GetColumnData(m_Pier);
+    }
 
     // Invalidate and update the drawing control to reflect the changes
     m_ctrlDrawXBeam.ResetExtents();

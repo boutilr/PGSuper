@@ -691,7 +691,7 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     pPier->GetTransverseOffset(&refColIdx, &refColOffset, &refColOffsetMeasure);
 
     Float64 Sref = 0.0;
-    if (refColIdx > 0)
+    if (refColIdx > 0 && refColIdx != INVALID_INDEX)
     {
         for (SpacingIndexType spaIdx = 0; spaIdx < refColIdx; spaIdx++)
         {
@@ -780,36 +780,39 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
 
     pDC->Polygon(upper_dev_points, (int)nUpperPoints);
 
-    //Draw reference column offset line
-    CPen ref_column_pen(PS_DASHDOT, 2, ALIGNMENT_COLOR);
-    pDC->SelectObject(&ref_column_pen);
+	if (refColIdx != INVALID_INDEX)
+    {
+        //Draw reference column offset line
+        CPen ref_column_pen(PS_DASHDOT, 2, ALIGNMENT_COLOR);
+        pDC->SelectObject(&ref_column_pen);
 
-    const CColumnData* pRefColumn = &pPier->GetColumnData(refColIdx);
+        const CColumnData* pRefColumn = &pPier->GetColumnData(refColIdx);
 
-    WBFL::Graphing::Point pt_start(refCol_x - refColOffset, -0.5);
-    WBFL::Graphing::Point pt_end(refCol_x - refColOffset, pRefColumn->GetColumnHeight() - 0.5);
+        WBFL::Graphing::Point pt_start(refCol_x - refColOffset, -0.5);
+        WBFL::Graphing::Point pt_end(refCol_x - refColOffset, pRefColumn->GetColumnHeight() - 0.5);
 
-    LONG dx_start, dy_start, dx_end, dy_end;
-    mapper.WPtoDP(pt_start, &dx_start, &dy_start);
-    mapper.WPtoDP(pt_end, &dx_end, &dy_end);
+        LONG dx_start, dy_start, dx_end, dy_end;
+        mapper.WPtoDP(pt_start, &dx_start, &dy_start);
+        mapper.WPtoDP(pt_end, &dx_end, &dy_end);
 
-    pDC->MoveTo(dx_start, dy_start);
-    pDC->LineTo(dx_end, dy_end);
+        pDC->MoveTo(dx_start, dy_start);
+        pDC->LineTo(dx_end, dy_end);
 
-    CPen dim_pen(PS_SOLID, 1, RGB(0, 0, 0));
-    pOldPen = pDC->SelectObject(&dim_pen);
+        CPen dim_pen(PS_SOLID, 1, RGB(0, 0, 0));
+        pOldPen = pDC->SelectObject(&dim_pen);
 
-    CFont font;
-    font.CreatePointFont(80, _T("Arial"));  // 8pt font
-    CFont* pOldFont = pDC->SelectObject(&font);
+        CFont font;
+        font.CreatePointFont(80, _T("Arial"));  // 8pt font
+        CFont* pOldFont = pDC->SelectObject(&font);
 
-    pDC->SetTextColor(RGB(0, 0, 0));
-    pDC->SetBkMode(OPAQUE);
-    int oldTA = pDC->SetTextAlign(TA_CENTER | TA_BOTTOM);
+        pDC->SetTextColor(RGB(0, 0, 0));
+        pDC->SetBkMode(OPAQUE);
+        int oldTA = pDC->SetTextAlign(TA_CENTER | TA_BOTTOM);
 
-    CString str;
-    str.Format((refColOffset == 0.0? _T("%s") : _T("%s offset")), (refColOffsetMeasure == pgsTypes::omtAlignment ? _T("alignment") : _T("bridgeline")));
-    DrawHorizontalDimension(pDC, mapper, refCol_x - refColOffset, (H1 + H3) / 2.0 + pRefColumn->GetColumnHeight() / 2.0, refCol_x, str);
+        CString str;
+        str.Format((refColOffset == 0.0 ? _T("%s") : _T("%s offset")), (refColOffsetMeasure == pgsTypes::omtAlignment ? _T("alignment") : _T("bridgeline")));
+        DrawHorizontalDimension(pDC, mapper, refCol_x - refColOffset, (H1 + H3) / 2.0 + pRefColumn->GetColumnHeight() / 2.0, refCol_x, str);
+    }
 
 
 }
