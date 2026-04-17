@@ -560,7 +560,7 @@ void CPierLayoutPage::OnLayoutGraphicChanged()
     if (m_bShowGuide)
     {
 		GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_HIDE);
-		SetDlgItemTextW(IDC_LAYOUT_GRAPHIC, _T("Show Live"));
+		SetDlgItemTextW(IDC_LAYOUT_GRAPHIC, _T("Live View"));
 		m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_SHOW);
 		m_bShowGuide = false;
     }
