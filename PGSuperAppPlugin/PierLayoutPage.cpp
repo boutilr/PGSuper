@@ -562,6 +562,7 @@ void CPierLayoutPage::OnLayoutGraphicChanged()
 		GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_HIDE);
 		SetDlgItemTextW(IDC_LAYOUT_GRAPHIC, _T("Live View"));
 		m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_SHOW);
+		m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT)->ShowWindow(SW_HIDE);
 		m_bShowGuide = false;
     }
     else
@@ -569,6 +570,7 @@ void CPierLayoutPage::OnLayoutGraphicChanged()
         GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_SHOW);
         SetDlgItemTextW(IDC_LAYOUT_GRAPHIC, _T("Show Guide"));
         m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_HIDE);
+        m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT)->ShowWindow(SW_SHOW);
         m_bShowGuide = true;
     }
 }
