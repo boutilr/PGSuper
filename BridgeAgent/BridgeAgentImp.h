@@ -209,6 +209,7 @@ public:
    GirderIndexType GetGirderCountBySpan(SpanIndexType spanIdx) const override;
    SegmentIndexType GetSegmentCount(const CGirderKey& girderKey) const override;
    SegmentIndexType GetSegmentCount(GroupIndexType grpIdx,GirderIndexType gdrIdx) const override;
+   void GetGenericBridgePier(PierIndexType pierIdx, IBridgePier** ppPier) const override;
    PierIndexType GetGirderGroupStartPier(GroupIndexType grpIdx) const override;
    PierIndexType GetGirderGroupEndPier(GroupIndexType grpIdx) const override;
    void GetGirderGroupPiers(GroupIndexType grpIdx,PierIndexType* pStartPierIdx,PierIndexType* pEndPierIdx) const override;
@@ -1624,7 +1625,7 @@ private:
 
    SpanIndexType GetSpanIndex(Float64 Xb) const;
    PierIndexType GetGenericBridgePierIndex(const CSegmentKey& segmentKey,pgsTypes::MemberEndType endType) const;
-   void GetGenericBridgePier(PierIndexType pierIdx,IBridgePier** ppPier) const;
+   //void GetGenericBridgePier(PierIndexType pierIdx,IBridgePier** ppPier) const;
    void GetGirderLine(const CSegmentKey& segmentKey,IGirderLine** ppGirderLine) const;
    void GetSegmentAtPier(PierIndexType pierIdx,const CGirderKey& girderKey,ISuperstructureMemberSegment** ppSegment) const;
    void GetPierLine(PierIndexType pierIdx,IPierLine** ppPierLine) const;
