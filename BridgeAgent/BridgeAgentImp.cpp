@@ -2602,11 +2602,6 @@ bool CBridgeAgentImp::BuildBridgeModel()
 
    WATCH(_T("Validating Bridge Model"));
 
-   if ( !LayoutPiers(pBridgeDesc) )
-   {
-      return false;
-   }
-
    if ( !LayoutGirders(pBridgeDesc) )
    {
       return false;
@@ -2620,6 +2615,11 @@ bool CBridgeAgentImp::BuildBridgeModel()
    if ( !LayoutTrafficBarriers(pBridgeDesc) )
    {
       return false;
+   }
+
+   if (!LayoutPiers(pBridgeDesc))
+   {
+       return false;
    }
 
    // check bridge for errors - will throw an exception if there are errors
@@ -2637,82 +2637,103 @@ bool CBridgeAgentImp::LayoutPiers(const CBridgeDescription2* pBridgeDesc)
 #pragma Reminder("UPDATE - build full pier model") // also add access methods to get pier model data
    // (may be useful for 3D BrIM type models
 
-   //PierIndexType nPiers = pBridgeDesc->GetPierCount();
-   //for ( PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++ )
-   //{
-   //   const CPierData2* pPierData = pBridgeDesc->GetPier(pierIdx);
+   PierIndexType nPiers = pBridgeDesc->GetPierCount();
+   for ( PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++ )
+   {
+      const CPierData2* pPierData = pBridgeDesc->GetPier(pierIdx);
 
-   //   if ( pPierData->GetPierModelType() == pgsTypes::pmtPhysical )
-   //   {
-   //      //
-   //      // General Pier Information
-   //      //
-   //      CComPtr<IBridgePier> pier;
-   //      GetGenericBridgePier(pierIdx,&pier);
+      if ( pPierData->GetPierModelType() == pgsTypes::pmtPhysical )
+      {
+         //
+         // General Pier Information
+         //
+         CComPtr<IBridgePier> pier;
+         GetGenericBridgePier(pierIdx,&pier);
 
-   //      // Pier Type (derived from boundary condition)
-   //      PierType pierType = GetPierType(pPierData);
-   //      pier->put_Type(pierType);
+         // Pier Type (derived from boundary condition)
+         PierType pierType = GetPierType(pPierData);
+         pier->put_Type(pierType);
 
-   //      // skew angle should already be set
+         // skew angle should already be set
 
-   //      // 
-   //      // set the crown slope in the plane of the pier???
-   //      // set the deck elevation at the alignment???
-   //      // set the crown point offset???
-   //      // set the curb line offsets???
+         // 
+         // set the crown slope in the plane of the pier???
+         // set the deck elevation at the alignment???
+         // set the crown point offset???
+         // set the curb line offsets???
 
-   //      //
-   //      // Cross Beam
-   //      //
-   //      CComPtr<ILinearCrossBeam> xbeam;
-   //      xbeam.CoCreateInstance(CLSID_LinearCrossBeam);
 
-   //      Float64 H1, H2, H3, H4;
-   //      Float64 X1, X2, X3, X4;
-   //      pPierData->GetXBeamDimensions(pgsTypes::stLeft,&H1,&H2,&X1,&X2);
-   //      pPierData->GetXBeamDimensions(pgsTypes::stRight,&H3,&H4,&X3,&X4);
+         GET_IFACE(IBridge, pBridge);
+         Float64 pierStation = pBridge->GetPierStation(pierIdx);
 
-   //      Float64 W1 = pPierData->GetXBeamWidth();
+         CComPtr<IAngle> skewAngle;
+         pBridge->GetPierSkew(pierIdx, &skewAngle);
+         Float64 skew;
+         skewAngle->get_Value(&skew);
 
-   //      Float64 X5, X6;
-   //      pPierData->GetXBeamOverhangs(&X5,&X6);
+         GET_IFACE(IRoadway, pRoadway);
+         CComPtr<IPoint2dCollection> deckProfile;
+         pRoadway->GetRoadwaySurface(pierStation, skewAngle, &deckProfile);
 
-   //      Float64 H5 = pPierData->GetDiaphragmHeight(pgsTypes::Back) + pPierData->GetDiaphragmHeight(pgsTypes::Ahead);
-   //      Float64 W2 = pPierData->GetDiaphragmWidth(pgsTypes::Back) + pPierData->GetDiaphragmWidth(pgsTypes::Ahead);
+		 pier->putref_DeckProfile(deckProfile);
 
-   //      xbeam->put_H1(H1);
-   //      xbeam->put_H2(H2);
-   //      xbeam->put_H3(H3);
-   //      xbeam->put_H4(H4);
-   //      xbeam->put_H5(H5);
+         Float64 leftCLO = pBridge->GetLeftInteriorCurbOffset(pierIdx);
+         Float64 rightCLO = pBridge->GetRightInteriorCurbOffset(pierIdx);
+		 pier->put_CurbLineOffset(qcbLeft, leftCLO);
+		 pier->put_CurbLineOffset(qcbRight, rightCLO);
 
-   //      xbeam->put_X1(X1);
-   //      xbeam->put_X2(X2);
-   //      xbeam->put_X3(X3);
-   //      xbeam->put_X4(X4);
+         //
+         // Cross Beam
+         //
+         CComPtr<ILinearCrossBeam> xbeam;
+         xbeam.CoCreateInstance(CLSID_LinearCrossBeam);
 
-   //      xbeam->put_W1(W1);
-   //      xbeam->put_W2(W2);
+         Float64 H1, H2, H3, H4;
+         Float64 X1, X2, X3, X4;
+         pPierData->GetXBeamDimensions(pgsTypes::stLeft,&H1,&H2,&X1,&X2);
+         pPierData->GetXBeamDimensions(pgsTypes::stRight,&H3,&H4,&X3,&X4);
 
-   //      CComQIPtr<ICrossBeam> crossBeam(xbeam);
-   //      pier->putref_CrossBeam(crossBeam);
-   //      
-   //      //
-   //      // Bearing Layout
-   //      //
-   //      CComPtr<IBearingLayout> bearingLayout;
-   //      bearingLayout.CoCreateInstance(CLSID_BearingLayout);
-   //      pier->putref_BearingLayout(bearingLayout);
+         Float64 W1 = pPierData->GetXBeamWidth();
 
-   //      //
-   //      // Column Layout
-   //      //
-   //      CComPtr<IColumnLayout> columnLayout;
-   //      columnLayout.CoCreateInstance(CLSID_ColumnLayout);
-   //      pier->putref_ColumnLayout(columnLayout);
-   //   }
-   //}
+         Float64 X5, X6;
+         pPierData->GetXBeamOverhangs(&X5,&X6);
+
+         Float64 H5 = pPierData->GetDiaphragmHeight(pgsTypes::Back) + pPierData->GetDiaphragmHeight(pgsTypes::Ahead);
+         Float64 W2 = pPierData->GetDiaphragmWidth(pgsTypes::Back) + pPierData->GetDiaphragmWidth(pgsTypes::Ahead);
+
+         xbeam->put_H1(H1);
+         xbeam->put_H2(H2);
+         xbeam->put_H3(H3);
+         xbeam->put_H4(H4);
+         xbeam->put_H5(H5);
+
+         xbeam->put_X1(X1);
+         xbeam->put_X2(X2);
+         xbeam->put_X3(X3);
+         xbeam->put_X4(X4);
+
+         xbeam->put_W1(W1);
+         xbeam->put_W2(W2);
+
+         CComQIPtr<ICrossBeam> crossBeam(xbeam);
+         pier->putref_CrossBeam(crossBeam);
+         
+         //
+         // Bearing Layout
+         //
+         CComPtr<IBearingLayout> bearingLayout;
+         bearingLayout.CoCreateInstance(CLSID_BearingLayout);
+         pier->putref_BearingLayout(bearingLayout);
+
+         //
+         // Column Layout
+         //
+         CComPtr<IColumnLayout> columnLayout;
+         columnLayout.CoCreateInstance(CLSID_ColumnLayout);
+         pier->putref_ColumnLayout(columnLayout);
+
+      }
+   }
 
    return true;
 }
