@@ -12388,6 +12388,38 @@ void CBridgeAgentImp::GetPierDisplaySettings(pgsTypes::DisplayEndSupportType* pS
    pBridgeDesc->GetPierDisplaySettings(pStartPierType, pEndPierType, pStartPierNumber);
 }
 
+void CBridgeAgentImp::GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const
+{
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+    CComPtr<IBridgePier> pier;
+    PierIndexType pierID = pPier->GetID();
+    GetGenericBridgePier(pierID, &pier);
+
+    CComPtr<ICrossBeam> xbeam;
+    pier->get_CrossBeam(&xbeam);
+
+    xbeam->get_Profile(1, ppShape); // stage 1 is upper x-beam
+}
+
+void CBridgeAgentImp::GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const
+{
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+    CComPtr<IBridgePier> pier;
+    PierIndexType pierID = pPier->GetID();
+    GetGenericBridgePier(pierID, &pier);
+
+    CComPtr<ICrossBeam> xbeam;
+    pier->get_CrossBeam(&xbeam);
+
+    xbeam->get_Profile(0, ppShape); // stage 0 is lower x-beam
+}
+
 std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails_Generic(PierIndexType pierIdx, pgsTypes::PierFaceType face, CBridgeAgentImp::BearingElevLocType locType,GirderIndexType gdrIndex,bool bIgnoreUnrecoverableDeformations) const
 {
    PierIndexType nPiers = GetPierCount();
