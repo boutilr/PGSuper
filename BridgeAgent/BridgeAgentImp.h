@@ -378,6 +378,8 @@ public:
    std::vector<BearingElevationDetails> GetBearingElevationDetails(PierIndexType pierIdx,pgsTypes::PierFaceType face,GirderIndexType gdrIdx, bool bIgnoreUnrecoverableDeformations) const override;
    std::vector<BearingElevationDetails> GetBearingElevationDetailsAtGirderEdges(PierIndexType pierIdx,pgsTypes::PierFaceType face,GirderIndexType gdrIdx) const override;
    void GetPierDisplaySettings(pgsTypes::DisplayEndSupportType* pStartPierType, pgsTypes::DisplayEndSupportType* pEndPierType, PierIndexType* pStartPierNumber) const override;
+   void GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const override;
+   void GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const override;
 
 // IMaterials
 public:

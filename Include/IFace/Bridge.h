@@ -288,6 +288,14 @@ public:
    virtual Float64 GetCantileverLength(const CSpanKey& spanKey,pgsTypes::MemberEndType endType) const = 0;
 
    ///////////////////////////////////////////////////
+   // Pier geometry
+   ///////////////////////////////////////////////////
+
+   // Returns the cross beam profile in Pier Coordinates
+   virtual void GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const = 0;
+   virtual void GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const = 0;
+
+   ///////////////////////////////////////////////////
    // Segment geometry
    ///////////////////////////////////////////////////
 
