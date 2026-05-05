@@ -71,8 +71,6 @@ interface IRebarSectionItem;
 interface IRebarLayout;
 interface IRebarLayoutItem;
 
-interface IBridgePier;
-
 class ISegmentLiftingDesignPointsOfInterest;
 class ISegmentHaulingDesignPointsOfInterest;
 
@@ -224,8 +222,6 @@ public:
 
    // Returns the number of girders in a span
    virtual GirderIndexType GetGirderCountBySpan(SpanIndexType spanIdx) const = 0;
-
-   virtual void GetGenericBridgePier(PierIndexType pierIdx, IBridgePier** ppPier) const = 0;
 
    // Returns the index of the pier at the start of a group
    virtual PierIndexType GetGirderGroupStartPier(GroupIndexType grpIdx) const = 0;
