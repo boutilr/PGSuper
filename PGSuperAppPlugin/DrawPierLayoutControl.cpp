@@ -27,11 +27,26 @@
 #include "PGSuperColors.h"
 #include "DrawPierLayoutControl.h"
 
+#include "DisplayObjectFactory.h"
+
+#include <WBFLGenericBridge.h>
+
+#include <WBFLGeometry/GeomHelpers.h>
+
+#include <EAF\EAFDisplayUnits.h>
+
 #include <IFace/Tools.h>
 #include <IFace\Bridge.h>
 #include <PsgLib\PierData2.h>
 
-IMPLEMENT_DYNAMIC(CDrawPierLayoutControl, CWnd)
+#define XBEAM_LINE_COLOR               GREY50
+#define XBEAM_FILL_COLOR               GREY70
+
+#define CROSSBEAM_DISPLAY_LIST_ID        0
+
+const WBFL::DManip::SelectionType g_selectionType = WBFL::DManip::SelectionType::None; // nothing is selectable, except for the section cut object
+
+IMPLEMENT_DYNAMIC(CDrawPierLayoutControl, CDisplayWnd) //I guess I manually create the object then?
 
 CDrawPierLayoutControl::CDrawPierLayoutControl()
 {
@@ -42,13 +57,14 @@ CDrawPierLayoutControl::CDrawPierLayoutControl()
     m_initialExtSide = WBFL::Graphing::Size(0, 0);
     m_currentExtFront = WBFL::Graphing::Size(0, 0);
     m_currentExtSide = WBFL::Graphing::Size(0, 0);
+    m_DisplayObjectID = 0;
 }
 
 CDrawPierLayoutControl::~CDrawPierLayoutControl()
 {
 }
 
-BEGIN_MESSAGE_MAP(CDrawPierLayoutControl, CWnd)
+BEGIN_MESSAGE_MAP(CDrawPierLayoutControl, CDisplayWnd)
     ON_WM_PAINT()
     ON_WM_ERASEBKGND()
     ON_WM_LBUTTONDOWN()
@@ -57,9 +73,88 @@ BEGIN_MESSAGE_MAP(CDrawPierLayoutControl, CWnd)
     ON_WM_LBUTTONDBLCLK()
 END_MESSAGE_MAP()
 
+void CDrawPierLayoutControl::OnDraw(CDC* pDC)
+{
+    CDisplayWnd::OnDraw(pDC);
+}
+
 void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
 {
+
+    CDisplayWnd::CustomInit();
+    
     m_pSource = pSource;
+
+    if (m_pSource == nullptr)
+        return;
+
+    const CPierData2* pPier = m_pSource->GetPierData();
+    if (pPier == nullptr)
+        return;
+
+    //auto doFactory = std::make_shared<CDisplayObjectFactory>(); // Do I need this? If so I will need another constructor method like in XBeamRate.
+    //m_pDispMgr->AddDisplayObjectFactory(doFactory);
+
+    m_pDispMgr->CreateDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
+
+    //CDManipClientDC dc2(this); // do I need this?
+
+    auto displayList = m_pDispMgr->FindDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
+
+    auto pBroker = EAFGetBroker();
+
+    GET_IFACE2(pBroker, IBridge, pBridge);
+    PierIndexType pierIdx = pPier->GetIndex();
+
+    // Model Upper Cross Beam (Elevation)
+    WBFL::Geometry::Point2d point(0, 0);
+
+    //if (pProject->GetPierType(pierID) != xbrTypes::pctExpansion)
+    {
+        auto doUpperXBeam = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
+        doUpperXBeam->SetPosition(point, false, false);
+        doUpperXBeam->SetSelectionType(g_selectionType);
+
+        CComPtr<IShape> upperXBeamShape;
+        pBridge->GetUpperXBeamProfile(pierIdx, &upperXBeamShape);
+
+        auto upperXBeamDrawStrategy = WBFL::DManip::ShapeDrawStrategy::Create();
+        upperXBeamDrawStrategy->SetShape(geomUtil::ConvertShape(upperXBeamShape));
+        upperXBeamDrawStrategy->SetSolidLineColor(XBEAM_LINE_COLOR);
+        upperXBeamDrawStrategy->SetSolidFillColor(XBEAM_FILL_COLOR);
+        upperXBeamDrawStrategy->Fill(true);
+
+        doUpperXBeam->SetDrawingStrategy(upperXBeamDrawStrategy);
+
+        auto upper_xbeam_gravity_well = WBFL::DManip::ShapeGravityWellStrategy::Create();
+        upper_xbeam_gravity_well->SetShape(geomUtil::ConvertShape(upperXBeamShape));
+        doUpperXBeam->SetGravityWellStrategy(upper_xbeam_gravity_well);
+
+        displayList->AddDisplayObject(doUpperXBeam);
+    }
+
+    // Model Lower Cross Beam (Elevation)
+    auto doLowerXBeam = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
+    doLowerXBeam->SetPosition(point, false, false);
+    doLowerXBeam->SetSelectionType(g_selectionType);
+
+    CComPtr<IShape> pLowerXBeamShape;
+	pBridge->GetLowerXBeamProfile(pierIdx, &pLowerXBeamShape);
+
+
+    auto lowerXBeamDrawStrategy = WBFL::DManip::ShapeDrawStrategy::Create();
+    lowerXBeamDrawStrategy->SetShape(geomUtil::ConvertShape(pLowerXBeamShape));
+    lowerXBeamDrawStrategy->SetSolidLineColor(XBEAM_LINE_COLOR);
+    lowerXBeamDrawStrategy->SetSolidFillColor(XBEAM_FILL_COLOR);
+    lowerXBeamDrawStrategy->Fill(true);
+
+    doLowerXBeam->SetDrawingStrategy(lowerXBeamDrawStrategy);
+
+    auto lower_xbeam_gravity_well = WBFL::DManip::ShapeGravityWellStrategy::Create();
+    lower_xbeam_gravity_well->SetShape(geomUtil::ConvertShape(pLowerXBeamShape));
+    doLowerXBeam->SetGravityWellStrategy(lower_xbeam_gravity_well);
+
+    displayList->AddDisplayObject(doLowerXBeam);
 }
 
 void CDrawPierLayoutControl::OnLButtonDown(UINT nFlags, CPoint point)
@@ -196,12 +291,6 @@ void CDrawPierLayoutControl::OnPaint()
     CRect rClient;
     GetClientRect(&rClient);
 
-    if (m_pSource == nullptr)
-        return;
-
-    const CPierData2* pPier = m_pSource->GetPierData();
-    if (pPier == nullptr)
-        return;
 
     int total_width = rClient.Width();
     int view_split = (total_width * 3) / 4;
@@ -215,6 +304,13 @@ void CDrawPierLayoutControl::OnPaint()
     CRgn rgnLeft;
     rgnLeft.CreateRectRgnIndirect(&rLeftView);
     dc.SelectClipRgn(&rgnLeft);
+
+    if (m_pSource == nullptr)
+        return;
+
+    const CPierData2* pPier = m_pSource->GetPierData();
+    if (pPier == nullptr)
+        return;
 
     WBFL::Graphing::PointMapper mapper;
     CalculateFrontViewBoundingBox(pPier, mapper, sLeftClient);
@@ -236,40 +332,42 @@ void CDrawPierLayoutControl::OnPaint()
 
     DrawPierGeometry(&dc, mapper);
 
-    // RIGHT SIDE: SIDE VIEW
-    CRect rRightView(rClient.left + view_split, rClient.top, rClient.right, rClient.bottom);
-    rRightView.DeflateRect(1, 1, 1, 1);
-    CSize sRightClient = rRightView.Size();
+    //// RIGHT SIDE: SIDE VIEW
+    //CRect rRightView(rClient.left + view_split, rClient.top, rClient.right, rClient.bottom);
+    //rRightView.DeflateRect(1, 1, 1, 1);
+    //CSize sRightClient = rRightView.Size();
 
-    // Set clipping region for right view
-    CRgn rgnRight;
-    rgnRight.CreateRectRgnIndirect(&rRightView);
-    dc.SelectClipRgn(&rgnRight);
+    //// Set clipping region for right view
+    //CRgn rgnRight;
+    //rgnRight.CreateRectRgnIndirect(&rRightView);
+    //dc.SelectClipRgn(&rgnRight);
 
-    // Erase background for right view
-    CBrush brushBkgnd(::GetSysColor(COLOR_WINDOW));
-    dc.FillRect(&rRightView, &brushBkgnd);
+    //// Erase background for right view
+    //CBrush brushBkgnd(::GetSysColor(COLOR_WINDOW));
+    //dc.FillRect(&rRightView, &brushBkgnd);
 
-    WBFL::Graphing::PointMapper side_mapper;
-    CalculateSideViewBoundingBox(pPier, side_mapper, sRightClient);
+    //WBFL::Graphing::PointMapper side_mapper;
+    //CalculateSideViewBoundingBox(pPier, side_mapper, sRightClient);
 
-    // Store SIDE VIEW initial extents only if not already set
-    if (m_initialExtSide.Dx() == 0 || m_initialExtSide.Dy() == 0)
-    {
-        m_initialExtSide = side_mapper.GetWorldExt();
-        m_initialOrgSide = side_mapper.GetWorldOrg();
-        m_currentExtSide = m_initialExtSide;
-        m_currentOrgSide = m_initialOrgSide;
-    }
+    //// Store SIDE VIEW initial extents only if not already set
+    //if (m_initialExtSide.Dx() == 0 || m_initialExtSide.Dy() == 0)
+    //{
+    //    m_initialExtSide = side_mapper.GetWorldExt();
+    //    m_initialOrgSide = side_mapper.GetWorldOrg();
+    //    m_currentExtSide = m_initialExtSide;
+    //    m_currentOrgSide = m_initialOrgSide;
+    //}
 
-    side_mapper.SetWorldExt(m_currentExtSide);
-    side_mapper.SetWorldOrg(m_currentOrgSide);
-    side_mapper.SetDeviceOrg(rRightView.left + sRightClient.cx / 2, rRightView.top + sRightClient.cy / 2);
+    //side_mapper.SetWorldExt(m_currentExtSide);
+    //side_mapper.SetWorldOrg(m_currentOrgSide);
+    //side_mapper.SetDeviceOrg(rRightView.left + sRightClient.cx / 2, rRightView.top + sRightClient.cy / 2);
 
-    DrawSideView(&dc, side_mapper);
+    //DrawSideView(&dc, side_mapper);
 
-    // Clear clipping region
-    dc.SelectClipRgn(NULL);
+    //// Clear clipping region
+    //dc.SelectClipRgn(NULL);
+    OnDraw(&dc);
+
 }
 
 void CDrawPierLayoutControl::OnLButtonDblClk(UINT nFlags, CPoint point)
@@ -745,40 +843,10 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     Float64 Hdiaph, Wdiaph;
     GetUpperXBeamDimensions(pPier, &Hdiaph, &Wdiaph);
 
-    WBFL::Graphing::Point upper_xbeam_points[6];
+    auto pBroker = EAFGetBroker();
+    GET_IFACE2(pBroker, IBridge, pBridge);
 
-    if (abs(refCol_x - refColOffset) <= pierWidth / 2.0)
-    {
-        upper_xbeam_points[0] = WBFL::Graphing::Point(refCol_x - refColOffset, -Hdiaph + (refCol_x - refColOffset - pierWidth / 2.0) * 0.02);
-    }
-    else
-    {
-        upper_xbeam_points[0] = WBFL::Graphing::Point(0.0, -Hdiaph - 0.02 * pierWidth / 2.0);
-    }
-    upper_xbeam_points[1] = WBFL::Graphing::Point(-pierWidth / 2.0 - X2 / H1 * Hdiaph, -Hdiaph);
-    upper_xbeam_points[2] = WBFL::Graphing::Point(-pierWidth / 2.0, 0.0);
-    if (abs(refCol_x - refColOffset) <= pierWidth / 2.0)
-    {
-        upper_xbeam_points[3] = WBFL::Graphing::Point(refCol_x - refColOffset, 0.02 * (refCol_x - refColOffset - pierWidth / 2.0));
-    }
-    else
-    {
-        upper_xbeam_points[3] = WBFL::Graphing::Point(0.0, -0.02 * pierWidth / 2.0);
-    }
-    upper_xbeam_points[4] = WBFL::Graphing::Point(pierWidth / 2.0, 0.0);
-    upper_xbeam_points[5] = WBFL::Graphing::Point(pierWidth / 2.0 + X4 / H3 * Hdiaph, -Hdiaph);
 
-    CPoint upper_dev_points[6];
-    IndexType nUpperPoints = 6;
-
-    for (IndexType i = 0; i < nUpperPoints; i++)
-    {
-        LONG dx, dy;
-        mapper.WPtoDP(upper_xbeam_points[i], &dx, &dy);
-        upper_dev_points[i] = CPoint(dx, dy);
-    }
-
-    pDC->Polygon(upper_dev_points, (int)nUpperPoints);
 
 	if (refColIdx != INVALID_INDEX)
     {
