@@ -24,6 +24,7 @@
 #include <Graphing/PointMapper.h>
 #include <PsgLib\PierData2.h>
 #include <PsgLib\Keys.h>
+#include <DManip/DManip.h>
 
 interface IPierLayoutDataSource
 {
@@ -32,7 +33,7 @@ public:
    virtual pgsTypes::PierModelType GetPierModelType() const = 0;
 };
 
-class CDrawPierLayoutControl : public CWnd
+class CDrawPierLayoutControl : public CDisplayWnd
 {
 	DECLARE_DYNAMIC(CDrawPierLayoutControl)
 
@@ -40,11 +41,16 @@ public:
 	CDrawPierLayoutControl();
 	virtual ~CDrawPierLayoutControl();
 
+	void OnDraw(CDC* pDC) override;
+
 	void CustomInit(IPierLayoutDataSource* pSource);
 
 	void ResetExtents();
 
 protected:
+
+	IDType m_DisplayObjectID; // used to generate display object IDs
+
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
