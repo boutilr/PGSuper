@@ -71,6 +71,7 @@ BEGIN_MESSAGE_MAP(CDrawPierLayoutControl, CDisplayWnd)
     ON_WM_LBUTTONUP()
     ON_WM_MOUSEMOVE()
     ON_WM_LBUTTONDBLCLK()
+    ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 void CDrawPierLayoutControl::OnDraw(CDC* pDC)
@@ -82,6 +83,8 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
 {
 
     CDisplayWnd::CustomInit();
+
+    SetMappingMode(WBFL::DManip::MapMode::Isotropic, false);
     
     m_pSource = pSource;
 
@@ -92,12 +95,7 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
     if (pPier == nullptr)
         return;
 
-    //auto doFactory = std::make_shared<CDisplayObjectFactory>(); // Do I need this? If so I will need another constructor method like in XBeamRate.
-    //m_pDispMgr->AddDisplayObjectFactory(doFactory);
-
     m_pDispMgr->CreateDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
-
-    //CDManipClientDC dc2(this); // do I need this?
 
     auto displayList = m_pDispMgr->FindDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
 
@@ -155,6 +153,9 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
     doLowerXBeam->SetGravityWellStrategy(lower_xbeam_gravity_well);
 
     displayList->AddDisplayObject(doLowerXBeam);
+
+    ScaleToFit();
+    
 }
 
 void CDrawPierLayoutControl::OnLButtonDown(UINT nFlags, CPoint point)
@@ -163,6 +164,21 @@ void CDrawPierLayoutControl::OnLButtonDown(UINT nFlags, CPoint point)
     m_dragStart = point;
     m_dragEnd = point;
     SetCapture();
+}
+
+// Then implement it in the .cpp
+void CDrawPierLayoutControl::OnSize(UINT nType, int cx, int cy)
+{
+    CDisplayWnd::OnSize(nType, cx, cy);
+
+    CRect rect;
+    GetClientRect(&rect);
+    rect.DeflateRect(1, 1, 1, 1);  // Small margin
+
+    // This sets up the logical viewport coordinate system
+    SetLogicalViewRect(MM_TEXT, rect);
+
+    ScaleToFit(false);  // Scale to fit display objects
 }
 
 void CDrawPierLayoutControl::OnMouseMove(UINT nFlags, CPoint point)
@@ -286,87 +302,37 @@ void CDrawPierLayoutControl::ResetExtents()
 
 void CDrawPierLayoutControl::OnPaint()
 {
-    CPaintDC dc(this);
 
-    CRect rClient;
-    GetClientRect(&rClient);
+	CDisplayWnd::OnPaint();
 
+    //DispWnd needs clipped region and view port set based on clipped region
 
-    int total_width = rClient.Width();
-    int view_split = (total_width * 3) / 4;
+    //CPaintDC dc(this);
 
-    // LEFT SIDE: FRONT VIEW
-    CRect rLeftView(rClient.left, rClient.top, rClient.left + view_split, rClient.bottom);
-    rLeftView.DeflateRect(1, 1, 1, 1);
-    CSize sLeftClient = rLeftView.Size();
+    //CRect rClient;
+    //GetClientRect(&rClient);
 
-    // Set clipping region for left view
-    CRgn rgnLeft;
-    rgnLeft.CreateRectRgnIndirect(&rLeftView);
-    dc.SelectClipRgn(&rgnLeft);
+    //int total_width = rClient.Width();
+    //int view_split = (total_width * 3) / 4;
 
-    if (m_pSource == nullptr)
-        return;
+    //// LEFT SIDE: FRONT VIEW
+    //CRect rLeftView(rClient.left, rClient.top, rClient.left + view_split, rClient.bottom);
+    //rLeftView.DeflateRect(1, 1, 1, 1);
+    //CSize sLeftClient = rLeftView.Size();
 
-    const CPierData2* pPier = m_pSource->GetPierData();
-    if (pPier == nullptr)
-        return;
+    //// Set clipping region for left view
+    //CRgn rgnLeft;
+    //rgnLeft.CreateRectRgnIndirect(&rLeftView);
+    //dc.SelectClipRgn(&rgnLeft);
 
-    WBFL::Graphing::PointMapper mapper;
-    CalculateFrontViewBoundingBox(pPier, mapper, sLeftClient);
+    //dc.SetViewportExt((int)sLeftClient.cx, -sLeftClient.cy);
+    //dc.SetViewportOrg((int)sLeftClient.cx/ 2, (int)sLeftClient.cy / 2);
 
-    // On first paint, store FRONT VIEW initial extents
-    if (!m_bInitialized)
-    {
-        m_initialExtFront = mapper.GetWorldExt();
-        m_initialOrgFront = mapper.GetWorldOrg();
-        m_currentExtFront = m_initialExtFront;
-        m_currentOrgFront = m_initialOrgFront;
-        m_bInitialized = TRUE;  // Set this early
-    }
+    //auto x  = dc.GetMapMode();
 
-    // Apply current zoom level
-    mapper.SetWorldExt(m_currentExtFront);
-    mapper.SetWorldOrg(m_currentOrgFront);
-    mapper.SetDeviceOrg(rLeftView.left + sLeftClient.cx / 2, rLeftView.top + sLeftClient.cy / 2);
+    //OnDraw(&dc);
 
-    DrawPierGeometry(&dc, mapper);
-
-    //// RIGHT SIDE: SIDE VIEW
-    //CRect rRightView(rClient.left + view_split, rClient.top, rClient.right, rClient.bottom);
-    //rRightView.DeflateRect(1, 1, 1, 1);
-    //CSize sRightClient = rRightView.Size();
-
-    //// Set clipping region for right view
-    //CRgn rgnRight;
-    //rgnRight.CreateRectRgnIndirect(&rRightView);
-    //dc.SelectClipRgn(&rgnRight);
-
-    //// Erase background for right view
-    //CBrush brushBkgnd(::GetSysColor(COLOR_WINDOW));
-    //dc.FillRect(&rRightView, &brushBkgnd);
-
-    //WBFL::Graphing::PointMapper side_mapper;
-    //CalculateSideViewBoundingBox(pPier, side_mapper, sRightClient);
-
-    //// Store SIDE VIEW initial extents only if not already set
-    //if (m_initialExtSide.Dx() == 0 || m_initialExtSide.Dy() == 0)
-    //{
-    //    m_initialExtSide = side_mapper.GetWorldExt();
-    //    m_initialOrgSide = side_mapper.GetWorldOrg();
-    //    m_currentExtSide = m_initialExtSide;
-    //    m_currentOrgSide = m_initialOrgSide;
-    //}
-
-    //side_mapper.SetWorldExt(m_currentExtSide);
-    //side_mapper.SetWorldOrg(m_currentOrgSide);
-    //side_mapper.SetDeviceOrg(rRightView.left + sRightClient.cx / 2, rRightView.top + sRightClient.cy / 2);
-
-    //DrawSideView(&dc, side_mapper);
-
-    //// Clear clipping region
-    //dc.SelectClipRgn(NULL);
-    OnDraw(&dc);
+    //OnCleanUpDC(&dc);
 
 }
 
@@ -416,9 +382,10 @@ void CDrawPierLayoutControl::GetUpperXBeamDimensions(const CPierData2* pPier, Fl
     *pH = max(Hdiap, Hbd);
 }
 
-void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(const CPierData2* pPier,
-    WBFL::Graphing::PointMapper& mapper, CSize sDeviceClient)
+void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(CDC* dc)
 {
+    const CPierData2* pPier = m_pSource->GetPierData();
+
     // Get pier dimensions
     ColumnIndexType nColumns = pPier->GetColumnCount();
 
@@ -472,10 +439,11 @@ void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(const CPierData2* pPi
     WBFL::Graphing::Size size = box.Size();
     WBFL::Graphing::Point org = box.Center();
 
-    mapper.SetMappingMode(WBFL::Graphing::PointMapper::MapMode::Isotropic);
-    mapper.SetWorldExt(size);
-    mapper.SetWorldOrg(org);
-    mapper.SetDeviceExt(sDeviceClient.cx, -sDeviceClient.cy);  // Negate Y to flip axis
+    dc->SetMapMode(MM_ISOTROPIC);
+    dc->SetWindowExt((int)size.Dx() + 500, (int)size.Dy() + 800);
+    dc->SetWindowOrg((int)org.X(), (int)org.Y());
+
+
 }
 
 void CDrawPierLayoutControl::CalculateSideViewBoundingBox(const CPierData2* pPier,

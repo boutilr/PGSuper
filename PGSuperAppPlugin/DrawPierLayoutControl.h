@@ -47,6 +47,8 @@ public:
 
 	void ResetExtents();
 
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+
 protected:
 
 	IDType m_DisplayObjectID; // used to generate display object IDs
@@ -81,8 +83,7 @@ private:
 
 	void GetUpperXBeamDimensions(const CPierData2* pPier, Float64* H, Float64* W);
 
-	void CalculateFrontViewBoundingBox(const CPierData2* pPier,
-		WBFL::Graphing::PointMapper& mapper, CSize sDeviceClient);
+	void CalculateFrontViewBoundingBox(CDC* dc);
 	void CalculateSideViewBoundingBox(const CPierData2* pPier,
 		WBFL::Graphing::PointMapper& mapper, CSize sDeviceClient);
 	void DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMapper& mapper);
