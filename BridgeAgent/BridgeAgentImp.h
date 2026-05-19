@@ -359,6 +359,10 @@ public:
    pgsTypes::PierModelType GetPierModelType(PierIndexType pierIdx) const override;
    ColumnIndexType GetColumnCount(PierIndexType pierIdx) const override;
    void GetColumnProperties(PierIndexType pierIdx,ColumnIndexType colIdx,bool bSkewAdjust,Float64* pHeight,Float64* pA,Float64* pI) const override;
+   Float64 GetColumnLocation(PierIndexType pierIdx, IndexType colIdx) const override;
+   Float64 GetTopColumnElevation(PierIndexType pierIdx, IndexType colIdx) const override;
+   Float64 GetBottomColumnElevation(PierIndexType pierIdx, IndexType colIdx) const override;
+   Float64 ConvertCrossBeamToPierCoordinate(PierIndexType pierIdx, Float64 Xxb) const override;
    bool ProcessNegativeMoments(SpanIndexType spanIdx) const override;
    pgsTypes::BoundaryConditionType GetBoundaryConditionType(PierIndexType pierIdx) const override;
    pgsTypes::PierSegmentConnectionType GetPierSegmentConnectionType(PierIndexType pierIdx) const override;
@@ -380,6 +384,8 @@ public:
    void GetPierDisplaySettings(pgsTypes::DisplayEndSupportType* pStartPierType, pgsTypes::DisplayEndSupportType* pEndPierType, PierIndexType* pStartPierNumber) const override;
    void GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const override;
    void GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const override;
+   StageIndexType GetStageIndex(pgsTypes::Stage stage) const;
+   void GetBottomSurface(PierIndexType pierIdx, pgsTypes::Stage stage, IPoint2dCollection** ppPoints) const override;
 
 // IMaterials
 public:

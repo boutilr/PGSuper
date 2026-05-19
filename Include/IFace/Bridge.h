@@ -288,14 +288,6 @@ public:
    virtual Float64 GetCantileverLength(const CSpanKey& spanKey,pgsTypes::MemberEndType endType) const = 0;
 
    ///////////////////////////////////////////////////
-   // Pier geometry
-   ///////////////////////////////////////////////////
-
-   // Returns the cross beam profile in Pier Coordinates
-   virtual void GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const = 0;
-   virtual void GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const = 0;
-
-   ///////////////////////////////////////////////////
    // Segment geometry
    ///////////////////////////////////////////////////
 
@@ -663,6 +655,11 @@ public:
    // returns the type of model used to define a pier
    virtual pgsTypes::PierModelType GetPierModelType(PierIndexType pierIdx) const = 0;
 
+    // Returns the cross beam profile in Pier Coordinates
+   virtual void GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const = 0;
+   virtual void GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const = 0;
+   virtual void GetBottomSurface(PierIndexType pierIdx, pgsTypes::Stage stage, IPoint2dCollection** ppPoints) const = 0;
+
    // returns the number of columns at a pier.
    virtual ColumnIndexType GetColumnCount(PierIndexType pierIdx) const = 0;
 
@@ -670,6 +667,11 @@ public:
    // to be the same. if bSkewAdjust is true, the column properties are adjusted for skew and the
    // moment of inertia about an axis normal to the alignment is returned
    virtual void GetColumnProperties(PierIndexType pierIdx,ColumnIndexType colIdx,bool bSkewAdjust,Float64* pHeight,Float64* pA,Float64* pI) const = 0;
+
+   virtual Float64 GetColumnLocation(PierIndexType pierIdx, IndexType colIdx) const = 0;
+   virtual Float64 GetTopColumnElevation(PierIndexType pierIdx, IndexType colIdx) const = 0;
+   virtual Float64 GetBottomColumnElevation(PierIndexType pierIdx, IndexType colIdx) const = 0;
+   virtual Float64 ConvertCrossBeamToPierCoordinate(PierIndexType pierIdx, Float64 Xxb) const = 0;
 
    // negative moment calculations and results need not be processed if a simple span analysis is
    // used or if there isn't any continuity.

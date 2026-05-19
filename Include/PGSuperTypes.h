@@ -290,6 +290,12 @@ typedef struct pgsTypes
                              bctIntegralBeforeDeckHingeAhead = 10
    } BoundaryConditionType;
 
+   typedef enum Stage
+   {
+       Stage1, // lower cross beam only
+       Stage2  // upper and lower cross beam together
+   } Stage;
+
    typedef enum PierModelType
    {
       pmtIdealized, // pier is modeled with an idealized support object

@@ -2732,6 +2732,16 @@ bool CBridgeAgentImp::LayoutPiers(const CBridgeDescription2* pBridgeDesc)
          columnLayout.CoCreateInstance(CLSID_ColumnLayout);
          pier->putref_ColumnLayout(columnLayout);
 
+         ColumnIndexType nColumns = GetColumnCount(pierIdx);
+         SpacingIndexType nSpaces = nColumns - 1;
+         columnLayout->put_Uniform(VARIANT_FALSE);
+         columnLayout->put_ColumnCount(nColumns);
+         for (SpacingIndexType spaceIdx = 0; spaceIdx < nSpaces; spaceIdx++)
+         {
+             Float64 space = pPierData->GetColumnSpacing(spaceIdx);
+             columnLayout->put_Spacing(spaceIdx, space);
+         }
+
       }
    }
 
@@ -12032,6 +12042,84 @@ void CBridgeAgentImp::GetColumnProperties(PierIndexType pierIdx,ColumnIndexType 
    }
 }
 
+Float64 CBridgeAgentImp::GetColumnLocation(PierIndexType pierIdx, IndexType colIdx) const
+{
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+    CComPtr<IBridgePier> pier;
+    PierIndexType pierID = pPier->GetID();
+    GetGenericBridgePier(pierID, &pier);
+
+    CComPtr<IColumnLayout> columnLayout;
+    pier->get_ColumnLayout(&columnLayout);
+
+    Float64 Xxb;
+    columnLayout->get_ColumnLocation(colIdx, &Xxb); // this is the location of the column relative to the top of the lower cross beam
+
+    // Get lower XBeam dimensions
+    Float64 H1, H2, X1, X2;
+    Float64 H3, H4, X3, X4;
+    pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1, &H2, &X1, &X2);
+    pPier->GetXBeamDimensions(pgsTypes::stRight, &H3, &H4, &X3, &X4);
+
+    Xxb -= X2; // now it is the location in cross beam coordinates
+
+    return Xxb;
+}
+
+Float64 CBridgeAgentImp::GetTopColumnElevation(PierIndexType pierIdx, IndexType colIdx) const
+{
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+    CComPtr<IBridgePier> pier;
+    PierIndexType pierID = pPier->GetID();
+    GetGenericBridgePier(pierID, &pier);
+
+    CComPtr<IColumnLayout> columnLayout;
+    pier->get_ColumnLayout(&columnLayout);
+
+    Float64 topElev;
+    columnLayout->get_TopColumnElevation(colIdx, &topElev);
+    return topElev;
+}
+
+Float64 CBridgeAgentImp::GetBottomColumnElevation(PierIndexType pierIdx, IndexType colIdx) const
+{
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+    CComPtr<IBridgePier> pier;
+    PierIndexType pierID = pPier->GetID();
+    GetGenericBridgePier(pierID, &pier);
+
+    CComPtr<IColumnLayout> columnLayout;
+    pier->get_ColumnLayout(&columnLayout);
+
+    Float64 botElev;
+    columnLayout->get_BottomColumnElevation(colIdx, &botElev);
+    return botElev;
+}
+
+Float64 CBridgeAgentImp::ConvertCrossBeamToPierCoordinate(PierIndexType pierIdx, Float64 Xxb) const
+{
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+    CComPtr<IBridgePier> pier;
+    PierIndexType pierID = pPier->GetID();
+    GetGenericBridgePier(pierID, &pier);
+
+    Float64 Xpier;
+    pier->ConvertCrossBeamToPierCoordinate(Xxb, &Xpier);
+    return Xpier;
+}
+
 pgsTypes::BoundaryConditionType CBridgeAgentImp::GetBoundaryConditionType(PierIndexType pierIdx) const
 {
    GET_IFACE(IBridgeDescription,pIBridgeDesc);
@@ -12418,6 +12506,29 @@ void CBridgeAgentImp::GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppSha
     pier->get_CrossBeam(&xbeam);
 
     xbeam->get_Profile(0, ppShape); // stage 0 is lower x-beam
+}
+
+StageIndexType CBridgeAgentImp::GetStageIndex(pgsTypes::Stage stage) const
+{
+    return (stage == pgsTypes::Stage1 ? 0 : 1);
+}
+
+void CBridgeAgentImp::GetBottomSurface(PierIndexType pierIdx, pgsTypes::Stage stage, IPoint2dCollection** ppPoints) const
+{
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+    CComPtr<IBridgePier> pier;
+    PierIndexType pierID = pPier->GetID();
+    GetGenericBridgePier(pierID, &pier);
+
+    CComPtr<ICrossBeam> xbeam;
+    pier->get_CrossBeam(&xbeam);
+
+    StageIndexType stageIdx = GetStageIndex(stage);
+    xbeam->get_BottomSurface(stageIdx, ppPoints);
+
 }
 
 std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails_Generic(PierIndexType pierIdx, pgsTypes::PierFaceType face, CBridgeAgentImp::BearingElevLocType locType,GirderIndexType gdrIndex,bool bIgnoreUnrecoverableDeformations) const
