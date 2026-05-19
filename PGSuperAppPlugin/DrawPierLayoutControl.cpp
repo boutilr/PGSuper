@@ -42,7 +42,10 @@
 #define XBEAM_LINE_COLOR               GREY50
 #define XBEAM_FILL_COLOR               GREY70
 
-#define CROSSBEAM_DISPLAY_LIST_ID        0
+#define ROADWAY_DISPLAY_LIST_ID        0
+#define CROSSBEAM_DISPLAY_LIST_ID      1
+#define COLUMN_DISPLAY_LIST_ID         2
+#define SECTION_CUT_DISPLAY_LIST_ID    3
 
 const WBFL::DManip::SelectionType g_selectionType = WBFL::DManip::SelectionType::None; // nothing is selectable, except for the section cut object
 
@@ -84,25 +87,288 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
 
     CDisplayWnd::CustomInit();
 
-    SetMappingMode(WBFL::DManip::MapMode::Isotropic, false);
-    
     m_pSource = pSource;
 
-    if (m_pSource == nullptr)
-        return;
+    m_pDispMgr->CreateDisplayList(ROADWAY_DISPLAY_LIST_ID);
+    m_pDispMgr->CreateDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
+    m_pDispMgr->CreateDisplayList(COLUMN_DISPLAY_LIST_ID);
+    m_pDispMgr->CreateDisplayList(SECTION_CUT_DISPLAY_LIST_ID);
+
+    SetMappingMode(WBFL::DManip::MapMode::Isotropic, false);
+
+	UpdateDisplayObjects();
+
+    ScaleToFit();
+    
+}
+
+void CDrawPierLayoutControl::UpdateDisplayObjects()
+{
+    CWaitCursor wait;
+
+
+    // Capture the current selection before blasting all the 
+    // display objects
+    auto vCurSel = m_pDispMgr->GetSelectedObjects();
+    ATLASSERT(vCurSel.size() < 2);
+    IDType curSel = INVALID_ID;
+    IDType listID = INVALID_ID;
+    if (vCurSel.size() == 1)
+    {
+        auto pDO = vCurSel[0];
+        curSel = pDO->GetID();
+        auto pDL = pDO->GetDisplayList();
+        listID = pDL->GetID();
+    }
+
+    m_pDispMgr->ClearDisplayObjects();
+    m_DisplayObjectID = 0;
+
+    //UpdateRoadwayDisplayObjects();
+    UpdateXBeamDisplayObjects();
+    //UpdateColumnDisplayObjects();
+    //UpdateBearingDisplayObjects();
+    //UpdateGirderDisplayObjects();
+    //UpdateRebarDisplayObjects();
+    //UpdateStirrupDisplayObjects();
+    //UpdateDimensionsDisplayObjects();
+    //UpdateSectionCutDisplayObjects();
+
+    // Re-instate the current selection
+    if (curSel != INVALID_ID)
+    {
+        auto doSel = m_pDispMgr->FindDisplayObject(curSel, listID, WBFL::DManip::AccessType::ByID);
+        m_pDispMgr->SelectObject(doSel, TRUE);
+    }
+}
+
+
+
+void CDrawPierLayoutControl::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    m_bDragging = TRUE;
+    m_dragStart = point;
+    m_dragEnd = point;
+    SetCapture();
+}
+
+void CDrawPierLayoutControl::UpdateRoadwayDisplayObjects()
+{
+ //   const CPierData2* pPier = m_pSource->GetPierData();
+
+ //   auto displayList = m_pDispMgr->FindDisplayList(ROADWAY_DISPLAY_LIST_ID);
+
+ //   auto pBroker = EAFGetBroker();
+
+	//auto pierIdx = pPier->GetIndex();
+
+ //   GET_IFACE2(pBroker, IBridge, pBridge);
+
+ //   CComPtr<IAngle> angle;
+	//pBridge->GetPierSkew(pierIdx, &angle);
+ //   Float64 skew;
+	//angle->get_Value(&skew);
+
+ //   Float64 cos_skew = cos(skew);
+
+ //   //GET_IFACE2(pBroker, IXBRProject, pProject);
+
+ //   // Model a vertical line for the alignment
+ //   // The alignment is at X = 0 in Pier coordinates
+ //   Float64 X = 0;
+ //   Float64 Xcl = pPier->ConvertPierToCurbLineCoordinate(pierID, X);
+ //   Float64 Ydeck = pPier->GetElevation(pierID, Xcl); // deck elevation at alignment
+ //   Float64 Yt = Ydeck + WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Feet); // add a little so it projects over the roadway surface
+ //   WBFL::Geometry::Point2d pnt1(X, Yt);
+
+ //   Float64 Yb = Yt - pPier->GetMaxColumnHeight(pierID);
+ //   WBFL::Geometry::Point2d pnt2(X, Yb);
+
+ //   auto doAlignment = CreateLineDisplayObject(pnt1, pnt2);
+ //   auto drawStrategy = doAlignment->GetDrawLineStrategy();
+ //   auto drawAlignmentStrategy = std::dynamic_pointer_cast<WBFL::DManip::SimpleDrawLineStrategy>(drawStrategy);
+ //   drawAlignmentStrategy->SetWidth(ALIGNMENT_LINE_WEIGHT);
+ //   drawAlignmentStrategy->SetColor(ALIGNMENT_COLOR);
+ //   drawAlignmentStrategy->SetLineStyle(WBFL::DManip::LineStyleType::Centerline);
+
+ //   // Don't add the object to the display list here... do it at the end
+ //   // We want it to be drawn on top so it has to go into the display list last
+ //   //displayList->AddDisplayObject(doAlignment);
+
+ //   // Draw the bridge line if different then the alignment
+ //   std::shared_ptr<WBFL::DManip::iLineDisplayObject> doBridgeLine;
+ //   Float64 BLO = pProject->GetBridgeLineOffset(pierID);
+ //   if (!IsZero(BLO))
+ //   {
+ //       // Model a vertical line for the bridge line
+ //       // Let X = BLO be at the alignment and Y = the alignment elevation
+ //       Float64 X = BLO / cos_skew;
+ //       pnt1.Move(X, Yt);
+ //       pnt2.Move(X, Yb);
+
+ //       doBridgeLine = CreateLineDisplayObject(pnt1, pnt2);
+ //       auto drawStrategy = doBridgeLine->GetDrawLineStrategy();
+ //       auto drawBridgeLineStrategy = std::dynamic_pointer_cast<WBFL::DManip::SimpleDrawLineStrategy>(drawStrategy);
+ //       drawBridgeLineStrategy->SetWidth(BRIDGELINE_LINE_WEIGHT);
+ //       drawBridgeLineStrategy->SetColor(BRIDGE_COLOR);
+ //       drawBridgeLineStrategy->SetLineStyle(WBFL::DManip::LineStyleType::Centerline);
+
+ //       //displayList->AddDisplayObject(doBridgeLine); // do this at the end
+ //   }
+
+ //   // Draw Roadway Surface
+ //   if (IsStandAlone())
+ //   {
+ //       // Stand-alone... we don't have an actual deck modeled, so
+ //       // just show the curb-to-curb extents of the roadway surface
+ //       auto doDeck = WBFL::DManip::PolyLineDisplayObject::Create(m_DisplayObjectID++);
+
+ //       Float64 LCO, RCO;
+ //       pProject->GetCurbLineOffset(pierID, &LCO, &RCO);
+ //       if (pProject->GetCurbLineDatum(pierID) == pgsTypes::omtBridge)
+ //       {
+ //           LCO += BLO;
+ //           RCO += BLO;
+ //       }
+
+ //       Float64 Ylc = pPier->GetElevation(pierID, 0);
+ //       LCO /= cos_skew; // skew adjust
+ //       pnt1.Move(LCO, Ylc);
+ //       doDeck->AddPoint(pnt1);
+
+ //       Float64 CPO = pProject->GetCrownPointOffset(pierID);
+ //       if (LCO <= CPO && CPO <= RCO)
+ //       {
+ //           // add crown point if it is between the left and right curblines
+ //           pnt2.Move(CPO, Ydeck);
+ //           doDeck->AddPoint(pnt2);
+ //       }
+
+ //       Float64 Yrc = pPier->GetElevation(pierID, (RCO - LCO) / cos_skew);
+ //       RCO /= cos_skew; // skew adjust
+ //       WBFL::Geometry::Point2d pnt3(RCO, Yrc);
+ //       doDeck->AddPoint(pnt3);
+
+ //       doDeck->SetPointType(WBFL::DManip::PointType::None);
+ //       doDeck->SetColor(PROFILE_COLOR);
+ //       doDeck->SetWidth(PROFILE_LINE_WEIGHT);
+
+ //       displayList->AddDisplayObject(doDeck);
+ //   }
+ //   else
+ //   {
+ //       // Part of PGSuper/PGSplice... we can get the actual superstructure shapes
+
+ //       // Deck
+ //       GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+ //       const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+ //       const CDeckDescription2* pDeck = pBridgeDesc->GetDeckDescription();
+
+ //       PierIndexType pierIdx = GetPierIndex();
+ //       const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+ //       Float64 pierStation = pPier->GetStation();
+
+ //       GET_IFACE2(pBroker, IShapes, pShapes);
+ //       GET_IFACE2(pBroker, IBridge, pBridge);
+
+ //       CComPtr<IDirection> pierDirection;
+ //       pBridge->GetPierDirection(pierIdx, &pierDirection);
+
+ //       pgsTypes::SupportedDeckType deckType = pDeck->GetDeckType();
+ //       if (deckType != pgsTypes::sdtNone)
+ //       {
+ //           auto dispObj = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
+
+ //           CComPtr<IShape> shape;
+ //           pShapes->GetSlabShape(pierStation, pierDirection, true/*include haunch*/, &shape);
+
+ //           auto strategy = WBFL::DManip::ShapeDrawStrategy::Create();
+
+ //           strategy->SetShape(geomUtil::ConvertShape(shape));
+ //           strategy->SetSolidLineColor(IsStructuralDeck(deckType) ? DECK_BORDER_COLOR : NONSTRUCTURAL_DECK_BORDER_COLOR);
+ //           strategy->SetSolidFillColor(IsStructuralDeck(deckType) ? DECK_FILL_COLOR : NONSTRUCTURAL_DECK_FILL_COLOR);
+ //           strategy->SetVoidLineColor(VOID_BORDER_COLOR);
+ //           strategy->SetVoidFillColor(GetSysColor(COLOR_WINDOW));
+ //           strategy->Fill(true);
+
+ //           dispObj->SetDrawingStrategy(strategy);
+
+ //           auto gravity_well = WBFL::DManip::ShapeGravityWellStrategy::Create();
+ //           gravity_well->SetShape(geomUtil::ConvertShape(shape));
+
+ //           dispObj->SetGravityWellStrategy(gravity_well);
+
+ //           dispObj->SetSelectionType(g_selectionType);
+
+ //           displayList->AddDisplayObject(dispObj);
+ //       }
+
+ //       // Left Hand Barrier
+ //       auto left_dispObj = WBFL::DManip::PointDisplayObject::Create();
+
+ //       Float64 left_curb_offset = pBridge->GetLeftCurbOffset(pierIdx);
+ //       Float64 right_curb_offset = pBridge->GetRightCurbOffset(pierIdx);
+
+ //       CComPtr<IShape> left_shape;
+ //       pShapes->GetLeftTrafficBarrierShape(pierStation, pierDirection, &left_shape);
+
+ //       if (left_shape)
+ //       {
+ //           auto strategy = WBFL::DManip::ShapeDrawStrategy::Create();
+ //           strategy->SetShape(geomUtil::ConvertShape(left_shape));
+ //           strategy->SetSolidLineColor(BARRIER_BORDER_COLOR);
+ //           strategy->SetSolidFillColor(BARRIER_FILL_COLOR);
+ //           strategy->SetVoidLineColor(VOID_BORDER_COLOR);
+ //           strategy->SetVoidFillColor(GetSysColor(COLOR_WINDOW));
+ //           strategy->Fill(true);
+ //           strategy->HasBoundingShape(false);
+
+ //           left_dispObj->SetDrawingStrategy(strategy);
+
+ //           displayList->AddDisplayObject(left_dispObj);
+ //       }
+
+ //       // Right Hand Barrier
+ //       auto right_dispObj = WBFL::DManip::PointDisplayObject::Create();
+
+ //       CComPtr<IShape> right_shape;
+ //       pShapes->GetRightTrafficBarrierShape(pierStation, pierDirection, &right_shape);
+
+ //       if (right_shape)
+ //       {
+ //           auto strategy = WBFL::DManip::ShapeDrawStrategy::Create();
+ //           strategy->SetShape(geomUtil::ConvertShape(right_shape));
+ //           strategy->SetSolidLineColor(BARRIER_BORDER_COLOR);
+ //           strategy->SetSolidFillColor(BARRIER_FILL_COLOR);
+ //           strategy->SetVoidLineColor(VOID_BORDER_COLOR);
+ //           strategy->SetVoidFillColor(GetSysColor(COLOR_WINDOW));
+ //           strategy->Fill(true);
+ //           strategy->HasBoundingShape(false);
+
+ //           right_dispObj->SetDrawingStrategy(strategy);
+
+ //           displayList->AddDisplayObject(right_dispObj);
+ //       }
+ //   }
+
+ //   displayList->AddDisplayObject(doAlignment);
+ //   if (doBridgeLine)
+ //   {
+ //       displayList->AddDisplayObject(doBridgeLine);
+ //   }
+}
+
+void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
+{
 
     const CPierData2* pPier = m_pSource->GetPierData();
-    if (pPier == nullptr)
-        return;
-
-    m_pDispMgr->CreateDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
+    PierIndexType pierIdx = pPier->GetIndex();
 
     auto displayList = m_pDispMgr->FindDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
 
     auto pBroker = EAFGetBroker();
 
     GET_IFACE2(pBroker, IBridge, pBridge);
-    PierIndexType pierIdx = pPier->GetIndex();
 
     // Model Upper Cross Beam (Elevation)
     WBFL::Geometry::Point2d point(0, 0);
@@ -137,7 +403,7 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
     doLowerXBeam->SetSelectionType(g_selectionType);
 
     CComPtr<IShape> pLowerXBeamShape;
-	pBridge->GetLowerXBeamProfile(pierIdx, &pLowerXBeamShape);
+    pBridge->GetLowerXBeamProfile(pierIdx, &pLowerXBeamShape);
 
 
     auto lowerXBeamDrawStrategy = WBFL::DManip::ShapeDrawStrategy::Create();
@@ -153,17 +419,124 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
     doLowerXBeam->SetGravityWellStrategy(lower_xbeam_gravity_well);
 
     displayList->AddDisplayObject(doLowerXBeam);
-
-    ScaleToFit();
-    
 }
 
-void CDrawPierLayoutControl::OnLButtonDown(UINT nFlags, CPoint point)
+void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
 {
-    m_bDragging = TRUE;
-    m_dragStart = point;
-    m_dragEnd = point;
-    SetCapture();
+    auto displayList = m_pDispMgr->FindDisplayList(COLUMN_DISPLAY_LIST_ID);
+
+    auto pBroker = EAFGetBroker();
+
+   // Create a function that represents the bottom of the cross beam
+   // We will use it to make the top of the column match the bottom of the
+   // cross beam.
+    WBFL::Math::PiecewiseFunction fn;
+    CComPtr<IPoint2dCollection> points;
+    GET_IFACE2(pBroker, IBridge, pBridge);
+    const CPierData2* pPier = m_pSource->GetPierData();
+    IndexType pierID = pPier->GetID();
+    PierIndexType pierIdx = pPier->GetIndex();
+    pBridge->GetBottomSurface(pierIdx, pgsTypes::Stage1, &points); // This is a problem I will have to fix for hammerhead piers since the ref column is not at center of pier. 
+
+    CComPtr<IEnumPoint2d> enumPoints;
+    points->get__Enum(&enumPoints);
+    CComPtr<IPoint2d> pnt;
+    while (enumPoints->Next(1, &pnt, nullptr) != S_FALSE)
+    {
+        Float64 x, y;
+        pnt->Location(&x, &y);
+        fn.AddPoint(x, y);
+        pnt.Release();
+    }
+
+    IndexType nColumns = pPier->GetColumnCount();
+    for (IndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        const CColumnData& columnData = pPier->GetColumnData(colIdx); /////below should be in column data:
+        Float64 XxbCol = pBridge->GetColumnLocation(pierIdx, colIdx);
+        Float64 XpCol = pBridge->ConvertCrossBeamToPierCoordinate(pierIdx, XxbCol);
+        Float64 Ytop = pBridge->GetTopColumnElevation(pierIdx, colIdx);  // same thing as column height
+        Float64 Ybot = pBridge->GetBottomColumnElevation(pierIdx, colIdx);
+        CColumnData::ColumnShapeType colShapeType = columnData.GetColumnShape();
+        Float64 d1, d2;
+        columnData.GetColumnDimensions(&d1, &d2);
+        CColumnData::ColumnHeightMeasurementType columnHeightType = columnData.GetColumnHeightMeasurementType();
+        Float64 H = columnData.GetColumnHeight();
+
+        WBFL::Geometry::Point2d pntTop(XpCol, Ytop);
+        WBFL::Geometry::Point2d pntBot(XpCol, Ybot);
+
+        auto doTop = WBFL::DManip::PointDisplayObject::Create();
+        doTop->Visible(false);
+        doTop->SetPosition(pntTop, false, false);
+        auto connectable1 = std::dynamic_pointer_cast<WBFL::DManip::iConnectable>(doTop);
+        auto socket1 = connectable1->AddSocket(0, pntTop);
+
+        auto doBot = WBFL::DManip::PointDisplayObject::Create();
+        doBot->Visible(false);
+        doBot->SetPosition(pntBot, false, false);
+        auto connectable2 = std::dynamic_pointer_cast<WBFL::DManip::iConnectable>(doBot);
+        auto socket2 = connectable2->AddSocket(0, pntBot);
+
+        // Create the shape of the column
+        auto columnShape = std::make_shared<WBFL::Geometry::Polygon>();
+        Float64 X1, X2, X3;
+        X2 = pntTop.X();
+        X1 = X2 - d1 / 2;
+        X3 = X2 + d1 / 2;
+        Float64 Y1 = fn.Evaluate(X1);
+        Float64 Y2 = fn.Evaluate(X2);
+        Float64 Y3 = fn.Evaluate(X3);
+
+        columnShape->AddPoint(X1, Y1);
+        columnShape->AddPoint(X2, Y2);
+        columnShape->AddPoint(X3, Y3);
+        columnShape->AddPoint(X3, Ybot);
+        columnShape->AddPoint(X1, Ybot);
+
+        auto doColumn = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
+        doColumn->SetPosition(pntTop, false, false);
+        doColumn->SetSelectionType(g_selectionType);
+
+        auto drawColumnStrategy = WBFL::DManip::ShapeDrawStrategy::Create();
+        doColumn->SetDrawingStrategy(drawColumnStrategy);
+
+        drawColumnStrategy->SetShape(columnShape);
+        drawColumnStrategy->SetSolidLineColor(XBEAM_LINE_COLOR);
+        drawColumnStrategy->SetSolidFillColor(XBEAM_LINE_COLOR);
+        drawColumnStrategy->Fill(true);
+
+        displayList->AddDisplayObject(doColumn);
+    }
+}
+
+void CDrawPierLayoutControl::UpdateSectionCutDisplayObjects()
+{
+    auto pBroker = EAFGetBroker();
+
+    auto display_list = m_pDispMgr->FindDisplayList(SECTION_CUT_DISPLAY_LIST_ID);
+
+    auto factory = m_pDispMgr->GetDisplayObjectFactory(0);
+
+    //auto disp_obj = factory->Create(CSectionCutDisplayImpl::ms_Format, nullptr);
+
+    //auto sink = disp_obj->GetEventSink();
+
+    //disp_obj->SetSelectionType(WBFL::DManip::SelectionType::All);
+
+    //auto point_disp = std::dynamic_pointer_cast<WBFL::DManip::iPointDisplayObject>(disp_obj);
+    //point_disp->SetMaxTipWidth(TOOLTIP_WIDTH);
+    //point_disp->SetToolTipText(_T("Drag me to move section cut.\r\nDouble click to enter the cut location\r\nPress CTRL + -> to move ahead\r\nPress CTRL + <- to move back"));
+    //point_disp->SetTipDisplayTime(TOOLTIP_DURATION);
+
+    //auto section_cut_strategy = std::dynamic_pointer_cast<iSectionCutDrawStrategy>(sink);
+    //section_cut_strategy->Init(m_pFrame, point_disp, m_pFrame);
+    //section_cut_strategy->SetColor(CUT_COLOR);
+
+    //point_disp->SetID(SECTION_CUT_ID);
+
+    //display_list->Clear();
+    //display_list->AddDisplayObject(disp_obj);
 }
 
 // Then implement it in the .cpp
@@ -380,123 +753,6 @@ void CDrawPierLayoutControl::GetUpperXBeamDimensions(const CPierData2* pPier, Fl
     }
 
     *pH = max(Hdiap, Hbd);
-}
-
-void CDrawPierLayoutControl::CalculateFrontViewBoundingBox(CDC* dc)
-{
-    const CPierData2* pPier = m_pSource->GetPierData();
-
-    // Get pier dimensions
-    ColumnIndexType nColumns = pPier->GetColumnCount();
-
-    // Calculate column spacing sum
-    Float64 S = 0.0;
-    for (SpacingIndexType spaIdx = 0; spaIdx < nColumns - 1; spaIdx++)
-    {
-        S += pPier->GetColumnSpacing(spaIdx);
-    }
-
-    Float64 X5 = pPier->GetXBeamOverhang(pgsTypes::stLeft);
-    Float64 X6 = pPier->GetXBeamOverhang(pgsTypes::stRight);
-    Float64 pierWidth = X5 + S + X6;
-
-    // Get lower XBeam dimensions
-    Float64 H1, H2, X1, X2;
-    Float64 H3, H4, X3, X4;
-    pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1, &H2, &X1, &X2);
-    pPier->GetXBeamDimensions(pgsTypes::stRight, &H3, &H4, &X3, &X4);
-
-    // Get upper XBeam dimensions
-    Float64 Hdiaph, Wdiaph;
-    GetUpperXBeamDimensions(pPier, &Hdiaph, &Wdiaph);
-
-    Float64 max_xbeam_height = max(H1 + H2, H3 + H4);
-
-    // Get maximum column height
-    Float64 max_column_height = 0.0;
-    for (ColumnIndexType i = 0; i < nColumns; i++)
-    {
-        const CColumnData* pColumn = &pPier->GetColumnData(i);
-        if (pColumn->GetColumnHeightMeasurementType() == CColumnData::chtHeight)
-        {
-            max_column_height = max(max_column_height, pColumn->GetColumnHeight());
-        }
-    }
-
-    // Calculate world bounding box with 10% margin
-    Float64 world_width = pierWidth;
-    Float64 world_height = max_column_height;
-
-    Float64 margin_h = world_width * 0.10;
-    Float64 margin_v = world_height * 0.10;
-
-    Float64 left = -pierWidth / 2.0 - margin_h;
-    Float64 right = pierWidth / 2.0 + margin_h;
-    Float64 bottom = -Hdiaph - margin_v;
-    Float64 top = world_height + margin_v;
-
-    WBFL::Graphing::Rect box(left, bottom, right, top);
-    WBFL::Graphing::Size size = box.Size();
-    WBFL::Graphing::Point org = box.Center();
-
-    dc->SetMapMode(MM_ISOTROPIC);
-    dc->SetWindowExt((int)size.Dx() + 500, (int)size.Dy() + 800);
-    dc->SetWindowOrg((int)org.X(), (int)org.Y());
-
-
-}
-
-void CDrawPierLayoutControl::CalculateSideViewBoundingBox(const CPierData2* pPier,
-    WBFL::Graphing::PointMapper& mapper, CSize sDeviceClient)
-{
-    // Get pier dimensions
-    ColumnIndexType nColumns = pPier->GetColumnCount();
-
-    Float64 W = pPier->GetXBeamWidth();
-
-    // Get XBeam dimensions
-    Float64 H1, H2, X1, X2;
-    Float64 H3, H4, X3, X4;
-    pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1, &H2, &X1, &X2);
-    pPier->GetXBeamDimensions(pgsTypes::stRight, &H3, &H4, &X3, &X4);
-
-    Float64 max_xbeam_height = max(H1 + H2, H3 + H4);
-
-    // Get maximum column height
-    Float64 max_column_height = 0.0;
-    for (ColumnIndexType i = 0; i < nColumns; i++)
-    {
-        const CColumnData* pColumn = &pPier->GetColumnData(i);
-        if (pColumn->GetColumnHeightMeasurementType() == CColumnData::chtHeight)
-        {
-            max_column_height = max(max_column_height, pColumn->GetColumnHeight());
-        }
-    }
-
-    // Get upper XBeam dimensions
-    Float64 Hdiaph, Wdiaph;
-    GetUpperXBeamDimensions(pPier, &Hdiaph, &Wdiaph);
-
-    // Calculate world bounding box with 10% margin
-    Float64 world_width = W;
-    Float64 world_height = max_column_height;
-
-    Float64 margin_h = world_width * 0.10;
-    Float64 margin_v = world_height * 0.10;
-
-    Float64 left = -W / 2.0 - margin_h;
-    Float64 right = W / 2.0 + margin_h;
-    Float64 bottom = -Hdiaph - margin_v;
-    Float64 top = world_height + margin_v;
-
-    WBFL::Graphing::Rect box(left, bottom, right, top);
-    WBFL::Graphing::Size size = box.Size();
-    WBFL::Graphing::Point org = box.Center();
-
-    mapper.SetMappingMode(WBFL::Graphing::PointMapper::MapMode::Isotropic);
-    mapper.SetWorldExt(size);
-    mapper.SetWorldOrg(org);
-    mapper.SetDeviceExt(sDeviceClient.cx, -sDeviceClient.cy);
 }
 
 void CDrawPierLayoutControl::DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper& mapper)

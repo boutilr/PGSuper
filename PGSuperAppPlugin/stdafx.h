@@ -48,6 +48,7 @@
 #include <WBFLCogo.h>
 #include <WBFLGenericBridge.h>
 #include <WBFLSTL.h>
+#include <Math\Math.h>
 
 #include <PsgLib\PointOfInterest.h>
 #include <PsgLib\GirderLabel.h>
