@@ -53,6 +53,12 @@ protected:
 
 	IDType m_DisplayObjectID; // used to generate display object IDs
 
+	void UpdateDisplayObjects();
+	void UpdateRoadwayDisplayObjects();
+	void UpdateXBeamDisplayObjects();
+	void UpdateColumnDisplayObjects();
+	void UpdateSectionCutDisplayObjects();
+
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
