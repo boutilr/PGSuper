@@ -126,7 +126,7 @@ void CDrawPierLayoutControl::UpdateDisplayObjects()
 
     //UpdateRoadwayDisplayObjects();
     UpdateXBeamDisplayObjects();
-    //UpdateColumnDisplayObjects();
+    UpdateColumnDisplayObjects();
     //UpdateBearingDisplayObjects();
     //UpdateGirderDisplayObjects();
     //UpdateRebarDisplayObjects();
@@ -434,7 +434,6 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
     CComPtr<IPoint2dCollection> points;
     GET_IFACE2(pBroker, IBridge, pBridge);
     const CPierData2* pPier = m_pSource->GetPierData();
-    IndexType pierID = pPier->GetID();
     PierIndexType pierIdx = pPier->GetIndex();
     pBridge->GetBottomSurface(pierIdx, pgsTypes::Stage1, &points); // This is a problem I will have to fix for hammerhead piers since the ref column is not at center of pier. 
 
