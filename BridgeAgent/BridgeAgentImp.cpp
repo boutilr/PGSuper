@@ -103,6 +103,7 @@
 #define BRIDGE          2
 #define GIRDER          3
 #define LOADS           4
+#define PIERS           5
 
 // this agent is "read only" to the external users. however, we do have data that must be changed
 // we cast away constness during validation
@@ -942,6 +943,7 @@ Uint16 CBridgeAgentImp::Validate( Uint16 level )
          VALIDATE_TO_LEVEL( COGO_MODEL,   BuildCogoModel );
          VALIDATE_TO_LEVEL( BRIDGE,       BuildBridgeModel );
          VALIDATE_AND_CHECK_TO_LEVEL( GIRDER,       BuildGirders,    ValidateGirders );
+         VALIDATE_TO_LEVEL( PIERS,       LayoutPiers );
       }
 
   
@@ -2620,19 +2622,17 @@ bool CBridgeAgentImp::BuildBridgeModel()
       return false;
    }
 
-   if (!LayoutPiers(pBridgeDesc))
-   {
-       return false;
-   }
-
    // check bridge for errors - will throw an exception if there are errors
    CheckBridge();
 
    return true;
 }
 
-bool CBridgeAgentImp::LayoutPiers(const CBridgeDescription2* pBridgeDesc)
+bool CBridgeAgentImp::LayoutPiers()
 {
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+
    // Build the physical generic pier model for the generic bridge object
    // Since we aren't using this information right now, this can be deferred until
    // a later date. The CPierData2 object contains enough information to create the
@@ -2656,8 +2656,6 @@ bool CBridgeAgentImp::LayoutPiers(const CBridgeDescription2* pBridgeDesc)
          // Pier Type (derived from boundary condition)
          PierType pierType = GetPierType(pPierData);
          pier->put_Type(pierType);
-
-         // skew angle should already be set
 
          // 
          // set the crown slope in the plane of the pier???
@@ -2685,9 +2683,6 @@ bool CBridgeAgentImp::LayoutPiers(const CBridgeDescription2* pBridgeDesc)
 		 pier->put_CurbLineOffset(qcbLeft, leftCLO);
 		 pier->put_CurbLineOffset(qcbRight, rightCLO);
 
-         //
-         // Cross Beam
-         //
          CComPtr<ILinearCrossBeam> xbeam;
          xbeam.CoCreateInstance(CLSID_LinearCrossBeam);
 
@@ -2701,8 +2696,30 @@ bool CBridgeAgentImp::LayoutPiers(const CBridgeDescription2* pBridgeDesc)
          Float64 X5, X6;
          pPierData->GetXBeamOverhangs(&X5,&X6);
 
-         Float64 H5 = pPierData->GetDiaphragmHeight(pgsTypes::Back) + pPierData->GetDiaphragmHeight(pgsTypes::Ahead);
-         Float64 W2 = pPierData->GetDiaphragmWidth(pgsTypes::Back) + pPierData->GetDiaphragmWidth(pgsTypes::Ahead);
+
+         Float64 Wback, Hback;
+         pBridge->GetPierDiaphragmSize(pierIdx, pgsTypes::Back, &Wback, &Hback);
+         Float64 Wahead, Hahead;
+         pBridge->GetPierDiaphragmSize(pierIdx, pgsTypes::Ahead, &Wahead, &Hahead);
+         Float64 W2 = Wback + Wahead;
+         Float64 Hdiap = Max(Hback, Hahead);
+         
+         Float64 Hbd = 0;
+         
+         // Compute elevation ignoring effects on non-recoverable deformations. We don't need to perform a full structural analysis to get the values we want
+         std::vector<BearingElevationDetails> vBackElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Back, ALL_GIRDERS, true);
+         for (const auto& elevdet : vBackElevDetails)
+         {
+             Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
+         }
+         
+         std::vector<BearingElevationDetails> vAheadElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Ahead, ALL_GIRDERS, true);
+         for (const auto& elevdet : vAheadElevDetails)
+         {
+             Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
+         }
+         
+         Float64 H5 = max(Hdiap, Hbd);
 
          xbeam->put_H1(H1);
          xbeam->put_H2(H2);
@@ -2718,8 +2735,9 @@ bool CBridgeAgentImp::LayoutPiers(const CBridgeDescription2* pBridgeDesc)
          xbeam->put_W1(W1);
          xbeam->put_W2(W2);
 
-         CComQIPtr<ICrossBeam> crossBeam(xbeam);
-         pier->putref_CrossBeam(crossBeam);
+         //CComQIPtr<ICrossBeam> crossBeam(xbeam);
+         //pier->putref_CrossBeam(crossBeam);
+         pier->putref_CrossBeam(xbeam);
          
          //
          // Bearing Layout
@@ -2733,6 +2751,8 @@ bool CBridgeAgentImp::LayoutPiers(const CBridgeDescription2* pBridgeDesc)
          //
          CComPtr<IColumnLayout> columnLayout;
          columnLayout.CoCreateInstance(CLSID_ColumnLayout);
+         columnLayout->put_Overhang(qcbLeft, X5);
+         columnLayout->put_Overhang(qcbRight, X6);
          pier->putref_ColumnLayout(columnLayout);
 
          ColumnIndexType nColumns = GetColumnCount(pierIdx);
@@ -11273,7 +11293,7 @@ void CBridgeAgentImp::GetRightCurbLinePoint(Float64 station, IDirection* directi
 
 Float64 CBridgeAgentImp::GetPierStation(PierIndexType pierIdx) const
 {
-   VALIDATE( BRIDGE );
+   VALIDATE( PIERS );
 
    CComPtr<IBridgeGeometry> geometry;
    m_Bridge->get_BridgeGeometry(&geometry);
@@ -12476,13 +12496,8 @@ void CBridgeAgentImp::GetPierDisplaySettings(pgsTypes::DisplayEndSupportType* pS
 
 void CBridgeAgentImp::GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const
 {
-    GET_IFACE(IBridgeDescription, pIBridgeDesc);
-    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
-    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
-
     CComPtr<IBridgePier> pier;
-    PierIndexType pierID = pPier->GetID();
-    GetGenericBridgePier(pierID, &pier);
+    GetGenericBridgePier(pierIdx, &pier);
 
     CComPtr<ICrossBeam> xbeam;
     pier->get_CrossBeam(&xbeam);

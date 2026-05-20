@@ -1457,7 +1457,7 @@ private:
    std::pair<Float64,Float64> ComputeReasonableSurfaceStationRange(const CBridgeDescription2* pBridgeDesc, const AlignmentData2& alignmentData, IAlignment* pAlignment);
 
    // helper functions for building the bridge model
-   bool LayoutPiers(const CBridgeDescription2* pBridgeDesc);
+   bool LayoutPiers();
    bool LayoutGirders(const CBridgeDescription2* pBridgeDesc);
    bool LayoutSsmHaunches();
    void GetHaunchDepth4ADimInput(const CPrecastSegmentData* pSegment,CComPtr<IDblArray>& pHaunchDepths);
