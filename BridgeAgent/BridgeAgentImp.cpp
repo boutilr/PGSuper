@@ -2627,15 +2627,10 @@ bool CBridgeAgentImp::BuildBridgeModel()
 
 bool CBridgeAgentImp::LayoutPiers()
 {
+    VALIDATE(GIRDER);
+
     GET_IFACE(IBridgeDescription, pIBridgeDesc);
     const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
-
-   // Build the physical generic pier model for the generic bridge object
-   // Since we aren't using this information right now, this can be deferred until
-   // a later date. The CPierData2 object contains enough information to create the
-   // full physical pier model.
-#pragma Reminder("UPDATE - build full pier model") // also add access methods to get pier model data
-   // (may be useful for 3D BrIM type models
 
    PierIndexType nPiers = pBridgeDesc->GetPierCount();
    for ( PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++ )
@@ -2653,12 +2648,6 @@ bool CBridgeAgentImp::LayoutPiers()
          // Pier Type (derived from boundary condition)
          PierType pierType = GetPierType(pPierData);
          pier->put_Type(pierType);
-
-         // 
-         // set the crown slope in the plane of the pier???
-         // set the deck elevation at the alignment???
-         // set the crown point offset???
-         // set the curb line offsets???
 
 
          GET_IFACE(IBridge, pBridge);
@@ -2750,7 +2739,6 @@ bool CBridgeAgentImp::LayoutPiers()
          columnLayout.CoCreateInstance(CLSID_ColumnLayout);
          columnLayout->put_Overhang(qcbLeft, X5);
          columnLayout->put_Overhang(qcbRight, X6);
-         pier->putref_ColumnLayout(columnLayout);
 
          ColumnIndexType nColumns = GetColumnCount(pierIdx);
          SpacingIndexType nSpaces = nColumns - 1;
@@ -2762,6 +2750,42 @@ bool CBridgeAgentImp::LayoutPiers()
              columnLayout->put_Spacing(spaceIdx, space);
          }
 
+         for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+         {
+
+			 const auto& columnData = pPierData->GetColumnData(colIdx);
+			 CColumnData::ColumnHeightMeasurementType colMeasurementType = columnData.GetColumnHeightMeasurementType();
+			 Float64 h = columnData.GetColumnHeight();
+
+             CComPtr<IColumn> column;
+             columnLayout->get_Column(colIdx, &column);
+
+             if (colMeasurementType == CColumnData::chtHeight)
+             {
+                 column->put_Height(h);
+             }
+             else
+             {
+                 column->put_BaseElevation(h);
+             }
+         }
+
+         // Set the reference column.
+         pgsTypes::OffsetMeasurementType refColMeasure;
+         ColumnIndexType refColIdx;
+         Float64 refColOffset;
+
+         pPierData->GetTransverseOffset(&refColIdx, &refColOffset, &refColMeasure);
+         
+         if (refColMeasure == pgsTypes::omtBridge)
+         {
+             // the reference column needs to be measured from the alignment
+			 Float64 blo = pBridge->GetAlignmentOffset();
+             refColOffset += blo;
+         }
+         columnLayout->SetReferenceColumn(refColIdx, refColOffset);
+
+         pier->putref_ColumnLayout(columnLayout);
       }
    }
 
@@ -11290,7 +11314,7 @@ void CBridgeAgentImp::GetRightCurbLinePoint(Float64 station, IDirection* directi
 
 Float64 CBridgeAgentImp::GetPierStation(PierIndexType pierIdx) const
 {
-   VALIDATE( PIERS );
+   VALIDATE( PIERS);
 
    CComPtr<IBridgeGeometry> geometry;
    m_Bridge->get_BridgeGeometry(&geometry);
