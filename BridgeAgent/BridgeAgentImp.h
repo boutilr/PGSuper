@@ -386,6 +386,11 @@ public:
    void GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const override;
    StageIndexType GetStageIndex(pgsTypes::Stage stage) const;
    void GetBottomSurface(PierIndexType pierIdx, pgsTypes::Stage stage, IPoint2dCollection** ppPoints) const override;
+   Float64 ConvertPierToCurbLineCoordinate(PierIndexType pierIdx, Float64 Xpier) const override;
+   Float64 GetElevation(PierIndexType pierIdx, Float64 Xcl) const override;
+   Float64 GetMaxColumnHeight(PierIndexType pierIdx) const override;
+
+
 
 // IMaterials
 public:

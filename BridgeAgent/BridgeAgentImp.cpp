@@ -12570,6 +12570,55 @@ void CBridgeAgentImp::GetBottomSurface(PierIndexType pierIdx, pgsTypes::Stage st
 
 }
 
+Float64 CBridgeAgentImp::ConvertPierToCurbLineCoordinate(PierIndexType pierIdx, Float64 Xpier) const
+{ 
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+    CComPtr<IBridgePier> pier;
+    PierIndexType pierID = pPier->GetID();
+    GetGenericBridgePier(pierID, &pier);
+
+    Float64 Xcl;
+    pier->ConvertPierToCurbLineCoordinate(Xpier, &Xcl);
+    return Xcl;
+}
+
+Float64 CBridgeAgentImp::GetElevation(PierIndexType pierIdx, Float64 Xcl) const
+{
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+    CComPtr<IBridgePier> pier;
+    PierIndexType pierID = pPier->GetID();
+    GetGenericBridgePier(pierID, &pier);
+
+    Float64 elev;
+    pier->get_Elevation(Xcl, &elev);
+    return elev;
+}
+
+Float64 CBridgeAgentImp::GetMaxColumnHeight(PierIndexType pierIdx) const
+{
+    IndexType nColumns = GetColumnCount(pierIdx);
+    Float64 Hmax = 0;
+
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPierData = pBridgeDesc->GetPier(pierIdx);
+
+    for (IndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        const auto& columnData = pPierData->GetColumnData(colIdx);
+        Float64 h = columnData.GetColumnHeight();
+        Hmax = Max(Hmax, h);
+    }
+
+    return Hmax;
+}
+
 std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails_Generic(PierIndexType pierIdx, pgsTypes::PierFaceType face, CBridgeAgentImp::BearingElevLocType locType,GirderIndexType gdrIndex,bool bIgnoreUnrecoverableDeformations) const
 {
    PierIndexType nPiers = GetPierCount();
