@@ -59,6 +59,9 @@ protected:
 	void UpdateColumnDisplayObjects();
 	void UpdateSectionCutDisplayObjects();
 
+	std::shared_ptr<WBFL::DManip::iLineDisplayObject> CreateLineDisplayObject(const WBFL::Geometry::Point2d& pntStart, const WBFL::Geometry::Point2d& pntEnd);
+
+
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
