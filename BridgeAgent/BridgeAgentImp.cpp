@@ -647,52 +647,6 @@ private:
    IStrandGridModel* m_StrandModel;
 };
 
-PierType GetPierType(const CPierData2* pPierData)
-{
-   if ( pPierData->IsBoundaryPier() )
-   {
-      switch( pPierData->GetBoundaryConditionType() )
-      {
-      case pgsTypes::bctHinge:
-      case pgsTypes::bctRoller:
-         return ptExpansion;
-
-      case pgsTypes::bctContinuousAfterDeck:
-      case pgsTypes::bctContinuousBeforeDeck:
-         return ptContinuous;
-
-      case pgsTypes::bctIntegralAfterDeck:
-      case pgsTypes::bctIntegralBeforeDeck:
-         return ptIntegral;
-
-      case pgsTypes::bctIntegralAfterDeckHingeBack:
-      case pgsTypes::bctIntegralBeforeDeckHingeBack:
-      case pgsTypes::bctIntegralAfterDeckHingeAhead:
-      case pgsTypes::bctIntegralBeforeDeckHingeAhead:
-         return ptIntegral;
-      }
-
-      ATLASSERT(false); // should never get here
-      return ptIntegral;
-   }
-   else
-   {
-      switch ( pPierData->GetSegmentConnectionType() )
-      {
-      case pgsTypes::psctContinousClosureJoint:
-      case pgsTypes::psctContinuousSegment:
-         return ptContinuous;
-
-      case pgsTypes::psctIntegralClosureJoint:
-      case pgsTypes::psctIntegralSegment:
-         return ptIntegral;
-      }
-
-      ATLASSERT(false); // should never get here
-      return ptIntegral;
-   }
-}
-
 // Utility class to implement data needs for alternate tensile stress requirement for pgsuper models
 class pgsAlternateTensStressDataProvider : public WBFL::Stability::IAlternateTensStressDataProvider
 {
@@ -759,6 +713,7 @@ private:
 
 /////////////////////////////////////////////////////////////////////////////
 // CBridgeAgentImp
+
 void CBridgeAgentImp::InvalidateSectionProperties(pgsTypes::SectionPropertyType sectPropType)
 {
    SectPropContainer* pOldSectProps = m_pSectProps[sectPropType].release();
@@ -2625,6 +2580,58 @@ bool CBridgeAgentImp::BuildBridgeModel()
    return true;
 }
 
+
+pgsTypes::PierType CBridgeAgentImp::GetPierType(PierIndexType pierIdx) const
+{
+
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPierData = pBridgeDesc->GetPier(pierIdx);
+
+    if (pPierData->IsBoundaryPier())
+    {
+        switch (pPierData->GetBoundaryConditionType())
+        {
+        case pgsTypes::bctHinge:
+        case pgsTypes::bctRoller:
+            return pgsTypes::pctExpansion;
+
+        case pgsTypes::bctContinuousAfterDeck:
+        case pgsTypes::bctContinuousBeforeDeck:
+            return pgsTypes::pctContinuous;
+
+        case pgsTypes::bctIntegralAfterDeck:
+        case pgsTypes::bctIntegralBeforeDeck:
+            return pgsTypes::pctIntegral;
+
+        case pgsTypes::bctIntegralAfterDeckHingeBack:
+        case pgsTypes::bctIntegralBeforeDeckHingeBack:
+        case pgsTypes::bctIntegralAfterDeckHingeAhead:
+        case pgsTypes::bctIntegralBeforeDeckHingeAhead:
+            return pgsTypes::pctIntegral;
+        }
+
+        ATLASSERT(false); // should never get here
+        return pgsTypes::pctIntegral;
+    }
+    else
+    {
+        switch (pPierData->GetSegmentConnectionType())
+        {
+        case pgsTypes::psctContinousClosureJoint:
+        case pgsTypes::psctContinuousSegment:
+            return pgsTypes::pctContinuous;
+
+        case pgsTypes::psctIntegralClosureJoint:
+        case pgsTypes::psctIntegralSegment:
+            return pgsTypes::pctIntegral;
+        }
+
+        ATLASSERT(false); // should never get here
+        return pgsTypes::pctIntegral;
+    }
+}
+
 bool CBridgeAgentImp::LayoutPiers()
 {
     VALIDATE(GIRDER);
@@ -2646,8 +2653,9 @@ bool CBridgeAgentImp::LayoutPiers()
          GetGenericBridgePier(pierIdx,&pier);
 
          // Pier Type (derived from boundary condition)
-         PierType pierType = GetPierType(pPierData);
-         pier->put_Type(pierType);
+         pgsTypes::PierType pierType = GetPierType(pierIdx);
+
+         pier->put_Type((PierType)pierType);
 
 
          GET_IFACE(IBridge, pBridge);

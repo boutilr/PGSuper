@@ -389,6 +389,7 @@ public:
    Float64 ConvertPierToCurbLineCoordinate(PierIndexType pierIdx, Float64 Xpier) const override;
    Float64 GetElevation(PierIndexType pierIdx, Float64 Xcl) const override;
    Float64 GetMaxColumnHeight(PierIndexType pierIdx) const override;
+   pgsTypes::PierType GetPierType(PierIndexType pierIdx) const override;
 
 
 

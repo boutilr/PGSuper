@@ -310,6 +310,13 @@ typedef struct pgsTypes
        pltCustom       // lower cross-beam manually defined by adding points
    } PierLayoutType;
 
+   typedef enum PierType
+   {
+       pctContinuous, // superstructure is continuous but hinged with substructure
+       pctIntegral,   // superstructure is fully continuous with substructure
+       pctExpansion   // no moment connectivity at pier
+   } PierType;
+
    // Bridge models can begin and/or end with a pier or an abutment starting with an arbitrary number (e.g., Pier 3)
    // This enum indicates what type of permanent support is at either end of the bridge
    typedef enum DisplayEndSupportType
