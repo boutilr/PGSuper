@@ -37,7 +37,9 @@
 
 #include <IFace/Tools.h>
 #include <IFace\Bridge.h>
+#include <IFace\Project.h>
 #include <PsgLib\PierData2.h>
+#include <PsgLib\BridgeDescription2.h>
 
 #define XBEAM_LINE_COLOR               GREY50
 #define XBEAM_FILL_COLOR               GREY70
@@ -124,7 +126,7 @@ void CDrawPierLayoutControl::UpdateDisplayObjects()
     m_pDispMgr->ClearDisplayObjects();
     m_DisplayObjectID = 0;
 
-    //UpdateRoadwayDisplayObjects();
+    UpdateRoadwayDisplayObjects();
     UpdateXBeamDisplayObjects();
     UpdateColumnDisplayObjects();
     //UpdateBearingDisplayObjects();
@@ -152,210 +154,192 @@ void CDrawPierLayoutControl::OnLButtonDown(UINT nFlags, CPoint point)
     SetCapture();
 }
 
+std::shared_ptr<WBFL::DManip::iLineDisplayObject> CDrawPierLayoutControl::CreateLineDisplayObject(const WBFL::Geometry::Point2d& pntStart, const WBFL::Geometry::Point2d& pntEnd)
+{
+    auto doPntStart = WBFL::DManip::PointDisplayObject::Create();
+    doPntStart->Visible(false);
+    doPntStart->SetPosition(pntStart, false, false);
+    auto connectable1 = std::dynamic_pointer_cast<WBFL::DManip::iConnectable>(doPntStart);
+    auto socket1 = connectable1->AddSocket(0, pntStart);
+
+    auto doPntEnd = WBFL::DManip::PointDisplayObject::Create();
+    doPntEnd->Visible(false);
+    doPntEnd->SetPosition(pntEnd, false, false);
+    auto connectable2 = std::dynamic_pointer_cast<WBFL::DManip::iConnectable>(doPntEnd);
+    auto socket2 = connectable2->AddSocket(0, pntEnd);
+
+    auto doLine = WBFL::DManip::LineDisplayObject::Create();
+
+    auto connector = std::dynamic_pointer_cast<WBFL::DManip::iConnector>(doLine);
+    auto startPlug = connector->GetStartPlug();
+    auto endPlug = connector->GetEndPlug();
+
+    connectable1->Connect(0, WBFL::DManip::AccessType::ByID, startPlug);
+    connectable2->Connect(0, WBFL::DManip::AccessType::ByID, endPlug);
+
+    return doLine;
+}
+
 void CDrawPierLayoutControl::UpdateRoadwayDisplayObjects()
 {
- //   const CPierData2* pPier = m_pSource->GetPierData();
+    const CPierData2* pPier = m_pSource->GetPierData();
 
- //   auto displayList = m_pDispMgr->FindDisplayList(ROADWAY_DISPLAY_LIST_ID);
+    auto displayList = m_pDispMgr->FindDisplayList(ROADWAY_DISPLAY_LIST_ID);
 
- //   auto pBroker = EAFGetBroker();
+    auto pBroker = EAFGetBroker();
 
-	//auto pierIdx = pPier->GetIndex();
+	auto pierIdx = pPier->GetIndex();
 
- //   GET_IFACE2(pBroker, IBridge, pBridge);
+    GET_IFACE2(pBroker, IBridge, pBridge);
 
- //   CComPtr<IAngle> angle;
-	//pBridge->GetPierSkew(pierIdx, &angle);
- //   Float64 skew;
-	//angle->get_Value(&skew);
+    CComPtr<IAngle> angle;
+	pBridge->GetPierSkew(pierIdx, &angle);
+    Float64 skew;
+	angle->get_Value(&skew);
 
- //   Float64 cos_skew = cos(skew);
+    Float64 cos_skew = cos(skew);
 
- //   //GET_IFACE2(pBroker, IXBRProject, pProject);
+    // Model a vertical line for the alignment
+    // The alignment is at X = 0 in Pier coordinates
+    Float64 X = 0;
 
- //   // Model a vertical line for the alignment
- //   // The alignment is at X = 0 in Pier coordinates
- //   Float64 X = 0;
- //   Float64 Xcl = pPier->ConvertPierToCurbLineCoordinate(pierID, X);
- //   Float64 Ydeck = pPier->GetElevation(pierID, Xcl); // deck elevation at alignment
- //   Float64 Yt = Ydeck + WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Feet); // add a little so it projects over the roadway surface
- //   WBFL::Geometry::Point2d pnt1(X, Yt);
+    Float64 Xcl = pBridge->ConvertPierToCurbLineCoordinate(pierIdx, X);
 
- //   Float64 Yb = Yt - pPier->GetMaxColumnHeight(pierID);
- //   WBFL::Geometry::Point2d pnt2(X, Yb);
+    Float64 Ydeck = pBridge->GetElevation(pierIdx, Xcl); // deck elevation at alignment
 
- //   auto doAlignment = CreateLineDisplayObject(pnt1, pnt2);
- //   auto drawStrategy = doAlignment->GetDrawLineStrategy();
- //   auto drawAlignmentStrategy = std::dynamic_pointer_cast<WBFL::DManip::SimpleDrawLineStrategy>(drawStrategy);
- //   drawAlignmentStrategy->SetWidth(ALIGNMENT_LINE_WEIGHT);
- //   drawAlignmentStrategy->SetColor(ALIGNMENT_COLOR);
- //   drawAlignmentStrategy->SetLineStyle(WBFL::DManip::LineStyleType::Centerline);
+    Float64 Yt = Ydeck + WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Feet); // add a little so it projects over the roadway surface
+    WBFL::Geometry::Point2d pnt1(X, Yt);
 
- //   // Don't add the object to the display list here... do it at the end
- //   // We want it to be drawn on top so it has to go into the display list last
- //   //displayList->AddDisplayObject(doAlignment);
+    Float64 Yb = Yt - pBridge->GetMaxColumnHeight(pierIdx);
+    WBFL::Geometry::Point2d pnt2(X, Yb);
 
- //   // Draw the bridge line if different then the alignment
- //   std::shared_ptr<WBFL::DManip::iLineDisplayObject> doBridgeLine;
- //   Float64 BLO = pProject->GetBridgeLineOffset(pierID);
- //   if (!IsZero(BLO))
- //   {
- //       // Model a vertical line for the bridge line
- //       // Let X = BLO be at the alignment and Y = the alignment elevation
- //       Float64 X = BLO / cos_skew;
- //       pnt1.Move(X, Yt);
- //       pnt2.Move(X, Yb);
+    auto doAlignment = CreateLineDisplayObject(pnt1, pnt2);
+    auto drawStrategy = doAlignment->GetDrawLineStrategy();
+    auto drawAlignmentStrategy = std::dynamic_pointer_cast<WBFL::DManip::SimpleDrawLineStrategy>(drawStrategy);
+    drawAlignmentStrategy->SetWidth(ALIGNMENT_LINE_WEIGHT);
+    drawAlignmentStrategy->SetColor(ALIGNMENT_COLOR);
+    drawAlignmentStrategy->SetLineStyle(WBFL::DManip::LineStyleType::Centerline);
 
- //       doBridgeLine = CreateLineDisplayObject(pnt1, pnt2);
- //       auto drawStrategy = doBridgeLine->GetDrawLineStrategy();
- //       auto drawBridgeLineStrategy = std::dynamic_pointer_cast<WBFL::DManip::SimpleDrawLineStrategy>(drawStrategy);
- //       drawBridgeLineStrategy->SetWidth(BRIDGELINE_LINE_WEIGHT);
- //       drawBridgeLineStrategy->SetColor(BRIDGE_COLOR);
- //       drawBridgeLineStrategy->SetLineStyle(WBFL::DManip::LineStyleType::Centerline);
+    // Don't add the object to the display list here... do it at the end
+    // We want it to be drawn on top so it has to go into the display list last
+    //displayList->AddDisplayObject(doAlignment);
 
- //       //displayList->AddDisplayObject(doBridgeLine); // do this at the end
- //   }
+    // Draw the bridge line if different then the alignment
+    std::shared_ptr<WBFL::DManip::iLineDisplayObject> doBridgeLine;
+    Float64 BLO = pBridge->GetAlignmentOffset();
+    if (!IsZero(BLO))
+    {
+        // Model a vertical line for the bridge line
+        // Let X = BLO be at the alignment and Y = the alignment elevation
+        Float64 X = BLO / cos_skew;
+        pnt1.Move(X, Yt);
+        pnt2.Move(X, Yb);
 
- //   // Draw Roadway Surface
- //   if (IsStandAlone())
- //   {
- //       // Stand-alone... we don't have an actual deck modeled, so
- //       // just show the curb-to-curb extents of the roadway surface
- //       auto doDeck = WBFL::DManip::PolyLineDisplayObject::Create(m_DisplayObjectID++);
+        doBridgeLine = CreateLineDisplayObject(pnt1, pnt2);
+        auto drawStrategy = doBridgeLine->GetDrawLineStrategy();
+        auto drawBridgeLineStrategy = std::dynamic_pointer_cast<WBFL::DManip::SimpleDrawLineStrategy>(drawStrategy);
+        drawBridgeLineStrategy->SetWidth(BRIDGELINE_LINE_WEIGHT);
+        drawBridgeLineStrategy->SetColor(BRIDGE_COLOR);
+        drawBridgeLineStrategy->SetLineStyle(WBFL::DManip::LineStyleType::Centerline);
 
- //       Float64 LCO, RCO;
- //       pProject->GetCurbLineOffset(pierID, &LCO, &RCO);
- //       if (pProject->GetCurbLineDatum(pierID) == pgsTypes::omtBridge)
- //       {
- //           LCO += BLO;
- //           RCO += BLO;
- //       }
+        //displayList->AddDisplayObject(doBridgeLine); // do this at the end
+    }
 
- //       Float64 Ylc = pPier->GetElevation(pierID, 0);
- //       LCO /= cos_skew; // skew adjust
- //       pnt1.Move(LCO, Ylc);
- //       doDeck->AddPoint(pnt1);
+    // Draw Roadway Surface
 
- //       Float64 CPO = pProject->GetCrownPointOffset(pierID);
- //       if (LCO <= CPO && CPO <= RCO)
- //       {
- //           // add crown point if it is between the left and right curblines
- //           pnt2.Move(CPO, Ydeck);
- //           doDeck->AddPoint(pnt2);
- //       }
+    Float64 pierStation = pPier->GetStation();
 
- //       Float64 Yrc = pPier->GetElevation(pierID, (RCO - LCO) / cos_skew);
- //       RCO /= cos_skew; // skew adjust
- //       WBFL::Geometry::Point2d pnt3(RCO, Yrc);
- //       doDeck->AddPoint(pnt3);
+    GET_IFACE2(pBroker, IShapes, pShapes);
 
- //       doDeck->SetPointType(WBFL::DManip::PointType::None);
- //       doDeck->SetColor(PROFILE_COLOR);
- //       doDeck->SetWidth(PROFILE_LINE_WEIGHT);
+    CComPtr<IDirection> pierDirection;
+    pBridge->GetPierDirection(pierIdx, &pierDirection);
 
- //       displayList->AddDisplayObject(doDeck);
- //   }
- //   else
- //   {
- //       // Part of PGSuper/PGSplice... we can get the actual superstructure shapes
+    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CDeckDescription2* pDeck = pBridgeDesc->GetDeckDescription();
 
- //       // Deck
- //       GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
- //       const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
- //       const CDeckDescription2* pDeck = pBridgeDesc->GetDeckDescription();
+    pgsTypes::SupportedDeckType deckType = pDeck->GetDeckType();
+    if (deckType != pgsTypes::sdtNone)
+    {
+        auto dispObj = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
 
- //       PierIndexType pierIdx = GetPierIndex();
- //       const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
- //       Float64 pierStation = pPier->GetStation();
+        CComPtr<IShape> shape;
+        pShapes->GetSlabShape(pierStation, pierDirection, true/*include haunch*/, &shape);
 
- //       GET_IFACE2(pBroker, IShapes, pShapes);
- //       GET_IFACE2(pBroker, IBridge, pBridge);
+        auto strategy = WBFL::DManip::ShapeDrawStrategy::Create();
 
- //       CComPtr<IDirection> pierDirection;
- //       pBridge->GetPierDirection(pierIdx, &pierDirection);
+        strategy->SetShape(geomUtil::ConvertShape(shape));
+        strategy->SetSolidLineColor(IsStructuralDeck(deckType) ? DECK_BORDER_COLOR : NONSTRUCTURAL_DECK_BORDER_COLOR);
+        strategy->SetSolidFillColor(IsStructuralDeck(deckType) ? DECK_FILL_COLOR : NONSTRUCTURAL_DECK_FILL_COLOR);
+        strategy->SetVoidLineColor(VOID_BORDER_COLOR);
+        strategy->SetVoidFillColor(GetSysColor(COLOR_WINDOW));
+        strategy->Fill(true);
 
- //       pgsTypes::SupportedDeckType deckType = pDeck->GetDeckType();
- //       if (deckType != pgsTypes::sdtNone)
- //       {
- //           auto dispObj = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
+        dispObj->SetDrawingStrategy(strategy);
 
- //           CComPtr<IShape> shape;
- //           pShapes->GetSlabShape(pierStation, pierDirection, true/*include haunch*/, &shape);
+        auto gravity_well = WBFL::DManip::ShapeGravityWellStrategy::Create();
+        gravity_well->SetShape(geomUtil::ConvertShape(shape));
 
- //           auto strategy = WBFL::DManip::ShapeDrawStrategy::Create();
+        dispObj->SetGravityWellStrategy(gravity_well);
 
- //           strategy->SetShape(geomUtil::ConvertShape(shape));
- //           strategy->SetSolidLineColor(IsStructuralDeck(deckType) ? DECK_BORDER_COLOR : NONSTRUCTURAL_DECK_BORDER_COLOR);
- //           strategy->SetSolidFillColor(IsStructuralDeck(deckType) ? DECK_FILL_COLOR : NONSTRUCTURAL_DECK_FILL_COLOR);
- //           strategy->SetVoidLineColor(VOID_BORDER_COLOR);
- //           strategy->SetVoidFillColor(GetSysColor(COLOR_WINDOW));
- //           strategy->Fill(true);
+        dispObj->SetSelectionType(g_selectionType);
 
- //           dispObj->SetDrawingStrategy(strategy);
+        displayList->AddDisplayObject(dispObj);
+        
 
- //           auto gravity_well = WBFL::DManip::ShapeGravityWellStrategy::Create();
- //           gravity_well->SetShape(geomUtil::ConvertShape(shape));
+        // Left Hand Barrier
+        auto left_dispObj = WBFL::DManip::PointDisplayObject::Create();
 
- //           dispObj->SetGravityWellStrategy(gravity_well);
+        Float64 left_curb_offset = pBridge->GetLeftCurbOffset(pierIdx);
+        Float64 right_curb_offset = pBridge->GetRightCurbOffset(pierIdx);
 
- //           dispObj->SetSelectionType(g_selectionType);
+        CComPtr<IShape> left_shape;
+        pShapes->GetLeftTrafficBarrierShape(pierStation, pierDirection, &left_shape);
 
- //           displayList->AddDisplayObject(dispObj);
- //       }
+        if (left_shape)
+        {
+            auto strategy = WBFL::DManip::ShapeDrawStrategy::Create();
+            strategy->SetShape(geomUtil::ConvertShape(left_shape));
+            strategy->SetSolidLineColor(BARRIER_BORDER_COLOR);
+            strategy->SetSolidFillColor(BARRIER_FILL_COLOR);
+            strategy->SetVoidLineColor(VOID_BORDER_COLOR);
+            strategy->SetVoidFillColor(GetSysColor(COLOR_WINDOW));
+            strategy->Fill(true);
+            strategy->HasBoundingShape(false);
 
- //       // Left Hand Barrier
- //       auto left_dispObj = WBFL::DManip::PointDisplayObject::Create();
+            left_dispObj->SetDrawingStrategy(strategy);
 
- //       Float64 left_curb_offset = pBridge->GetLeftCurbOffset(pierIdx);
- //       Float64 right_curb_offset = pBridge->GetRightCurbOffset(pierIdx);
+            displayList->AddDisplayObject(left_dispObj);
+        }
 
- //       CComPtr<IShape> left_shape;
- //       pShapes->GetLeftTrafficBarrierShape(pierStation, pierDirection, &left_shape);
+        // Right Hand Barrier
+        auto right_dispObj = WBFL::DManip::PointDisplayObject::Create();
 
- //       if (left_shape)
- //       {
- //           auto strategy = WBFL::DManip::ShapeDrawStrategy::Create();
- //           strategy->SetShape(geomUtil::ConvertShape(left_shape));
- //           strategy->SetSolidLineColor(BARRIER_BORDER_COLOR);
- //           strategy->SetSolidFillColor(BARRIER_FILL_COLOR);
- //           strategy->SetVoidLineColor(VOID_BORDER_COLOR);
- //           strategy->SetVoidFillColor(GetSysColor(COLOR_WINDOW));
- //           strategy->Fill(true);
- //           strategy->HasBoundingShape(false);
+        CComPtr<IShape> right_shape;
+        pShapes->GetRightTrafficBarrierShape(pierStation, pierDirection, &right_shape);
 
- //           left_dispObj->SetDrawingStrategy(strategy);
+        if (right_shape)
+        {
+            auto strategy = WBFL::DManip::ShapeDrawStrategy::Create();
+            strategy->SetShape(geomUtil::ConvertShape(right_shape));
+            strategy->SetSolidLineColor(BARRIER_BORDER_COLOR);
+            strategy->SetSolidFillColor(BARRIER_FILL_COLOR);
+            strategy->SetVoidLineColor(VOID_BORDER_COLOR);
+            strategy->SetVoidFillColor(GetSysColor(COLOR_WINDOW));
+            strategy->Fill(true);
+            strategy->HasBoundingShape(false);
 
- //           displayList->AddDisplayObject(left_dispObj);
- //       }
+            right_dispObj->SetDrawingStrategy(strategy);
 
- //       // Right Hand Barrier
- //       auto right_dispObj = WBFL::DManip::PointDisplayObject::Create();
+            displayList->AddDisplayObject(right_dispObj);
+        }
+    }
 
- //       CComPtr<IShape> right_shape;
- //       pShapes->GetRightTrafficBarrierShape(pierStation, pierDirection, &right_shape);
-
- //       if (right_shape)
- //       {
- //           auto strategy = WBFL::DManip::ShapeDrawStrategy::Create();
- //           strategy->SetShape(geomUtil::ConvertShape(right_shape));
- //           strategy->SetSolidLineColor(BARRIER_BORDER_COLOR);
- //           strategy->SetSolidFillColor(BARRIER_FILL_COLOR);
- //           strategy->SetVoidLineColor(VOID_BORDER_COLOR);
- //           strategy->SetVoidFillColor(GetSysColor(COLOR_WINDOW));
- //           strategy->Fill(true);
- //           strategy->HasBoundingShape(false);
-
- //           right_dispObj->SetDrawingStrategy(strategy);
-
- //           displayList->AddDisplayObject(right_dispObj);
- //       }
- //   }
-
- //   displayList->AddDisplayObject(doAlignment);
- //   if (doBridgeLine)
- //   {
- //       displayList->AddDisplayObject(doBridgeLine);
- //   }
+    displayList->AddDisplayObject(doAlignment);
+    if (doBridgeLine)
+    {
+        displayList->AddDisplayObject(doBridgeLine);
+    }
 }
 
 void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
@@ -676,35 +660,6 @@ void CDrawPierLayoutControl::OnPaint()
 {
 
 	CDisplayWnd::OnPaint();
-
-    //DispWnd needs clipped region and view port set based on clipped region
-
-    //CPaintDC dc(this);
-
-    //CRect rClient;
-    //GetClientRect(&rClient);
-
-    //int total_width = rClient.Width();
-    //int view_split = (total_width * 3) / 4;
-
-    //// LEFT SIDE: FRONT VIEW
-    //CRect rLeftView(rClient.left, rClient.top, rClient.left + view_split, rClient.bottom);
-    //rLeftView.DeflateRect(1, 1, 1, 1);
-    //CSize sLeftClient = rLeftView.Size();
-
-    //// Set clipping region for left view
-    //CRgn rgnLeft;
-    //rgnLeft.CreateRectRgnIndirect(&rLeftView);
-    //dc.SelectClipRgn(&rgnLeft);
-
-    //dc.SetViewportExt((int)sLeftClient.cx, -sLeftClient.cy);
-    //dc.SetViewportOrg((int)sLeftClient.cx/ 2, (int)sLeftClient.cy / 2);
-
-    //auto x  = dc.GetMapMode();
-
-    //OnDraw(&dc);
-
-    //OnCleanUpDC(&dc);
 
 }
 
