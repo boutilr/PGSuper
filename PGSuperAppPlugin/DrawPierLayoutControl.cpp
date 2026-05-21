@@ -352,7 +352,7 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
     // Model Upper Cross Beam (Elevation)
     WBFL::Geometry::Point2d point(0, 0);
 
-    //if (pProject->GetPierType(pierID) != xbrTypes::pctExpansion)
+    if (pBridge->GetPierType(pierIdx) != ptExpansion)
     {
         auto doUpperXBeam = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
         doUpperXBeam->SetPosition(point, false, false);
@@ -494,7 +494,7 @@ void CDrawPierLayoutControl::UpdateSectionCutDisplayObjects()
 
     auto display_list = m_pDispMgr->FindDisplayList(SECTION_CUT_DISPLAY_LIST_ID);
 
-    auto factory = m_pDispMgr->GetDisplayObjectFactory(0);
+    //auto factory = m_pDispMgr->GetDisplayObjectFactory(0);
 
     //auto disp_obj = factory->Create(CSectionCutDisplayImpl::ms_Format, nullptr);
 
