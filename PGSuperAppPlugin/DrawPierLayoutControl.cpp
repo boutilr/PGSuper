@@ -101,9 +101,8 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
     m_pDispMgr->CreateDisplayList(SECTION_CUT_DISPLAY_LIST_ID);
 
     SetMappingMode(WBFL::DManip::MapMode::Isotropic, false);
-
+    CDManipClientDC dc2(this);
 	UpdateDisplayObjects();
-
     ScaleToFit();
     
 }
@@ -445,7 +444,7 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
     doLabel->SetBkMode(TRANSPARENT);
     doLabel->SetTextAlign(TA_TOP | TA_CENTER);
     doLabel->SetPosition(geomUtil::GetPoint(pntBC));
-    //displayList->AddDisplayObject(doLabel);
+    displayList->AddDisplayObject(doLabel);
 }
 
 void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
