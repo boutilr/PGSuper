@@ -389,6 +389,8 @@ public:
    Float64 ConvertPierToCurbLineCoordinate(PierIndexType pierIdx, Float64 Xpier) const override;
    Float64 GetElevation(PierIndexType pierIdx, Float64 Xcl) const override;
    Float64 GetMaxColumnHeight(PierIndexType pierIdx) const override;
+   Float64 ConvertPierToCrossBeamCoordinate(PierIndexType pierIdx, Float64 Xpier) const override;
+   void GetXBeamShape(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 Xxb, IShape** ppShape) const override;
    pgsTypes::PierType GetPierType(PierIndexType pierIdx) const override;
 
 

@@ -49,6 +49,10 @@
 #define COLUMN_DISPLAY_LIST_ID         2
 #define SECTION_CUT_DISPLAY_LIST_ID    3
 
+// The End/Section view of the pier is offset from the Elevation
+// view by this amount.
+const Float64 EndOffset = WBFL::Units::ConvertToSysUnits(10, WBFL::Units::Measure::Feet);
+
 const WBFL::DManip::SelectionType g_selectionType = WBFL::DManip::SelectionType::None; // nothing is selectable, except for the section cut object
 
 IMPLEMENT_DYNAMIC(CDrawPierLayoutControl, CDisplayWnd) //I guess I manually create the object then?
@@ -398,6 +402,50 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
     doLowerXBeam->SetGravityWellStrategy(lower_xbeam_gravity_well);
 
     displayList->AddDisplayObject(doLowerXBeam);
+
+    // Section Cut
+    Float64 Lxb = pPier->GetXBeamLength();
+    Lxb = pBridge->ConvertCrossBeamToPierCoordinate(pierIdx, Lxb);
+
+    Float64 XxbCut = pBridge->ConvertPierToCrossBeamCoordinate(pierIdx, pPier->GetXBeamLength()/2.0/*m_pFrame->GetCurrentCutLocation()*/);
+
+    auto doXBeamSection = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
+    doXBeamSection->SetPosition(point, false, false);
+    doXBeamSection->SetSelectionType(g_selectionType);
+
+    CComPtr<IShape> xbeamShape;
+    pBridge->GetXBeamShape(pierIdx, pgsTypes::Stage1, XxbCut, &xbeamShape);
+    CComQIPtr<IXYPosition> position(xbeamShape);
+    position->Offset(EndOffset + Lxb, 0);
+
+    auto xbeamDrawStrategy = WBFL::DManip::ShapeDrawStrategy::Create();
+    xbeamDrawStrategy->SetShape(geomUtil::ConvertShape(xbeamShape));
+    xbeamDrawStrategy->SetSolidLineColor(XBEAM_LINE_COLOR);
+    xbeamDrawStrategy->SetSolidFillColor(XBEAM_FILL_COLOR);
+    xbeamDrawStrategy->Fill(true);
+
+    doXBeamSection->SetDrawingStrategy(xbeamDrawStrategy);
+
+    auto xbeam_section_gravity_well = WBFL::DManip::ShapeGravityWellStrategy::Create();
+    xbeam_section_gravity_well->SetShape(geomUtil::ConvertShape(xbeamShape));
+    doXBeamSection->SetGravityWellStrategy(xbeam_section_gravity_well);
+
+    displayList->AddDisplayObject(doXBeamSection);
+
+    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+    CString strSectionCutLabel;
+    strSectionCutLabel.Format(_T("Section @ %s"), ::FormatDimension(XxbCut, pDisplayUnits->GetSpanLengthUnit()));
+
+    CComPtr<IPoint2d> pntBC;
+    position->get_LocatorPoint(lpBottomCenter, &pntBC);
+    pntBC->Offset(0, -WBFL::Units::ConvertToSysUnits(3.0, WBFL::Units::Measure::Feet));
+
+    auto doLabel = WBFL::DManip::TextBlock::Create();
+    doLabel->SetText(strSectionCutLabel);
+    doLabel->SetBkMode(TRANSPARENT);
+    doLabel->SetTextAlign(TA_TOP | TA_CENTER);
+    doLabel->SetPosition(geomUtil::GetPoint(pntBC));
+    //displayList->AddDisplayObject(doLabel);
 }
 
 void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
