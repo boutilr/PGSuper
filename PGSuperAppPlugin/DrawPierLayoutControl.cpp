@@ -27,9 +27,11 @@
 #include "PGSuperColors.h"
 #include "DrawPierLayoutControl.h"
 
-#include "DisplayObjectFactory.h"
+#include "XBeamDisplayObjectFactory.h"
 
 #include <WBFLGenericBridge.h>
+
+#include "XBeamSectionCut.h"
 
 #include <WBFLGeometry/GeomHelpers.h>
 
@@ -48,6 +50,8 @@
 #define CROSSBEAM_DISPLAY_LIST_ID      1
 #define COLUMN_DISPLAY_LIST_ID         2
 #define SECTION_CUT_DISPLAY_LIST_ID    3
+
+#define SECTION_CUT_ID                500
 
 // The End/Section view of the pier is offset from the Elevation
 // view by this amount.
@@ -90,18 +94,28 @@ void CDrawPierLayoutControl::OnDraw(CDC* pDC)
 
 void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
 {
-
     CDisplayWnd::CustomInit();
 
     m_pSource = pSource;
+    const CPierData2* pPier = m_pSource->GetPierData();
+
+    auto doFactory = std::make_shared<CXBeamDisplayObjectFactory>();
+    m_pDispMgr->AddDisplayObjectFactory(doFactory);
 
     m_pDispMgr->CreateDisplayList(ROADWAY_DISPLAY_LIST_ID);
     m_pDispMgr->CreateDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
     m_pDispMgr->CreateDisplayList(COLUMN_DISPLAY_LIST_ID);
     m_pDispMgr->CreateDisplayList(SECTION_CUT_DISPLAY_LIST_ID);
 
+    Float64 xMin = -pPier->GetXBeamLength() / 2.0;
+    Float64 xLoc = 1.0;
+    Float64 xMax = pPier->GetXBeamLength() / 2.0;
+    m_pCutLoc = new CXBeamCutLocation(0,xLoc, xMax);
+
     SetMappingMode(WBFL::DManip::MapMode::Isotropic, false);
     CDManipClientDC dc2(this);
+
+
 	UpdateDisplayObjects();
     ScaleToFit();
     
@@ -406,7 +420,7 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
     Float64 Lxb = pPier->GetXBeamLength();
     Lxb = pBridge->ConvertCrossBeamToPierCoordinate(pierIdx, Lxb);
 
-    Float64 XxbCut = pBridge->ConvertPierToCrossBeamCoordinate(pierIdx, pPier->GetXBeamLength()/2.0/*m_pFrame->GetCurrentCutLocation()*/);
+    Float64 XxbCut = pBridge->ConvertPierToCrossBeamCoordinate(pierIdx, m_pCutLoc->GetCurrentCutLocation());
 
     auto doXBeamSection = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
     doXBeamSection->SetPosition(point, false, false);
@@ -541,27 +555,29 @@ void CDrawPierLayoutControl::UpdateSectionCutDisplayObjects()
 
     auto display_list = m_pDispMgr->FindDisplayList(SECTION_CUT_DISPLAY_LIST_ID);
 
-    //auto factory = m_pDispMgr->GetDisplayObjectFactory(0);
+    auto factory = m_pDispMgr->GetDisplayObjectFactory(0);
 
-    //auto disp_obj = factory->Create(CSectionCutDisplayImpl::ms_Format, nullptr);
+    auto disp_obj = factory->Create(CXBeamSectionCutDisplayImpl::ms_Format, nullptr);
 
-    //auto sink = disp_obj->GetEventSink();
+    auto sink = disp_obj->GetEventSink();
 
-    //disp_obj->SetSelectionType(WBFL::DManip::SelectionType::All);
+    disp_obj->SetSelectionType(WBFL::DManip::SelectionType::All);
 
-    //auto point_disp = std::dynamic_pointer_cast<WBFL::DManip::iPointDisplayObject>(disp_obj);
-    //point_disp->SetMaxTipWidth(TOOLTIP_WIDTH);
-    //point_disp->SetToolTipText(_T("Drag me to move section cut.\r\nDouble click to enter the cut location\r\nPress CTRL + -> to move ahead\r\nPress CTRL + <- to move back"));
-    //point_disp->SetTipDisplayTime(TOOLTIP_DURATION);
+    auto point_disp = std::dynamic_pointer_cast<WBFL::DManip::iPointDisplayObject>(disp_obj);
+    point_disp->SetMaxTipWidth(TOOLTIP_WIDTH);
+    point_disp->SetToolTipText(_T("Drag me to move section cut.\r\nDouble click to enter the cut location\r\nPress CTRL + -> to move ahead\r\nPress CTRL + <- to move back"));
+    point_disp->SetTipDisplayTime(TOOLTIP_DURATION);
 
-    //auto section_cut_strategy = std::dynamic_pointer_cast<iSectionCutDrawStrategy>(sink);
-    //section_cut_strategy->Init(m_pFrame, point_disp, m_pFrame);
-    //section_cut_strategy->SetColor(CUT_COLOR);
+    auto section_cut_strategy = std::dynamic_pointer_cast<iXBeamSectionCutDrawStrategy>(sink);
+    const CPierData2* pPier = m_pSource->GetPierData();
+    PierIndexType pierIdx = pPier->GetIndex();
+    section_cut_strategy->Init(pierIdx, point_disp, m_pCutLoc);
+    section_cut_strategy->SetColor(CUT_COLOR);
 
-    //point_disp->SetID(SECTION_CUT_ID);
+    point_disp->SetID(SECTION_CUT_ID);
 
-    //display_list->Clear();
-    //display_list->AddDisplayObject(disp_obj);
+    display_list->Clear();
+    display_list->AddDisplayObject(disp_obj);
 }
 
 // Then implement it in the .cpp
@@ -714,41 +730,6 @@ void CDrawPierLayoutControl::OnLButtonDblClk(UINT nFlags, CPoint point)
     m_currentOrgSide = m_initialOrgSide;
 
     InvalidateRect(NULL, TRUE);  // TRUE = erase background and force complete repaint
-}
-
-void CDrawPierLayoutControl::GetUpperXBeamDimensions(const CPierData2* pPier, Float64* pH, Float64* pW)
-{
-    auto pBroker = EAFGetBroker();
-    GET_IFACE2(pBroker, IBridge, pBridge);
-    auto pierIdx = pPier->GetIndex();
-
-    // Draw Upper Cross Beam Diaphragm. Basically, this is vertical distance from top of lower cross beam to bottom of slab
-    // Take max of diaphragm depth and max girder bearing deducts
-    // (don't use the pPier object here... use the pBridge interface... it resolves
-    // diaphragm dimensions that are computed based on bridge component geometry)
-    Float64 Wback, Hback;
-    pBridge->GetPierDiaphragmSize(pierIdx, pgsTypes::Back, &Wback, &Hback);
-    Float64 Wahead, Hahead;
-    pBridge->GetPierDiaphragmSize(pierIdx, pgsTypes::Ahead, &Wahead, &Hahead);
-    *pW = Wback + Wahead;
-    Float64 Hdiap = Max(Hback, Hahead);
-
-    Float64 Hbd = 0;
-
-    // Compute elevation ignoring effects on non-recoverable deformations. We don't need to perform a full structural analysis to get the values we want
-    std::vector<BearingElevationDetails> vBackElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Back, ALL_GIRDERS, true);
-    for (const auto& elevdet : vBackElevDetails)
-    {
-        Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
-    }
-
-    std::vector<BearingElevationDetails> vAheadElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Ahead, ALL_GIRDERS, true);
-    for (const auto& elevdet : vAheadElevDetails)
-    {
-        Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
-    }
-
-    *pH = max(Hdiap, Hbd);
 }
 
 void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMapper& mapper)
@@ -905,12 +886,11 @@ void CDrawPierLayoutControl::DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMap
     pDC->SelectObject(&upper_xbeam_pen);
     pDC->SelectObject(&upper_xbeam_brush);
 
-    Float64 Hdiaph, Wdiaph;
-    GetUpperXBeamDimensions(pPier, &Hdiaph, &Wdiaph);
-
     auto pBroker = EAFGetBroker();
     GET_IFACE2(pBroker, IBridge, pBridge);
 
+    Float64 Hdiaph, Wdiaph;
+    pBridge->GetUpperXBeamDimensions(pPier->GetIndex(), &Hdiaph, &Wdiaph);
 
 
 	if (refColIdx != INVALID_INDEX)
