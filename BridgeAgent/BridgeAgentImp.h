@@ -391,6 +391,8 @@ public:
    Float64 GetMaxColumnHeight(PierIndexType pierIdx) const override;
    Float64 ConvertPierToCrossBeamCoordinate(PierIndexType pierIdx, Float64 Xpier) const override;
    void GetXBeamShape(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 Xxb, IShape** ppShape) const override;
+   void GetUpperXBeamDimensions(PierIndexType pierIdx, Float64* pd, Float64* pw) const override;
+   Float64 GetPierDepth(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 xLoc) const override;
    pgsTypes::PierType GetPierType(PierIndexType pierIdx) const override;
 
 

@@ -20,7 +20,7 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 #pragma once
-
+#include "XBeamCutLocation.h"
 #include <Graphing/PointMapper.h>
 #include <PsgLib\PierData2.h>
 #include <PsgLib\Keys.h>
@@ -74,6 +74,8 @@ protected:
 private:
 	IPierLayoutDataSource* m_pSource;
 
+	CXBeamCutLocation* m_pCutLoc;
+
 	// Zoom state - store initial bounds for reset
 	WBFL::Graphing::Point m_initialOrgFront;
 	WBFL::Graphing::Size m_initialExtFront;
@@ -90,13 +92,7 @@ private:
 	CPoint m_dragStart;
 	CPoint m_dragEnd;
 
-	void GetUpperXBeamDimensions(const CPierData2* pPier, Float64* H, Float64* W);
-
-	void CalculateFrontViewBoundingBox(CDC* dc);
-	void CalculateSideViewBoundingBox(const CPierData2* pPier,
-		WBFL::Graphing::PointMapper& mapper, CSize sDeviceClient);
 	void DrawPierGeometry(CDC* pDC, WBFL::Graphing::PointMapper& mapper);
-	void DrawSideView(CDC* pDC, WBFL::Graphing::PointMapper& mapper);
 	void DrawSymbolicDimensions(CDC* pDC, WBFL::Graphing::PointMapper& mapper,
 		Float64 H1, Float64 H2, Float64 X1, Float64 X2,
 		Float64 H3, Float64 H4, Float64 X3, Float64 X4);
