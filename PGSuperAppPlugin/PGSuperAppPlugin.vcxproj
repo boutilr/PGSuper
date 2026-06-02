@@ -511,6 +511,9 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClCompile Include="TimelineGrid.cpp" />
     <ClCompile Include="TimeStepPropertiesPage.cpp" />
     <ClCompile Include="Utilities.cpp" />
+    <ClCompile Include="XBeamCutLocation.cpp" />
+    <ClCompile Include="XBeamDisplayObjectFactory.cpp" />
+    <ClCompile Include="XBeamSectionCut.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\PGSplice.tip" />
@@ -919,6 +922,9 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClInclude Include="TimelineGrid.h" />
     <ClInclude Include="TimeStepPropertiesPage.h" />
     <ClInclude Include="Utilities.h" />
+    <ClInclude Include="XBeamCutLocation.h" />
+    <ClInclude Include="XBeamDisplayObjectFactory.h" />
+    <ClInclude Include="XBeamSectionCut.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\AnalysisResultsView.ico" />

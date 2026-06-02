@@ -664,6 +664,8 @@ public:
    virtual Float64 GetMaxColumnHeight(PierIndexType pierIdx) const = 0;
    virtual Float64 ConvertPierToCrossBeamCoordinate(PierIndexType pierIdx, Float64 Xpier) const = 0;
    virtual void GetXBeamShape(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 Xxb, IShape** ppShape) const = 0;
+   virtual void GetUpperXBeamDimensions(PierIndexType pierIdx, Float64* pd, Float64* pw) const = 0;
+   virtual Float64 GetPierDepth(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 xLoc) const = 0;
    virtual pgsTypes::PierType GetPierType(PierIndexType pierIdx) const = 0;
 
    // returns the number of columns at a pier.

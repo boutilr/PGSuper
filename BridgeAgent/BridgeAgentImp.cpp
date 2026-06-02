@@ -2691,30 +2691,8 @@ bool CBridgeAgentImp::LayoutPiers()
          Float64 X5, X6;
          pPierData->GetXBeamOverhangs(&X5,&X6);
 
-
-         Float64 Wback, Hback;
-         pBridge->GetPierDiaphragmSize(pierIdx, pgsTypes::Back, &Wback, &Hback);
-         Float64 Wahead, Hahead;
-         pBridge->GetPierDiaphragmSize(pierIdx, pgsTypes::Ahead, &Wahead, &Hahead);
-         Float64 W2 = Wback + Wahead;
-         Float64 Hdiap = Max(Hback, Hahead);
-         
-         Float64 Hbd = 0;
-         
-         // Compute elevation ignoring effects on non-recoverable deformations. We don't need to perform a full structural analysis to get the values we want
-         std::vector<BearingElevationDetails> vBackElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Back, ALL_GIRDERS, true);
-         for (const auto& elevdet : vBackElevDetails)
-         {
-             Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
-         }
-         
-         std::vector<BearingElevationDetails> vAheadElevDetails = pBridge->GetBearingElevationDetails(pierIdx, pgsTypes::Ahead, ALL_GIRDERS, true);
-         for (const auto& elevdet : vAheadElevDetails)
-         {
-             Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
-         }
-         
-         Float64 H5 = max(Hdiap, Hbd);
+         Float64 H5, W2;
+		 GetUpperXBeamDimensions(pierIdx, &H5, &W2);
 
          xbeam->put_H1(H1);
          xbeam->put_H2(H2);
@@ -12679,6 +12657,82 @@ void CBridgeAgentImp::GetXBeamShape(PierIndexType pierIdx, pgsTypes::Stage stage
     StageIndexType stageIdx = GetStageIndex(stage);
 
     xbeam->get_Shape(stageIdx, Xxb, ppShape);
+}
+
+void CBridgeAgentImp::GetUpperXBeamDimensions(PierIndexType pierIdx, Float64* ph, Float64* pw) const
+{
+    VALIDATE(GIRDER);
+
+    // Upper Cross Beam Diaphragm. Basically, this is vertical distance from top of lower cross beam to bottom of slab
+    // Take max of diaphragm depth and max girder bearing deducts
+    // (don't use the pPier object here... use the pBridge interface... it resolves
+    // diaphragm dimensions that are computed based on bridge component geometry)
+    Float64 Wback, Hback;
+    GetPierDiaphragmSize(pierIdx, pgsTypes::Back, &Wback, &Hback);
+    Float64 Wahead, Hahead;
+    GetPierDiaphragmSize(pierIdx, pgsTypes::Ahead, &Wahead, &Hahead);
+    *pw = Wback + Wahead;
+    Float64 Hdiap = Max(Hback, Hahead);
+
+    Float64 Hbd = 0;
+
+    // Compute elevation ignoring effects on non-recoverable deformations. We don't need to perform a full structural analysis to get the values we want
+    std::vector<BearingElevationDetails> vBackElevDetails = GetBearingElevationDetails(pierIdx, pgsTypes::Back, ALL_GIRDERS, true);
+    for (const auto& elevdet : vBackElevDetails)
+    {
+        Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
+    }
+
+    std::vector<BearingElevationDetails> vAheadElevDetails = GetBearingElevationDetails(pierIdx, pgsTypes::Ahead, ALL_GIRDERS, true);
+    for (const auto& elevdet : vAheadElevDetails)
+    {
+        Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
+    }
+
+    *ph = max(Hdiap, Hbd);
+
+}
+
+Float64 CBridgeAgentImp::GetPierDepth(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 xLoc) const
+{
+    VALIDATE(PIERS);
+
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+    for (ColumnIndexType colIdx = 0; colIdx < pPier->GetColumnCount(); colIdx++)
+    {
+        Float64 Xcol = GetColumnLocation(pierIdx, colIdx);
+        Float64 D1, D2;
+        const auto& columnData = pPier->GetColumnData(colIdx);
+        columnData.GetColumnDimensions(&D1, &D2);
+        if (Xcol - D1 / 2 <= xLoc && xLoc <= Xcol + D1 / 2)
+        {
+            Float64 H = columnData.GetColumnHeight();
+            return H;
+        }
+        else
+        {
+            GET_IFACE(IBridgeDescription, pIBridgeDesc);
+            const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+            const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+            CComPtr<IBridgePier> pier;
+            PierIndexType pierID = pPier->GetID();
+            GetGenericBridgePier(pierID, &pier);
+
+            CComPtr<ICrossBeam> xbeam;
+            pier->get_CrossBeam(&xbeam);
+
+            StageIndexType stageIdx = GetStageIndex(stage);
+
+            Float64 H;
+            xbeam->get_Depth(stageIdx, xLoc, &H);
+            return H;
+        }
+
+    }
 }
 
 std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails_Generic(PierIndexType pierIdx, pgsTypes::PierFaceType face, CBridgeAgentImp::BearingElevLocType locType,GirderIndexType gdrIndex,bool bIgnoreUnrecoverableDeformations) const
