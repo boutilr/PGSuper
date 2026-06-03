@@ -1509,6 +1509,8 @@
 #define IDC_SELECT_BEARINGS             2068
 #define IDC_STATIC_BRG_NOTE             2069
 #define IDC_STATIC_BOUNDS               2070
+#define IDC_TRANS_GROUP                 2071
+#define IDC_COLUMN_HEIGHT_TEXT          2072
 #define IDS_E_WRITE                     2500
 #define IDS_E_UNSAFESAVE                2501
 #define IDS_E_SAVERECOVER1              2502
