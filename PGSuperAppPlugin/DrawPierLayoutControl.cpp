@@ -580,6 +580,46 @@ void CDrawPierLayoutControl::UpdateSectionCutDisplayObjects()
     display_list->AddDisplayObject(disp_obj);
 }
 
+BOOL CDrawPierLayoutControl::CreatePopout(IPierLayoutDataSource* pSource, CWnd* pOwner)
+{
+    CString className = AfxRegisterWndClass(
+        CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS,
+        ::LoadCursor(nullptr, IDC_ARROW),
+        (HBRUSH)(COLOR_WINDOW + 1),
+        nullptr);
+
+    // Use WS_EX_APPWINDOW so this is treated as a normal app window (not a tool window).
+    DWORD dwExStyle = WS_EX_APPWINDOW;
+    // Use WS_OVERLAPPEDWINDOW (or WS_POPUPWINDOW|WS_CAPTION|WS_SYSMENU) for a regular top-level window
+    DWORD dwStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+
+    HWND hOwner = (pOwner != nullptr) ? pOwner->GetSafeHwnd() : nullptr;
+
+    BOOL ok = CreateEx(
+        dwExStyle,
+        className,
+        _T("Pier Layout"),
+        dwStyle,
+        CRect(100, 100, 1000, 800),
+        CWnd::FromHandle(hOwner), // supply the owner window if provided
+        0);
+
+    if (!ok)
+        return FALSE;
+
+    // Initialize control after creation
+    CustomInit(pSource);
+
+    // Optionally keep the popout above the owner without making it topmost for all apps:
+    // if (hOwner) SetWindowPos(hOwner, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW);
+
+    ShowWindow(SW_SHOW);
+    UpdateWindow();
+
+    return TRUE;
+}
+
+
 // Then implement it in the .cpp
 void CDrawPierLayoutControl::OnSize(UINT nType, int cx, int cy)
 {
