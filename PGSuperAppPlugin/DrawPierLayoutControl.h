@@ -47,6 +47,8 @@ public:
 
 	void ResetExtents();
 
+	BOOL CreatePopout(IPierLayoutDataSource* pSource, CWnd* pOwner);
+
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 
 protected:
