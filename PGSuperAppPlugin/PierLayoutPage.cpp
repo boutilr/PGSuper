@@ -552,28 +552,69 @@ void CPierLayoutPage::SwapDialogs()
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
         }
+
     }
 }
+
+void CPierLayoutPage::ShowPierLayoutPopout()
+{
+    if (m_pPierLayoutPopout == nullptr ||
+        !::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
+    {
+        m_pPierLayoutPopout = new CDrawPierLayoutControl();
+
+        if (!m_pPierLayoutPopout->CreatePopout(&m_CommonPierLayoutDlg, this))
+        {
+            delete m_pPierLayoutPopout;
+            m_pPierLayoutPopout = nullptr;
+            return;
+        }
+    }
+
+    m_pPierLayoutPopout->ShowWindow(SW_SHOW);
+    m_pPierLayoutPopout->ResetExtents();
+    m_pPierLayoutPopout->Invalidate();
+    m_pPierLayoutPopout->UpdateWindow();
+}
+
 
 void CPierLayoutPage::OnLayoutGraphicChanged()
 {
     if (m_bShowGuide)
     {
-		GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_HIDE);
-		SetDlgItemTextW(IDC_LAYOUT_GRAPHIC, _T("Live View"));
-		m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_SHOW);
-		m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT)->ShowWindow(SW_HIDE);
-		m_bShowGuide = false;
+        // SWITCH TO LIVE VIEW
+
+        GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_SHOW);
+        SetDlgItemText(IDC_LAYOUT_GRAPHIC, _T("Hide Live"));
+
+        m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_SHOW);
+
+        // Hide embedded control
+        m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT)->ShowWindow(SW_HIDE);
+
+        ShowPierLayoutPopout();
+
+        m_bShowGuide = false;
     }
     else
     {
-        GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_SHOW);
-        SetDlgItemTextW(IDC_LAYOUT_GRAPHIC, _T("Show Guide"));
-        m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_HIDE);
-        m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT)->ShowWindow(SW_SHOW);
+        // SWITCH TO GUIDE
+
+        GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_HIDE);
+        SetDlgItemText(IDC_LAYOUT_GRAPHIC, _T("Live View"));
+
+        m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_SHOW);
+
+        if (m_pPierLayoutPopout &&
+            ::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
+        {
+            m_pPierLayoutPopout->ShowWindow(SW_HIDE);
+        }
+
         m_bShowGuide = true;
     }
 }
+
 
 
 

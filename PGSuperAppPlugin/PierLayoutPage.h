@@ -87,6 +87,10 @@ protected:
    void FillPierModelTypeComboBox();
    void FillPierLayoutTypeComboBox();
 
+   CDrawPierLayoutControl* m_pPierLayoutPopout = nullptr;
+
+   void ShowPierLayoutPopout();
+
    CPierData2* m_pPier;
    PierIndexType m_PierIdx;
 
