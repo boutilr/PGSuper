@@ -146,7 +146,7 @@ void CDrawPierLayoutControl::UpdateDisplayObjects()
     UpdateRoadwayDisplayObjects();
     UpdateXBeamDisplayObjects();
     UpdateColumnDisplayObjects();
-    UpdateSectionCutDisplayObjects();
+    //UpdateSectionCutDisplayObjects();
 
     // Re-instate the current selection
     if (curSel != INVALID_ID)
@@ -458,7 +458,7 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
     doLabel->SetBkMode(TRANSPARENT);
     doLabel->SetTextAlign(TA_TOP | TA_CENTER);
     doLabel->SetPosition(geomUtil::GetPoint(pntBC));
-    displayList->AddDisplayObject(doLabel);
+    //displayList->AddDisplayObject(doLabel);
 }
 
 void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
