@@ -427,7 +427,7 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
     doXBeamSection->SetSelectionType(g_selectionType);
 
     CComPtr<IShape> xbeamShape;
-    pBridge->GetXBeamShape(pierIdx, pgsTypes::Stage1, XxbCut, &xbeamShape);
+    pBridge->GetXBeamShape(pierIdx, pgsTypes::Stage2, XxbCut, &xbeamShape);
     CComQIPtr<IXYPosition> position(xbeamShape);
     position->Offset(EndOffset + Lxb, 0);
 
