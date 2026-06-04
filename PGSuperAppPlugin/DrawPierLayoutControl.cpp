@@ -102,9 +102,6 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
     auto doFactory = std::make_shared<CXBeamDisplayObjectFactory>();
     m_pDispMgr->AddDisplayObjectFactory(doFactory);
 
-    m_pDispMgr->EnableLBtnSelect(true);
-    m_pDispMgr->EnableRBtnSelect(true);
-
     m_pDispMgr->CreateDisplayList(ROADWAY_DISPLAY_LIST_ID);
     m_pDispMgr->CreateDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
     m_pDispMgr->CreateDisplayList(COLUMN_DISPLAY_LIST_ID);
@@ -116,8 +113,8 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
     m_pCutLoc = new CXBeamCutLocation(0,xLoc, xMax);
 
     SetMappingMode(WBFL::DManip::MapMode::Isotropic, false);
-
     CDManipClientDC dc2(this);
+
 
 	UpdateDisplayObjects();
     ScaleToFit();
@@ -163,17 +160,10 @@ void CDrawPierLayoutControl::UpdateDisplayObjects()
 
 void CDrawPierLayoutControl::OnLButtonDown(UINT nFlags, CPoint point)
 {
-
-    //m_bDragging = TRUE;
-    //m_dragStart = point;
-    //m_dragEnd = point;
-    //SetCapture();
-
-	//ScaleToFit();
-
-    CDManipClientDC dc2(this);
-
-	CDisplayWnd::OnLButtonDown(nFlags, point);
+    m_bDragging = TRUE;
+    m_dragStart = point;
+    m_dragEnd = point;
+    SetCapture();
 }
 
 std::shared_ptr<WBFL::DManip::iLineDisplayObject> CDrawPierLayoutControl::CreateLineDisplayObject(const WBFL::Geometry::Point2d& pntStart, const WBFL::Geometry::Point2d& pntEnd)
