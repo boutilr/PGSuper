@@ -78,6 +78,9 @@ protected:
    afx_msg void OnPierModelTypeChanged();
    afx_msg void OnPierLayoutTypeChanged();
    afx_msg void OnLayoutGraphicChanged();
+   afx_msg LRESULT OnPierLayoutChanged(WPARAM wParam, LPARAM lParam);
+
+   void RefreshPierLayoutPopout();
 
    void SwapDialogs();
 
