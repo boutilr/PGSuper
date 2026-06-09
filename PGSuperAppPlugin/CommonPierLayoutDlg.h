@@ -48,7 +48,6 @@ public:
 
 	// IPierLayoutDataSource implementation
 	const CPierData2* GetPierData() const override;
-	pgsTypes::PierModelType GetPierModelType() const override;
 
    // Implementation
 protected:
