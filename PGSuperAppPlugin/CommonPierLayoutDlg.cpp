@@ -424,12 +424,6 @@ const CPierData2* CCommonPierLayoutDlg::GetPierData() const
     return &m_Pier;
 }
 
-pgsTypes::PierModelType CCommonPierLayoutDlg::GetPierModelType() const
-{
-    return m_PierModelType;
-}
-
-
 void CCommonPierLayoutDlg::OnPierLayoutChanged()
 {
     // Get the current values from the edit controls into member variables
