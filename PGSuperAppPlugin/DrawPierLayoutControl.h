@@ -30,7 +30,6 @@ interface IPierLayoutDataSource
 {
 public:
    virtual const CPierData2 * GetPierData() const = 0;
-   virtual pgsTypes::PierModelType GetPierModelType() const = 0;
 };
 
 
