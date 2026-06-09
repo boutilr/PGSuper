@@ -53,6 +53,8 @@ LOG
    rab : 08.25.1998 : Created file
 *****************************************************************************/
 
+#define WM_PIER_LAYOUT_CHANGED (WM_APP + 101)  // defined here for common use in the pier dialogs
+
 class PSGLIBCLASS CPierData2
 {
 public:

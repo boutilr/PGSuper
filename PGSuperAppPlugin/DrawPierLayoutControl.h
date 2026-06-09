@@ -33,9 +33,13 @@ public:
    virtual pgsTypes::PierModelType GetPierModelType() const = 0;
 };
 
+
 class CDrawPierLayoutControl : public CDisplayWnd
 {
 	DECLARE_DYNAMIC(CDrawPierLayoutControl)
+
+	friend class CCommonPierLayoutDlg;
+	friend class CPierLayoutPage;
 
 public:
 	CDrawPierLayoutControl();

@@ -34,8 +34,6 @@
 /////////////////////////////////////////////////////////////////////////////
 // CommonPierLayoutDlg dialog
 
-class CPierLayoutPage;
-
 class CCommonPierLayoutDlg : public CDialog, public IPierLayoutDataSource
 {
 
@@ -85,6 +83,7 @@ protected:
 	void FillRefColumnComboBox(ColumnIndexType nColumns=INVALID_INDEX);
 	void FillHeightMeasureComboBox();
 	void FillTransverseLocationComboBox();
+	void RefreshDisplay();
 
 	ColumnIndexType m_RefColumnIdx;
 	Float64 m_TransverseOffset;
