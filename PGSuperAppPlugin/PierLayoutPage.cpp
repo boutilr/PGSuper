@@ -226,6 +226,7 @@ BEGIN_MESSAGE_MAP(CPierLayoutPage, CPropertyPage)
     ON_CBN_SELCHANGE(IDC_PIER_MODEL_TYPE, OnPierModelTypeChanged)
     ON_CBN_SELCHANGE(IDC_PIER_LAYOUT_TYPE, OnPierLayoutTypeChanged)
     ON_BN_CLICKED(IDC_LAYOUT_GRAPHIC, OnLayoutGraphicChanged)
+    ON_MESSAGE(WM_PIER_LAYOUT_CHANGED, OnPierLayoutChanged)
     ON_COMMAND(ID_HELP, OnHelp)
     //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -556,6 +557,24 @@ void CPierLayoutPage::SwapDialogs()
     }
 }
 
+LRESULT CPierLayoutPage::OnPierLayoutChanged(WPARAM, LPARAM)
+{
+    RefreshPierLayoutPopout();
+    return 0;
+}
+
+void CPierLayoutPage::RefreshPierLayoutPopout()
+{
+    if (m_pPierLayoutPopout &&
+        ::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
+    {
+        m_CommonPierLayoutDlg.UpdateData(TRUE);
+    }
+}
+
+
+
+
 void CPierLayoutPage::ShowPierLayoutPopout()
 {
     if (m_pPierLayoutPopout == nullptr ||
@@ -572,6 +591,7 @@ void CPierLayoutPage::ShowPierLayoutPopout()
     }
 
     m_pPierLayoutPopout->ShowWindow(SW_SHOW);
+	m_pPierLayoutPopout->UpdateDisplayObjects();
     m_pPierLayoutPopout->ResetExtents();
     m_pPierLayoutPopout->Invalidate();
     m_pPierLayoutPopout->UpdateWindow();
