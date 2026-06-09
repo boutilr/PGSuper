@@ -121,6 +121,7 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
     
 }
 
+
 void CDrawPierLayoutControl::UpdateDisplayObjects()
 {
     CWaitCursor wait;
@@ -591,7 +592,7 @@ BOOL CDrawPierLayoutControl::CreatePopout(IPierLayoutDataSource* pSource, CWnd* 
     // Use WS_EX_APPWINDOW so this is treated as a normal app window (not a tool window).
     DWORD dwExStyle = WS_EX_APPWINDOW;
     // Use WS_OVERLAPPEDWINDOW (or WS_POPUPWINDOW|WS_CAPTION|WS_SYSMENU) for a regular top-level window
-    DWORD dwStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+    DWORD dwStyle = WS_OVERLAPPEDWINDOW/* | WS_VISIBLE*/;
 
     HWND hOwner = (pOwner != nullptr) ? pOwner->GetSafeHwnd() : nullptr;
 
