@@ -197,6 +197,7 @@ public:
 
    CBearingData2* GetBearingData(GirderIndexType gdrIdx, pgsTypes::PierFaceType face);
    const CBearingData2* GetBearingData(GirderIndexType gdrIdx, pgsTypes::PierFaceType face) const;
+   const std::vector<CBearingData2> GetPierBearingData(pgsTypes::PierFaceType face) const;
 
    // get support width and net bearing height without having to get all bearing data
    Float64 GetSupportWidth(GirderIndexType gdrIdx, pgsTypes::PierFaceType face) const;
