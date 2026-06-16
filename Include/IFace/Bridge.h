@@ -23,6 +23,7 @@
 #pragma once
 #include <vector>
 #include <functional>
+#include <Math\Math.h>
 
 #include <PGSuperTypes.h>
 #include <Details.h>
@@ -58,6 +59,7 @@ class CPTData;
 class CDuctData;
 class CSegmentPTData;
 class CSegmentDuctData;
+class CPierData2;
 
 interface IRCBeam2Ex;
 class IEAFDisplayUnits;
@@ -657,13 +659,24 @@ public:
 
     // Returns the cross beam profile in Pier Coordinates
    virtual void GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const = 0;
+   virtual void GetUpperXBeamProfile(const CPierData2& pierData, IPoint2dCollection** ppPoints) const = 0;
    virtual void GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const = 0;
+   virtual void GetLowerXBeamProfile(const CPierData2& pierData, IPoint2dCollection** ppPoints) const = 0;
+   virtual void GetBottomXBeamProfile(const CPierData2& pierData, IPoint2dCollection** ppPoints) const = 0;
+   virtual void GetXBeamProfile(const CPierData2& pierData, pgsTypes::Stage stage, IShape** ppShape) const = 0;
    virtual void GetBottomSurface(PierIndexType pierIdx, pgsTypes::Stage stage, IPoint2dCollection** ppPoints) const = 0;
    virtual Float64 ConvertPierToCurbLineCoordinate(PierIndexType pierIdx, Float64 Xpier) const = 0;
+   virtual Float64 ConvertPierToCurbLineCoordinate(const CPierData2& pierData, Float64 Xpier) const = 0;
    virtual Float64 GetElevation(PierIndexType pierIdx, Float64 Xcl) const = 0;
+   virtual Float64 GetElevation(const CPierData2& pierData, Float64 Xcl) const = 0;
+   virtual void CreateDeckProfileFunction(const CPierData2& pierData, WBFL::Math::PiecewiseFunction* pFN) const = 0;
    virtual Float64 GetMaxColumnHeight(PierIndexType pierIdx) const = 0;
    virtual Float64 ConvertPierToCrossBeamCoordinate(PierIndexType pierIdx, Float64 Xpier) const = 0;
+   virtual Float64 ConvertCurbLineToPierCoordinate(const CPierData2& pierData, Float64 Xcl) const = 0;
    virtual void GetXBeamShape(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 Xxb, IShape** ppShape) const = 0;
+   virtual void GetXBeamShape(const CPierData2& pierData, pgsTypes::Stage stage, Float64 Xxb, IShape** ppShape) const = 0;
+   virtual void GetUpperXBeamShape(const CPierData2& pierData, Float64 Xxb, IShape** ppShape) const = 0;
+   virtual void GetLowerXBeamShape(const CPierData2& pierData, Float64 Xxb, IShape** ppShape) const = 0;
    virtual void GetUpperXBeamDimensions(PierIndexType pierIdx, Float64* pd, Float64* pw) const = 0;
    virtual Float64 GetPierDepth(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 xLoc) const = 0;
    virtual pgsTypes::PierType GetPierType(PierIndexType pierIdx) const = 0;
@@ -679,7 +692,10 @@ public:
    virtual Float64 GetColumnLocation(PierIndexType pierIdx, IndexType colIdx) const = 0;
    virtual Float64 GetTopColumnElevation(PierIndexType pierIdx, IndexType colIdx) const = 0;
    virtual Float64 GetBottomColumnElevation(PierIndexType pierIdx, IndexType colIdx) const = 0;
+   virtual Float64 GetDelta(const CPierData2& pierData) const = 0;
    virtual Float64 ConvertCrossBeamToPierCoordinate(PierIndexType pierIdx, Float64 Xxb) const = 0;
+   virtual Float64 ConvertCrossBeamToPierCoordinate(const CPierData2& pierData, Float64 Xxb) const = 0;
+   virtual Float64 ConvertCrossBeamToCurbLineCoordinate(const CPierData2& pierData, Float64 Xxb) const = 0;
 
    // negative moment calculations and results need not be processed if a simple span analysis is
    // used or if there isn't any continuity.

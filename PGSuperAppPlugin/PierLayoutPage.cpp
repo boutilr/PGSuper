@@ -568,7 +568,10 @@ void CPierLayoutPage::RefreshPierLayoutPopout()
     if (m_pPierLayoutPopout &&
         ::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
     {
-        m_CommonPierLayoutDlg.UpdateData(TRUE);
+        m_pPierLayoutPopout->UpdateDisplayObjects();
+        m_pPierLayoutPopout->ResetExtents();
+        m_pPierLayoutPopout->Invalidate();
+		m_pPierLayoutPopout->UpdateWindow();
     }
 }
 
