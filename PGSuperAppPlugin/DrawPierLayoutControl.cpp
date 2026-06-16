@@ -377,7 +377,7 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
         doUpperXBeam->SetSelectionType(g_selectionType);
 
         CComPtr<IShape> upperXBeamShape;
-        pBridge->GetUpperXBeamProfile(pierIdx, &upperXBeamShape);
+        pBridge->GetXBeamProfile(*pPier, pgsTypes::Stage::Stage2, &upperXBeamShape);
 
         auto upperXBeamDrawStrategy = WBFL::DManip::ShapeDrawStrategy::Create();
         upperXBeamDrawStrategy->SetShape(geomUtil::ConvertShape(upperXBeamShape));
@@ -400,8 +400,7 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
     doLowerXBeam->SetSelectionType(g_selectionType);
 
     CComPtr<IShape> pLowerXBeamShape;
-    pBridge->GetLowerXBeamProfile(pierIdx, &pLowerXBeamShape);
-
+    pBridge->GetXBeamProfile(*pPier, pgsTypes::Stage::Stage1, &pLowerXBeamShape);
 
     auto lowerXBeamDrawStrategy = WBFL::DManip::ShapeDrawStrategy::Create();
     lowerXBeamDrawStrategy->SetShape(geomUtil::ConvertShape(pLowerXBeamShape));
@@ -428,7 +427,7 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
     doXBeamSection->SetSelectionType(g_selectionType);
 
     CComPtr<IShape> xbeamShape;
-    pBridge->GetXBeamShape(pierIdx, pgsTypes::Stage2, XxbCut, &xbeamShape);
+    pBridge->GetXBeamShape(*pPier, pgsTypes::Stage2, XxbCut, &xbeamShape);
     CComQIPtr<IXYPosition> position(xbeamShape);
     position->Offset(EndOffset + Lxb, 0);
 

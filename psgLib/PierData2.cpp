@@ -1932,6 +1932,17 @@ const CBearingData2* CPierData2::GetBearingData(GirderIndexType gdrIdx, pgsTypes
    return &m_BearingData[face][gdrIdx];
 }
 
+const std::vector<CBearingData2> CPierData2::GetPierBearingData(pgsTypes::PierFaceType face) const
+{
+    // Interior piers have a single bearing - use ahead slot to store
+    if (IsInteriorPier())
+    {
+        face = pgsTypes::Ahead;
+    }
+
+    return m_BearingData[face];
+}
+
 Float64 CPierData2::GetSupportWidth(GirderIndexType gdrIdx, pgsTypes::PierFaceType face) const
 {
    ProtectBearingData();
