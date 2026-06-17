@@ -474,8 +474,8 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
     CComPtr<IPoint2dCollection> points;
     GET_IFACE2(pBroker, IBridge, pBridge);
     const CPierData2* pPier = m_pSource->GetPierData();
-    PierIndexType pierIdx = pPier->GetIndex();
-    pBridge->GetBottomSurface(pierIdx, pgsTypes::Stage1, &points); // This is a problem I will have to fix for hammerhead piers since the ref column is not at center of pier. 
+
+    pBridge->GetPierBottomSurface(*pPier, &points); // This is a problem I will have to fix for hammerhead piers since the ref column is not at center of pier. 
 
     CComPtr<IEnumPoint2d> enumPoints;
     points->get__Enum(&enumPoints);
@@ -491,11 +491,12 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
     IndexType nColumns = pPier->GetColumnCount();
     for (IndexType colIdx = 0; colIdx < nColumns; colIdx++)
     {
-        const CColumnData& columnData = pPier->GetColumnData(colIdx); /////below should be in column data:
-        Float64 XxbCol = pBridge->GetColumnLocation(pierIdx, colIdx);
-        Float64 XpCol = pBridge->ConvertCrossBeamToPierCoordinate(pierIdx, XxbCol);
-        Float64 Ytop = pBridge->GetTopColumnElevation(pierIdx, colIdx);  // same thing as column height
-        Float64 Ybot = pBridge->GetBottomColumnElevation(pierIdx, colIdx);
+        const CColumnData& columnData = pPier->GetColumnData(colIdx);
+		Float64 XxbCol = pBridge->GetColumnLocation(*pPier, colIdx);
+        Float64 XpCol = pBridge->ConvertCrossBeamToPierCoordinate(*pPier, XxbCol);
+        Float64 Ytop = pBridge->GetTopColumnElevation(*pPier, colIdx);
+        Float64 Ybot = Ytop - columnData.GetColumnHeight();
+
         CColumnData::ColumnShapeType colShapeType = columnData.GetColumnShape();
         Float64 d1, d2;
         columnData.GetColumnDimensions(&d1, &d2);

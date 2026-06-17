@@ -34,6 +34,8 @@
 /////////////////////////////////////////////////////////////////////////////
 // CommonPierLayoutDlg dialog
 
+class CPierLayoutPage;
+
 class CCommonPierLayoutDlg : public CDialog, public IPierLayoutDataSource
 {
 
