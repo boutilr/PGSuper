@@ -39,6 +39,8 @@
 // CPierLayoutPage dialog
 class CPierLayoutPage : public CPropertyPage
 {
+	friend class CCommonPierLayoutDlg;
+
 	DECLARE_DYNCREATE(CPierLayoutPage)
 
 // Construction
