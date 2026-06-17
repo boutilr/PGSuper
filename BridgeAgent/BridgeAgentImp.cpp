@@ -12123,13 +12123,21 @@ Float64 CBridgeAgentImp::GetColumnLocation(PierIndexType pierIdx, IndexType colI
     pier->get_ColumnLayout(&columnLayout);
 
     Float64 Xxb;
-    columnLayout->get_ColumnLocation(colIdx, &Xxb); // this is the location of the column relative to the top of the lower cross beam
+    columnLayout->get_ColumnLocation(colIdx, &Xxb);
 
-    // Get lower XBeam dimensions
-    Float64 H1, H2, X1, X2;
-    Float64 H3, H4, X3, X4;
-    pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1, &H2, &X1, &X2);
-    pPier->GetXBeamDimensions(pgsTypes::stRight, &H3, &H4, &X3, &X4);
+    return Xxb;
+}
+
+Float64 CBridgeAgentImp::GetColumnLocation(const CPierData2& pierData, IndexType colIdx) const
+{
+
+    Float64 Xxb = pierData.GetXBeamOverhang(pgsTypes::stLeft);
+    IndexType nSpaces = (colIdx == 0 ? 0 : colIdx);
+    for (IndexType idx = 0; idx < nSpaces; idx++)
+    {
+        Float64 spacing = pierData.GetColumnSpacing(idx);
+        Xxb += spacing;
+    }
 
     return Xxb;
 }
@@ -12152,22 +12160,24 @@ Float64 CBridgeAgentImp::GetTopColumnElevation(PierIndexType pierIdx, IndexType 
     return topElev;
 }
 
-Float64 CBridgeAgentImp::GetBottomColumnElevation(PierIndexType pierIdx, IndexType colIdx) const
+Float64 CBridgeAgentImp::GetTopColumnElevation(const CPierData2& pierData, IndexType colIdx) const
 {
-    GET_IFACE(IBridgeDescription, pIBridgeDesc);
-    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
-    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+    Float64 Xxb = GetColumnLocation(pierData, colIdx);
 
-    CComPtr<IBridgePier> pier;
-    PierIndexType pierID = pPier->GetID();
-    GetGenericBridgePier(pierID, &pier);
+    Float64 Xcl = ConvertCrossBeamToCurbLineCoordinate(pierData, Xxb);
 
-    CComPtr<IColumnLayout> columnLayout;
-    pier->get_ColumnLayout(&columnLayout);
+    Float64 deckElev = GetElevation(pierData, Xcl);
 
-    Float64 botElev;
-    columnLayout->get_BottomColumnElevation(colIdx, &botElev);
-    return botElev;
+	Float64 tDeck = GetDeckThickness();
+
+    Float64 H5, W2;
+    GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
+
+	Float64 full_xbeam_depth = GetPierDepth(pierData, pgsTypes::Stage1, Xxb) + H5;
+
+    Float64 elev = deckElev - tDeck - full_xbeam_depth;
+
+    return elev;
 }
 
 Float64 CBridgeAgentImp::ConvertCrossBeamToPierCoordinate(PierIndexType pierIdx, Float64 Xxb) const
@@ -12603,6 +12613,24 @@ void CBridgeAgentImp::GetPierDisplaySettings(pgsTypes::DisplayEndSupportType* pS
    pBridgeDesc->GetPierDisplaySettings(pStartPierType, pEndPierType, pStartPierNumber);
 }
 
+Float64 CBridgeAgentImp::GetDeckThickness() const
+{
+    Float64 tDeck = 0.0;
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    auto pDeck = pBridgeDesc->GetDeckDescription();
+    if (pDeck->GetDeckType() == pgsTypes::sdtCompositeSIP)
+    {
+        tDeck = pDeck->GrossDepth + pDeck->PanelDepth;
+    }
+    else
+    {
+        tDeck = pDeck->GrossDepth;
+    }
+
+    return tDeck;
+}
+
 void CBridgeAgentImp::GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const
 {
     VALIDATE(PIERS);
@@ -12665,22 +12693,6 @@ void CBridgeAgentImp::GetUpperXBeamProfile(const CPierData2& pierData, IPoint2dC
             &deckProfile);
 
         // ---------------------------------------------------------
-        // Deck thickness
-        // ---------------------------------------------------------
-
-        Float64 tDeck = 0.0;
-
-        auto pDeck = pBridgeDesc->GetDeckDescription();
-        if (pDeck->GetDeckType() == pgsTypes::sdtCompositeSIP)
-        {
-            tDeck = pDeck->GrossDepth + pDeck->PanelDepth;
-        }
-        else
-        {
-            tDeck = pDeck->GrossDepth;
-        }
-
-        // ---------------------------------------------------------
         // Compute upper xbeam extents
         // ---------------------------------------------------------
 
@@ -12718,6 +12730,8 @@ void CBridgeAgentImp::GetUpperXBeamProfile(const CPierData2& pierData, IPoint2dC
         Float64 YxbStart = GetElevation(pierData, XclStart);
 
         Float64 YxbEnd = GetElevation(pierData, XclEnd);
+
+		Float64 tDeck = GetDeckThickness();
 
         YxbStart -= tDeck;
         YxbEnd -= tDeck;
@@ -12847,19 +12861,7 @@ void CBridgeAgentImp::GetLowerXBeamProfile(const CPierData2& pierData, IPoint2dC
         Float64 Yl = GetElevation(pierData, Xlcl);
         Float64 Yr = GetElevation(pierData, Xrcl);
 
-        GET_IFACE(IBridgeDescription, pIBridgeDesc);
-        const CBridgeDescription2* pBridgeDesc =
-            pIBridgeDesc->GetBridgeDescription();
-        Float64 tDeck = 0.0;
-        auto pDeck = pBridgeDesc->GetDeckDescription();
-        if (pDeck->GetDeckType() == pgsTypes::sdtCompositeSIP)
-        {
-            tDeck = pDeck->GrossDepth + pDeck->PanelDepth;
-        }
-        else
-        {
-            tDeck = pDeck->GrossDepth;
-        }
+		Float64 tDeck = GetDeckThickness();
 
         // adjust for deck thickness
         Yl -= tDeck;
@@ -12958,19 +12960,7 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData, IPoint2d
         Float64 Ylt = GetElevation(pierData, Xltcl);
         Float64 Yrt = GetElevation(pierData, Xrtcl);
 
-        GET_IFACE(IBridgeDescription, pIBridgeDesc);
-        const CBridgeDescription2* pBridgeDesc =
-            pIBridgeDesc->GetBridgeDescription();
-        Float64 tDeck = 0.0;
-        auto pDeck = pBridgeDesc->GetDeckDescription();
-        if (pDeck->GetDeckType() == pgsTypes::sdtCompositeSIP)
-        {
-            tDeck = pDeck->GrossDepth + pDeck->PanelDepth;
-        }
-        else
-        {
-            tDeck = pDeck->GrossDepth;
-        }
+		Float64 tDeck = GetDeckThickness();
 
         Ylt -= tDeck;
         Yrt -= tDeck;
@@ -13049,23 +13039,122 @@ StageIndexType CBridgeAgentImp::GetStageIndex(pgsTypes::Stage stage) const
     return (stage == pgsTypes::Stage1 ? 0 : 1);
 }
 
-void CBridgeAgentImp::GetBottomSurface(PierIndexType pierIdx, pgsTypes::Stage stage, IPoint2dCollection** ppPoints) const
+void CBridgeAgentImp::GetPierBottomSurface(const CPierData2& pierData, IPoint2dCollection** ppPoints) const
 {
     VALIDATE(PIERS);
 
-    GET_IFACE(IBridgeDescription, pIBridgeDesc);
-    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
-    const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+    // get top profile of lower cross beam
+    CComPtr<IPoint2dCollection> lxbProfile;
+    GetLowerXBeamProfile(pierData, &lxbProfile);
 
-    CComPtr<IBridgePier> pier;
-    PierIndexType pierID = pPier->GetID();
-    GetGenericBridgePier(pierID, &pier);
+    // get the top left point
+    CComPtr<IPoint2d> lxbTL;
+    lxbProfile->get_Item(0, &lxbTL);
 
-    CComPtr<ICrossBeam> xbeam;
-    pier->get_CrossBeam(&xbeam);
+    IndexType nPoints;
+    lxbProfile->get_Count(&nPoints);
+    CComPtr<IPoint2d> lxbTR;
+    lxbProfile->get_Item(nPoints - 1, &lxbTR);
 
-    StageIndexType stageIdx = GetStageIndex(stage);
-    xbeam->get_BottomSurface(stageIdx, ppPoints);
+    Float64 Xl, Yl;
+    lxbTL->Location(&Xl, &Yl);
+
+    Float64 Xr, Yr;
+    lxbTR->Location(&Xr, &Yr);
+
+    // interpolation parameters for depth of lower xbeam between tapers
+    Float64 Xs = Xl;
+    Float64 dX = Xr - Xl;
+
+    Float64 H1, H2, H3, H4;
+    Float64 X1, X2, X3, X4;
+    pierData.GetXBeamDimensions(pgsTypes::stLeft, &H1, &H2, &X1, &X2);
+    pierData.GetXBeamDimensions(pgsTypes::stRight, &H3, &H4, &X3, &X4);
+
+    Float64 dyL = H1 + H2;
+    Float64 dyR = H3 + H4;
+
+    // horizontal location of left/right tapers
+    Float64 Xlt = Xl + X1;
+    Float64 Xrt = Xr - X3;
+
+    Xlt = IsZero(Xlt) ? 0 : Xlt;
+    Xrt = IsZero(Xrt) ? 0 : Xrt;
+
+    // horizontal location of left/right end points of bottom of xbeam
+    Xl += X2;
+    Xr -= X4;
+
+    CComPtr<IPoint2dCollection> BXBProfile;
+    BXBProfile.CoCreateInstance(CLSID_Point2dCollection);
+    for (IndexType idx = nPoints - 1; 0 <= idx && idx != INVALID_INDEX; idx--)
+    {
+        CComPtr<IPoint2d> pnt;
+        lxbProfile->get_Item(idx, &pnt);
+        Float64 X;
+        pnt->get_X(&X);
+        if (InRange(Xlt, X, Xrt))
+        {
+            // X is between tapers
+            CComPtr<IPoint2d> pntBXB;
+            pnt->Clone(&pntBXB);
+
+            Float64 dy = ::LinInterp(X - Xs, dyL, dyR, dX);
+
+            pntBXB->Offset(0, -dy);
+            BXBProfile->Insert(0, pntBXB);
+        }
+    }
+
+    Float64 Xltcl = ConvertPierToCurbLineCoordinate(pierData, Xlt);
+    Float64 Xrtcl = ConvertPierToCurbLineCoordinate(pierData, Xrt);
+
+    Float64 Ylt = GetElevation(pierData, Xltcl);
+    Float64 Yrt = GetElevation(pierData, Xrtcl);
+
+    Float64 tDeck = GetDeckThickness();
+
+    Ylt -= tDeck;
+    Yrt -= tDeck;
+
+    CComPtr<IPoint2d> bxbL;
+    bxbL.CoCreateInstance(CLSID_Point2d);
+    bxbL->Move(Xl, Yl - H1);
+    BXBProfile->Insert(0, bxbL);
+
+    if (!IsZero(H2) && !IsZero(X1))
+    {
+        // there is a taper on the left side
+        CComPtr<IPoint2d> bxbLT;
+        bxbLT.CoCreateInstance(CLSID_Point2d);
+
+        Float64 y;
+        bxbL->get_Y(&y);
+
+        bxbLT->Move(Xlt, y - H2);
+        BXBProfile->Insert(1, bxbLT);
+    }
+
+    if (!IsZero(H4) && !IsZero(X3))
+    {
+        // there is a taper on the right side
+        CComPtr<IPoint2d> bxbRT;
+        bxbRT.CoCreateInstance(CLSID_Point2d);
+
+        Float64 y = Yr - H3 - H4; // this is bxbR->Y - m_H4
+
+        bxbRT->Move(Xrt, y);
+        BXBProfile->Add(bxbRT);
+    }
+
+    CComPtr<IPoint2d> bxbR;
+    bxbR.CoCreateInstance(CLSID_Point2d);
+    bxbR->Move(Xr, Yr - H3);
+    BXBProfile->Add(bxbR);
+
+    BXBProfile->RemoveDuplicatePoints();
+
+    BXBProfile.CopyTo(ppPoints);
 
 }
 
@@ -13204,18 +13293,7 @@ void CBridgeAgentImp::GetUpperXBeamShape(const CPierData2& pierData, Float64 Xxb
 
     Float64 Y = GetElevation(pierData, Xcl);
 
-    Float64 tDeck = 0.0;
-
-    GET_IFACE(IBridgeDescription, pIBridgeDesc);
-    auto pDeck = pIBridgeDesc->GetDeckDescription();
-    if (pDeck->GetDeckType() == pgsTypes::sdtCompositeSIP)
-    {
-        tDeck = pDeck->GrossDepth + pDeck->PanelDepth;
-    }
-    else
-    {
-        tDeck = pDeck->GrossDepth;
-    }
+	Float64 tDeck = GetDeckThickness();
 
     Y -= tDeck;
 
@@ -13308,19 +13386,7 @@ void CBridgeAgentImp::GetLowerXBeamShape(const CPierData2& pierData, Float64 Xxb
 
     Float64 Y = GetElevation(pierData, Xcl);
 
-    Float64 tDeck = 0.0;
-
-    GET_IFACE(IBridgeDescription, pBridgeDesc);
-
-    auto pDeck = pBridgeDesc->GetDeckDescription();
-    if (pDeck->GetDeckType() == pgsTypes::sdtCompositeSIP)
-    {
-        tDeck = pDeck->GrossDepth + pDeck->PanelDepth;
-    }
-    else
-    {
-        tDeck = pDeck->GrossDepth;
-    }
+	Float64 tDeck = GetDeckThickness();
 
     Y -= tDeck;
 
@@ -13482,6 +13548,65 @@ Float64 CBridgeAgentImp::GetPierDepth(PierIndexType pierIdx, pgsTypes::Stage sta
         }
 
     }
+}
+
+Float64 CBridgeAgentImp::GetPierDepth(const CPierData2& pierData, pgsTypes::Stage stage, Float64 xLoc) const
+{
+
+    VALIDATE(PIERS);
+
+    // Create a function that represents the top of the lower cross beam
+    Float64 Xoffset;
+    Float64 x, y;
+
+    // Adjust X-values so they are in XBeam coordinates (X=0 at bottom left of lower cross beam)
+    CComPtr<IPoint2dCollection> bxbProfile;
+    GetBottomXBeamProfile(pierData, &bxbProfile);
+    CComPtr<IPoint2d> pnt;
+    bxbProfile->get_Item(0, &pnt);
+    pnt->get_X(&Xoffset);
+    pnt.Release();
+
+    CComPtr<IEnumPoint2d> enumPoints;
+    bxbProfile->get__Enum(&enumPoints);
+    WBFL::Math::PiecewiseFunction fnBottom;
+    while (enumPoints->Next(1, &pnt, nullptr) != S_FALSE)
+    {
+        pnt->Location(&x, &y);
+        fnBottom.AddPoint(x - Xoffset, y);
+        pnt.Release();
+    }
+
+    CComPtr<IPoint2dCollection> lxbProfile;
+    GetLowerXBeamProfile(pierData, &lxbProfile);
+    enumPoints.Release();
+    lxbProfile->get__Enum(&enumPoints);
+    WBFL::Math::PiecewiseFunction fnTop;
+    while (enumPoints->Next(1, &pnt, nullptr) != S_FALSE)
+    {
+        pnt->Location(&x, &y);
+        fnTop.AddPoint(x - Xoffset, y);
+        pnt.Release();
+    }
+
+
+    Float64 Y1 = fnTop.Evaluate(xLoc);
+    Float64 Y2 = fnBottom.Evaluate(xLoc);
+
+    Float64 H = Y1 - Y2; // depth of the lower cross beam
+    Float64 depth = H;
+
+	pgsTypes::PierType pierType = GetPierType(pierData.GetIndex());
+
+    Float64 W2, H5;
+	GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
+
+    if (pgsTypes::Stage::Stage2 && pierType == ptIntegral)
+    {
+        depth += H5;
+    }
+
+    return depth;
 }
 
 std::vector<BearingElevationDetails> CBridgeAgentImp::GetBearingElevationDetails_Generic(PierIndexType pierIdx, pgsTypes::PierFaceType face, CBridgeAgentImp::BearingElevLocType locType,GirderIndexType gdrIndex,bool bIgnoreUnrecoverableDeformations) const
@@ -37886,6 +38011,173 @@ Float64 CBridgeAgentImp::ComputePierDiaphragmWidth(PierIndexType pierIdx,pgsType
             // The segment/pier connection is integral and there is a physical model of the pier.
             // Use the lower cross beam width as the minimum width of the pier diaphragm
             W = Max(W,pPier->GetXBeamWidth());
+         }
+      }
+      else
+      {
+         ATLASSERT(false); // Is there a new type?
+         W = 0;
+      }
+   }
+
+   return W;
+}
+
+Float64 CBridgeAgentImp::ComputePierDiaphragmWidth(const CPierData2& pierData, pgsTypes::PierFaceType pierFace) const
+{
+
+   // Compute the maximum bearing offset... this is used by many of the geometry configurations
+   GroupIndexType backGrpIdx, aheadGrpIdx;
+   GetGirderGroupIndex(pierData.GetIndex(), &backGrpIdx, &aheadGrpIdx);
+
+   GroupIndexType grpIdx = (pierFace == pgsTypes::Back ? backGrpIdx : aheadGrpIdx);
+   if ( grpIdx == INVALID_INDEX )
+   {
+      return 0.0;
+   }
+
+   Float64 Wsupport(0.0); // support width measured along CL girder... need to measure it normal
+   // to CL Pier. See below for adjusting bearing offset. The same logic is used for adjusting the bearing offset
+   // and the support width.
+   // Take max among all girders framing into pier
+   GirderIndexType nGirders = GetGirderCount(grpIdx);
+   for (GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++)
+   {
+      if (pierData.IsBoundaryPier())
+      {
+         Wsupport = max(Wsupport, pierData.GetSupportWidth(gdrIdx, pierFace));
+      }
+      else
+      {
+         ATLASSERT(pierData.IsInteriorPier());
+         Wsupport = max(Wsupport, pierData.GetSupportWidth(gdrIdx, pgsTypes::Ahead));
+      }
+   }
+
+   Float64 maxBrgOffset = 0;
+   Float64 maxSupportWidth = 0;
+   for ( GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++ )
+   {
+      // get segment bearing offset
+      CSegmentKey segmentKey = GetSegmentAtPier(pierData.GetIndex(), CGirderKey(grpIdx, gdrIdx));
+      Float64 brgOffset;
+
+
+      // segment bearing offset is measured along the CL girder.
+      // we need it to be measured normal to the CL pier
+      // get the angle between the pier and the girder, then deduct 90 degrees
+      // so that it is the angle between the pier normal and the girder.
+      // multiply the bearing offset by this angle to get the bearing offset
+      // normal to the pier.
+      // Since the girders need not be parallel, each girder can have a different intersection
+      // angle with the pier. For this reason, we have to compute the bearing offset and
+      // support width normal to the pier uniquely for each girder.
+      CComPtr<IAngle> objSegAngle;
+      Float64 segAngle;
+      if ( pierFace == pgsTypes::Back || (pierFace == pgsTypes::Ahead && pierData.IsInteriorPier() && !IsSegmentContinuousOverPier(pierData.GetSegmentConnectionType())) )
+      {
+         brgOffset = GetSegmentEndBearingOffset(segmentKey);
+         GetSegmentAngle(segmentKey, pgsTypes::metEnd, &objSegAngle);
+         objSegAngle->get_Value(&segAngle);
+         segAngle -= PI_OVER_2;
+      }
+      else
+      {
+         brgOffset = GetSegmentStartBearingOffset(segmentKey);
+         GetSegmentAngle(segmentKey, pgsTypes::metStart, &objSegAngle);
+         objSegAngle->get_Value(&segAngle);
+         segAngle -= PI_OVER_2;
+      }
+
+      brgOffset *= cos(segAngle);
+      maxBrgOffset = Max(maxBrgOffset,brgOffset);
+      maxSupportWidth = Max(maxSupportWidth,Wsupport*cos(segAngle));
+   }
+
+   Float64 W = 0;
+   if ( pierData.IsBoundaryPier() )
+   {
+      pgsTypes::BoundaryConditionType bcType = pierData.GetBoundaryConditionType();
+      if ( bcType == pgsTypes::bctHinge || bcType == pgsTypes::bctRoller )
+      {
+         W = maxSupportWidth;
+      }
+      else if ( bcType == pgsTypes::bctContinuousBeforeDeck || bcType == pgsTypes::bctContinuousAfterDeck )
+      {
+         W = maxBrgOffset - maxSupportWidth/2;
+      }
+      else if ( bcType == pgsTypes::bctIntegralBeforeDeck || bcType == pgsTypes::bctIntegralAfterDeck )
+      {
+         W = maxBrgOffset + maxSupportWidth/2;
+
+         if ( pierData.GetPierModelType() == pgsTypes::pmtPhysical )
+         {
+            // The segment/pier connection is integral and there is a physical model of the pier.
+            // Use the lower cross beam width as the minimum width of the pier diaphragm
+            W = Max(W,pierData.GetXBeamWidth()/2);
+         }
+      }
+      else if ( bcType == pgsTypes::bctIntegralBeforeDeckHingeBack || bcType == pgsTypes::bctIntegralAfterDeckHingeBack )
+      {
+         if ( pierFace == pgsTypes::Back )
+         {
+            W = maxSupportWidth;
+         }
+         else
+         {
+            W = maxBrgOffset + maxSupportWidth/2;
+            if ( pierData.GetPierModelType() == pgsTypes::pmtPhysical )
+            {
+               W = Max(W,pierData.GetXBeamWidth()/2);
+            }
+         }
+      }
+      else if ( bcType == pgsTypes::bctIntegralBeforeDeckHingeAhead || bcType == pgsTypes::bctIntegralAfterDeckHingeAhead )
+      {
+         if ( pierFace == pgsTypes::Back )
+         {
+            W = maxBrgOffset + maxSupportWidth/2;
+            if ( pierData.GetPierModelType() == pgsTypes::pmtPhysical )
+            {
+               W = Max(W,pierData.GetXBeamWidth()/2);
+            }
+         }
+         else
+         {
+            W = maxSupportWidth;
+         }
+      }
+      else
+      {
+         ATLASSERT(false); // Is there a new type?
+         W = 0;
+      }
+   }
+   else
+   {
+      ATLASSERT(pierData.IsInteriorPier());
+      pgsTypes::PierSegmentConnectionType connectionType = pierData.GetSegmentConnectionType();
+
+      if ( connectionType == pgsTypes::psctContinousClosureJoint )
+      {
+         W = 2*(maxBrgOffset - maxSupportWidth/2);
+      }
+      else if ( connectionType == pgsTypes::psctIntegralClosureJoint )
+      {
+         W = 2*(maxBrgOffset + maxSupportWidth/2);
+      }
+      else if ( connectionType == pgsTypes::psctContinuousSegment )
+      {
+         W = maxSupportWidth;
+      }
+      else if ( connectionType == pgsTypes::psctIntegralSegment )
+      {
+         W = maxSupportWidth;
+         if ( pierData.GetPierModelType() == pgsTypes::pmtPhysical )
+         {
+            // The segment/pier connection is integral and there is a physical model of the pier.
+            // Use the lower cross beam width as the minimum width of the pier diaphragm
+            W = Max(W,pierData.GetXBeamWidth());
          }
       }
       else

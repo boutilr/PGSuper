@@ -657,6 +657,7 @@ public:
    // returns the type of model used to define a pier
    virtual pgsTypes::PierModelType GetPierModelType(PierIndexType pierIdx) const = 0;
 
+   virtual Float64 GetDeckThickness() const = 0;
     // Returns the cross beam profile in Pier Coordinates
    virtual void GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const = 0;
    virtual void GetUpperXBeamProfile(const CPierData2& pierData, IPoint2dCollection** ppPoints) const = 0;
@@ -664,7 +665,7 @@ public:
    virtual void GetLowerXBeamProfile(const CPierData2& pierData, IPoint2dCollection** ppPoints) const = 0;
    virtual void GetBottomXBeamProfile(const CPierData2& pierData, IPoint2dCollection** ppPoints) const = 0;
    virtual void GetXBeamProfile(const CPierData2& pierData, pgsTypes::Stage stage, IShape** ppShape) const = 0;
-   virtual void GetBottomSurface(PierIndexType pierIdx, pgsTypes::Stage stage, IPoint2dCollection** ppPoints) const = 0;
+   virtual void GetPierBottomSurface(const CPierData2& pierData, IPoint2dCollection** ppPoints) const = 0;
    virtual Float64 ConvertPierToCurbLineCoordinate(PierIndexType pierIdx, Float64 Xpier) const = 0;
    virtual Float64 ConvertPierToCurbLineCoordinate(const CPierData2& pierData, Float64 Xpier) const = 0;
    virtual Float64 GetElevation(PierIndexType pierIdx, Float64 Xcl) const = 0;
@@ -679,6 +680,7 @@ public:
    virtual void GetLowerXBeamShape(const CPierData2& pierData, Float64 Xxb, IShape** ppShape) const = 0;
    virtual void GetUpperXBeamDimensions(PierIndexType pierIdx, Float64* pd, Float64* pw) const = 0;
    virtual Float64 GetPierDepth(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 xLoc) const = 0;
+   virtual Float64 GetPierDepth(const CPierData2& pierData, pgsTypes::Stage stage, Float64 xLoc) const = 0;
    virtual pgsTypes::PierType GetPierType(PierIndexType pierIdx) const = 0;
 
    // returns the number of columns at a pier.
@@ -690,8 +692,9 @@ public:
    virtual void GetColumnProperties(PierIndexType pierIdx,ColumnIndexType colIdx,bool bSkewAdjust,Float64* pHeight,Float64* pA,Float64* pI) const = 0;
 
    virtual Float64 GetColumnLocation(PierIndexType pierIdx, IndexType colIdx) const = 0;
+   virtual Float64 GetColumnLocation(const CPierData2& pierData, IndexType colIdx) const = 0;
    virtual Float64 GetTopColumnElevation(PierIndexType pierIdx, IndexType colIdx) const = 0;
-   virtual Float64 GetBottomColumnElevation(PierIndexType pierIdx, IndexType colIdx) const = 0;
+   virtual Float64 GetTopColumnElevation(const CPierData2& pierData, IndexType colIdx) const = 0;
    virtual Float64 GetDelta(const CPierData2& pierData) const = 0;
    virtual Float64 ConvertCrossBeamToPierCoordinate(PierIndexType pierIdx, Float64 Xxb) const = 0;
    virtual Float64 ConvertCrossBeamToPierCoordinate(const CPierData2& pierData, Float64 Xxb) const = 0;
