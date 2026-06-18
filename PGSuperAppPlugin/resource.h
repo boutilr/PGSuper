@@ -1067,6 +1067,7 @@
 #define IDC_LEFT_MOD_E                  1749
 #define IDC_FC1                         1749
 #define IDC_H3                          1749
+#define IDC_R                           1749
 #define IDC_FC2                         1750
 #define IDS_E_INVALIDVERSION            1750
 #define IDC_H4                          1750
@@ -1156,7 +1157,9 @@
 #define IDC_H2_LABEL                    1814
 #define IDC_H2_UNIT                     1815
 #define IDC_H3_LABEL                    1816
+#define IDC_R_LABEL                     1816
 #define IDC_H3_UNIT                     1817
+#define IDC_R_UNIT                      1817
 #define IDC_H4_LABEL                    1818
 #define IDC_H4_UNIT                     1819
 #define IDC_X1_LABEL                    1820
