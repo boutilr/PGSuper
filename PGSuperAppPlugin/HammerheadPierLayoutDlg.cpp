@@ -34,6 +34,7 @@
 // the other location.
 
 #include "stdafx.h"
+#include "PierLayoutPage.h"
 #include "HammerheadPierLayoutDlg.h"
 #include <EAF\EAFDisplayUnits.h>
 #include <IFace\Project.h>
@@ -367,5 +368,10 @@ void CHammerheadPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& p
 void CHammerheadPierLayoutDlg::SetPierData(const CPierData2& pierData)
 {
     m_Pier = pierData;
+}
+
+const CPierData2* CHammerheadPierLayoutDlg::GetPierData() const
+{
+    return &m_Pier;
 }
 

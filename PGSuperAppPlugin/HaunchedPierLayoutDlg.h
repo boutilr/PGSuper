@@ -23,27 +23,27 @@
 #pragma once
 #include "resource.h"
 #include <PsgLib\PierData2.h>
-#include <PsgLib\ColumnData.h>
+#include "ColumnLayoutGrid.h"
 #include <PgsExt\ColumnFixityComboBox.h>
 #include "DrawPierLayoutControl.h"
 
 
-// HammerheadPierLayoutDlg.h : header file
+// CommonPierLayoutDlg.h : header file
 //
 
 /////////////////////////////////////////////////////////////////////////////
-// HammerheadPierLayoutDlg dialog
+// CommonPierLayoutDlg dialog
 
 class CPierLayoutPage;
 
-class CHammerheadPierLayoutDlg : public CDialog, public IPierLayoutDataSource
+class CHaunchedPierLayoutDlg : public CDialog, public IPierLayoutDataSource
 {
 
-friend class CPierLayoutPage;
+	friend class CPierLayoutPage;
 
 // Construction
 public:
-	CHammerheadPierLayoutDlg(CWnd* pParent = nullptr);
+	CHaunchedPierLayoutDlg(CWnd* pParent = nullptr);
 
 	void SetPierModelType(const pgsTypes::PierModelType& pierModelType);
 	void SetPierData(const CPierData2& pierData);
@@ -58,9 +58,16 @@ protected:
 
 	virtual BOOL OnInitDialog() override;
 
-	afx_msg void OnColumnCountChanged(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg LRESULT OnColumnGridCellChanged(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnHeightMeasureChanged();
-	afx_msg void OnColumnShapeChanged();
+	afx_msg void OnAddColumn();
+	afx_msg void OnRemoveColumns();
+	afx_msg void OnPierLayoutChanged();
+	afx_msg void OnRefColumnChanged();
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 
 	DECLARE_MESSAGE_MAP()
 
@@ -74,10 +81,10 @@ protected:
 	CColumnFixityComboBox m_cbColumnFixity;
 	CColumnData::ColumnHeightMeasurementType m_ColumnHeightMeasurementType;
 
-	void FillRefColumnComboBox(ColumnIndexType nColumns = INVALID_INDEX);
+	void FillRefColumnComboBox(ColumnIndexType nColumns=INVALID_INDEX);
 	void FillHeightMeasureComboBox();
-	void FillColumnShapeComboBox();
 	void FillTransverseLocationComboBox();
+	void RefreshDisplay();
 
 	ColumnIndexType m_RefColumnIdx;
 	Float64 m_TransverseOffset;
@@ -89,13 +96,6 @@ protected:
 	Float64 m_XBeamEndSlopeOffset[2];
 	Float64 m_XBeamOverhang[2];
 	pgsTypes::ColumnLongitudinalBaseFixityType m_ColumnFixity;
-
-	Float64 m_ColumnHeight;
-	CColumnData::ColumnShapeType m_ColumnShapeType;
-	Float64 m_D1, m_D2;
-
-	pgsTypes::ColumnTransverseFixityType m_TransverseFixity; // fixity used for pier analysis
-
 };
 
 
