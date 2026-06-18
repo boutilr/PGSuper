@@ -33,6 +33,7 @@
 #include <PsgLib\PierData2.h>
 #include "CommonPierLayoutDlg.h"
 #include "HammerheadPierLayoutDlg.h"
+#include "HaunchedPierLayoutDlg.h"
 #include <WBFLGenericBridge.h>
 
 /////////////////////////////////////////////////////////////////////////////
@@ -40,6 +41,8 @@
 class CPierLayoutPage : public CPropertyPage
 {
 	friend class CCommonPierLayoutDlg;
+	friend class CHammerheadPierLayoutDlg;
+	friend class CHaunchedPierLayoutDlg;
 
 	DECLARE_DYNCREATE(CPierLayoutPage)
 
@@ -107,9 +110,11 @@ protected:
    // Embedded dialogs
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;
    CHammerheadPierLayoutDlg m_HammerheadPierLayoutDlg;
+   CHaunchedPierLayoutDlg m_HaunchedPierLayoutDlg;
 
    bool CommitCommonPierLayout();
    bool CommitHammerheadPierLayout();
+   bool CommitHaunchedPierLayout();
 
    BOOL OnKillActive();
 
