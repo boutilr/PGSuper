@@ -130,6 +130,40 @@ bool CPierLayoutPage::CommitCommonPierLayout()
     return true;
 }
 
+bool CPierLayoutPage::CommitHaunchedPierLayout()
+{
+
+    if (!m_HaunchedPierLayoutDlg.UpdateData(TRUE))
+    {
+        return false;
+    }
+
+    m_pPier->SetTransverseOffset(m_HaunchedPierLayoutDlg.m_RefColumnIdx, 
+    m_HaunchedPierLayoutDlg.m_TransverseOffset, m_HaunchedPierLayoutDlg.m_TransverseOffsetMeasurement);
+    m_pPier->SetXBeamWidth(m_HaunchedPierLayoutDlg.m_XBeamWidth);
+
+    for (int i = 0; i < 2; i++)
+    {
+        pgsTypes::SideType side = (pgsTypes::SideType)i;
+        m_pPier->SetXBeamDimensions(side, m_HaunchedPierLayoutDlg.m_XBeamHeight[side], m_HaunchedPierLayoutDlg.m_XBeamTaperHeight[side],
+        m_HaunchedPierLayoutDlg.m_XBeamTaperLength[side], m_HaunchedPierLayoutDlg.m_XBeamEndSlopeOffset[side]);
+        m_pPier->SetXBeamOverhang(side, m_HaunchedPierLayoutDlg.m_XBeamOverhang[side]);
+    }
+
+    m_pPier->SetColumnFixity(m_HaunchedPierLayoutDlg.m_ColumnFixity);
+    m_HaunchedPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
+
+    ColumnIndexType nColumns = m_pPier->GetColumnCount();
+    for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        CColumnData column = m_pPier->GetColumnData(colIdx);
+        column.SetColumnHeightMeasurementType(m_HaunchedPierLayoutDlg.m_ColumnHeightMeasurementType);
+        m_pPier->SetColumnData(colIdx, column);
+    }
+
+    return true;
+}
+
 bool CPierLayoutPage::CommitHammerheadPierLayout()
 {
 
@@ -212,6 +246,13 @@ BOOL CPierLayoutPage::OnApply()
                 return FALSE;
             }
         }
+        else if (m_PierLayoutType == pgsTypes::pltHaunched)
+        {
+            if (!CommitHaunchedPierLayout())
+            {
+                return FALSE;
+            }
+        }
     }
 
     SetModified(FALSE);
@@ -260,6 +301,10 @@ BOOL CPierLayoutPage::OnInitDialog()
     VERIFY(m_HammerheadPierLayoutDlg.Create(IDD_PIER_LAYOUT_HAMMERHEAD, this));
     VERIFY(m_HammerheadPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
 
+    m_HaunchedPierLayoutDlg.SetPierModelType(m_PierModelType);
+    m_HaunchedPierLayoutDlg.SetPierData(*m_pPier);
+    VERIFY(m_HaunchedPierLayoutDlg.Create(IDD_PIER_LAYOUT_HAUNCHED, this));
+    VERIFY(m_HaunchedPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
 
     CPropertyPage::OnInitDialog();
 
@@ -489,7 +534,8 @@ void CPierLayoutPage::OnPierModelTypeChanged()
 
         bool bIsEmbeddedPierDlg =
             (pWnd->GetSafeHwnd() == m_CommonPierLayoutDlg.GetSafeHwnd()) ||
-            (pWnd->GetSafeHwnd() == m_HammerheadPierLayoutDlg.GetSafeHwnd());
+            (pWnd->GetSafeHwnd() == m_HammerheadPierLayoutDlg.GetSafeHwnd()) ||
+            (pWnd->GetSafeHwnd() == m_HaunchedPierLayoutDlg.GetSafeHwnd());
 
         if (!bIsEmbeddedPierDlg &&
             nID != IDC_PIER_MODEL_LABEL &&
@@ -517,6 +563,7 @@ void CPierLayoutPage::OnPierModelTypeChanged()
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
         m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
+        m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
     }
 
     SetModified(TRUE);
@@ -533,7 +580,7 @@ void CPierLayoutPage::OnPierLayoutTypeChanged()
     SwapDialogs();
 }
 
-void CPierLayoutPage::SwapDialogs()
+void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
 {
     if (m_PierModelType == pgsTypes::pmtPhysical)
     {
@@ -541,17 +588,25 @@ void CPierLayoutPage::SwapDialogs()
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_SHOW);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
         }
         else if (m_PierLayoutType == pgsTypes::pltHammerhead)
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_SHOW);
-            //m_HammerheadPierLayoutDlg.UpdateData(TRUE);
+            m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
+        }
+        else if (m_PierLayoutType == pgsTypes::pltHaunched)
+        {
+            m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_HaunchedPierLayoutDlg.ShowWindow(SW_SHOW);
         }
         else
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
         }
 
     }
@@ -580,21 +635,60 @@ void CPierLayoutPage::RefreshPierLayoutPopout()
 
 void CPierLayoutPage::ShowPierLayoutPopout()
 {
-    if (m_pPierLayoutPopout == nullptr ||
-        !::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
+    // Select the correct data source based on current model/layout
+    IPierLayoutDataSource* pSource = nullptr;
+
+    if (m_PierModelType == pgsTypes::pmtPhysical)
+    {
+        switch (m_PierLayoutType)
+        {
+        case pgsTypes::pltCommon:
+            pSource = &m_CommonPierLayoutDlg;
+            break;
+        case pgsTypes::pltHammerhead:
+            pSource = &m_HammerheadPierLayoutDlg;
+            break;
+        case pgsTypes::pltHaunched:
+            pSource = &m_HaunchedPierLayoutDlg;
+            break;
+        default:
+            // No popout for custom/unknown layouts
+            pSource = nullptr;
+            break;
+        }
+    }
+    else
+    {
+        // Idealized model has no physical layout to draw
+        pSource = nullptr;
+    }
+
+    if (pSource == nullptr)
+    {
+        // nothing to show
+        return;
+    }
+
+    // If popout doesn't exist, create it with the chosen source.
+    if (m_pPierLayoutPopout == nullptr || !::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
     {
         m_pPierLayoutPopout = new CDrawPierLayoutControl();
-
-        if (!m_pPierLayoutPopout->CreatePopout(&m_CommonPierLayoutDlg, this))
+        if (!m_pPierLayoutPopout->CreatePopout(pSource, this))
         {
             delete m_pPierLayoutPopout;
             m_pPierLayoutPopout = nullptr;
             return;
         }
     }
+    else
+    {
+        // Popout already exists — re-bind to the new data source.
+        m_pPierLayoutPopout->CustomInit(pSource);
+    }
 
+    // Show and refresh
     m_pPierLayoutPopout->ShowWindow(SW_SHOW);
-	m_pPierLayoutPopout->UpdateDisplayObjects();
+    m_pPierLayoutPopout->UpdateDisplayObjects();
     m_pPierLayoutPopout->ResetExtents();
     m_pPierLayoutPopout->Invalidate();
     m_pPierLayoutPopout->UpdateWindow();
@@ -603,18 +697,48 @@ void CPierLayoutPage::ShowPierLayoutPopout()
 
 void CPierLayoutPage::OnLayoutGraphicChanged()
 {
+    // Determine the active embedded dialog (data source) based on current model/layout
+    CDialog* pActiveDlg = nullptr;
+    if (m_PierModelType == pgsTypes::pmtPhysical)
+    {
+        switch (m_PierLayoutType)
+        {
+        case pgsTypes::pltCommon:
+            pActiveDlg = &m_CommonPierLayoutDlg;
+            break;
+        case pgsTypes::pltHammerhead:
+            pActiveDlg = &m_HammerheadPierLayoutDlg;
+            break;
+        case pgsTypes::pltHaunched:
+            pActiveDlg = &m_HaunchedPierLayoutDlg;
+            break;
+        default:
+            pActiveDlg = nullptr;
+            break;
+        }
+    }
+
+    // If there is no valid active dialog, nothing to do.
+    if (pActiveDlg == nullptr || !::IsWindow(pActiveDlg->GetSafeHwnd()))
+    {
+        return;
+    }
+
     if (m_bShowGuide)
     {
-        // SWITCH TO LIVE VIEW
-
+        // SWITCH TO LIVE VIEW (use popout)
         GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_SHOW);
         SetDlgItemText(IDC_LAYOUT_GRAPHIC, _T("Hide Live"));
 
-        m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_SHOW);
+        // hide the guide graphic inside the active dialog
+        if (CWnd* pGuide = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT_GUIDE))
+            pGuide->ShowWindow(SW_HIDE);
 
-        // Hide embedded control
-        m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT)->ShowWindow(SW_HIDE);
+        // hide the embedded control in the dialog (we use the popout for live)
+        if (CWnd* pEmbedded = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT))
+            pEmbedded->ShowWindow(SW_HIDE);
 
+        // Create / show a popout bound to the currently active dialog's data source
         ShowPierLayoutPopout();
 
         m_bShowGuide = false;
@@ -622,12 +746,18 @@ void CPierLayoutPage::OnLayoutGraphicChanged()
     else
     {
         // SWITCH TO GUIDE
-
         GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_HIDE);
         SetDlgItemText(IDC_LAYOUT_GRAPHIC, _T("Live View"));
 
-        m_CommonPierLayoutDlg.GetDlgItem(IDC_PIER_LAYOUT_GUIDE)->ShowWindow(SW_SHOW);
+        // show the guide graphic inside the active dialog
+        if (CWnd* pGuide = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT_GUIDE))
+            pGuide->ShowWindow(SW_SHOW);
 
+        // hide or collapse the embedded live control to avoid duplicate drawing
+        if (CWnd* pEmbedded = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT))
+            pEmbedded->ShowWindow(SW_HIDE);
+
+        // hide the popout if present
         if (m_pPierLayoutPopout &&
             ::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
         {
