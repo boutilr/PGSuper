@@ -141,6 +141,7 @@ bool CPierLayoutPage::CommitHaunchedPierLayout()
     m_pPier->SetTransverseOffset(m_HaunchedPierLayoutDlg.m_RefColumnIdx, 
     m_HaunchedPierLayoutDlg.m_TransverseOffset, m_HaunchedPierLayoutDlg.m_TransverseOffsetMeasurement);
     m_pPier->SetXBeamWidth(m_HaunchedPierLayoutDlg.m_XBeamWidth);
+    m_pPier->SetXBeamRadius(m_HaunchedPierLayoutDlg.m_XBeamRadius);
 
     for (int i = 0; i < 2; i++)
     {
