@@ -280,7 +280,6 @@ void CHaunchedPierLayoutDlg::RefreshDisplay()
 {
     // Invalidate and update the drawing control to reflect the changes
     m_ctrlDrawXBeam.UpdateDisplayObjects();
-    m_ctrlDrawXBeam.ResetExtents();
     m_ctrlDrawXBeam.Invalidate();
     m_ctrlDrawXBeam.UpdateWindow();
 

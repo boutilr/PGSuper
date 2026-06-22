@@ -625,7 +625,6 @@ void CPierLayoutPage::RefreshPierLayoutPopout()
         ::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
     {
         m_pPierLayoutPopout->UpdateDisplayObjects();
-        m_pPierLayoutPopout->ResetExtents();
         m_pPierLayoutPopout->Invalidate();
 		m_pPierLayoutPopout->UpdateWindow();
     }
@@ -690,7 +689,6 @@ void CPierLayoutPage::ShowPierLayoutPopout()
     // Show and refresh
     m_pPierLayoutPopout->ShowWindow(SW_SHOW);
     m_pPierLayoutPopout->UpdateDisplayObjects();
-    m_pPierLayoutPopout->ResetExtents();
     m_pPierLayoutPopout->Invalidate();
     m_pPierLayoutPopout->UpdateWindow();
 }
