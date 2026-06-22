@@ -87,6 +87,7 @@ CPierData2::CPierData2()
    m_XBeamOverhang[pgsTypes::stLeft]  = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
    m_XBeamOverhang[pgsTypes::stRight] = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
    m_XBeamWidth = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
+   m_XBeamRadius = WBFL::Units::ConvertToSysUnits(25,WBFL::Units::Measure::Feet);
 
    m_ColumnFixity = pgsTypes::cftFixed;
    CColumnData defaultColumn(this);
@@ -352,6 +353,11 @@ bool CPierData2::operator==(const CPierData2& rOther) const
          return false;
       }
 
+      if ( !IsEqual(m_XBeamRadius,rOther.m_XBeamRadius) )
+      {
+         return false;
+      }
+
       pgsTypes::PierFaceType face = (pgsTypes::PierFaceType)i;
 
       if ( !IsEqual(m_GirderEndDistance[face], rOther.m_GirderEndDistance[face]) )
@@ -536,7 +542,7 @@ HRESULT CPierData2::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress>
 
    // Make sure outside changes to the bridge haven't made our data out of sync
    ProtectBearingData();
-   pStrSave->BeginUnit(_T("PierDataDetails"),22.0);
+   pStrSave->BeginUnit(_T("PierDataDetails"),23.0);
    
    pStrSave->put_Property(_T("ID"),CComVariant(m_PierID));
 
@@ -581,6 +587,7 @@ HRESULT CPierData2::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress>
       pStrSave->put_Property(_T("XBeamOverhang_Left"),CComVariant(m_XBeamOverhang[pgsTypes::stLeft]));
       pStrSave->put_Property(_T("XBeamOverhang_Right"),CComVariant(m_XBeamOverhang[pgsTypes::stRight]));
       pStrSave->put_Property(_T("XBeamWidth"),CComVariant(m_XBeamWidth));
+      pStrSave->put_Property(_T("XBeamRadius"),CComVariant(m_XBeamRadius));  // added in version 23
 
       pStrSave->put_Property(_T("ColumnFixity"),CComVariant(m_ColumnFixity)); // added version 16
 
@@ -955,6 +962,12 @@ HRESULT CPierData2::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress>
 
             hr = pStrLoad->get_Property(_T("XBeamWidth"),&var);
             m_XBeamWidth = var.dblVal;
+
+			if (22 < version)
+            {
+                hr = pStrLoad->get_Property(_T("XBeamRadius"), &var);
+                m_XBeamRadius = var.dblVal;
+            }
 
             if ( 15 < version )
             {
@@ -1468,6 +1481,7 @@ void CPierData2::MakeCopy(const CPierData2& rOther,bool bCopyDataOnly)
 
    m_Concrete = rOther.m_Concrete;
    m_XBeamWidth = rOther.m_XBeamWidth;
+   m_XBeamRadius = rOther.m_XBeamRadius;
 
    for ( int i = 0; i < 2; i++ )
    {
@@ -2235,6 +2249,16 @@ void CPierData2::SetXBeamWidth(Float64 width)
 Float64 CPierData2::GetXBeamWidth() const
 {
    return m_XBeamWidth;
+}
+
+void CPierData2::SetXBeamRadius(Float64 radius)
+{
+   m_XBeamRadius = radius;
+}
+
+Float64 CPierData2::GetXBeamRadius() const
+{
+   return m_XBeamRadius;
 }
 
 void CPierData2::SetXBeamOverhang(pgsTypes::SideType side,Float64 overhang)
