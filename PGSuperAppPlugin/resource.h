@@ -325,6 +325,7 @@
 #define IDD_PIER_LAYOUT_HAUNCHED        1119
 #define IDC_LIFTING_TAG                 1120
 #define IDC_HPOFFSET_HP1_UNIT           1120
+#define IDD_PIER_LAYOUT_CUSTOM          1120
 #define IDC_NUM_SS                      1121
 #define IDC_BEFORE_TEMP_STRAND_REMOVAL_TAG 1121
 #define IDC_NUM_SS_SPIN                 1122
