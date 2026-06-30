@@ -34,6 +34,7 @@
 #include "CommonPierLayoutDlg.h"
 #include "HammerheadPierLayoutDlg.h"
 #include "HaunchedPierLayoutDlg.h"
+#include "CustomPierLayoutDlg.h"
 #include <WBFLGenericBridge.h>
 
 /////////////////////////////////////////////////////////////////////////////
@@ -43,6 +44,7 @@ class CPierLayoutPage : public CPropertyPage
 	friend class CCommonPierLayoutDlg;
 	friend class CHammerheadPierLayoutDlg;
 	friend class CHaunchedPierLayoutDlg;
+	friend class CCustomPierLayoutDlg;
 
 	DECLARE_DYNCREATE(CPierLayoutPage)
 
@@ -111,10 +113,12 @@ protected:
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;
    CHammerheadPierLayoutDlg m_HammerheadPierLayoutDlg;
    CHaunchedPierLayoutDlg m_HaunchedPierLayoutDlg;
+   CCustomPierLayoutDlg m_CustomPierLayoutDlg;
 
    bool CommitCommonPierLayout();
    bool CommitHammerheadPierLayout();
    bool CommitHaunchedPierLayout();
+   bool CommitCustomPierLayout();
 
    BOOL OnKillActive();
 
