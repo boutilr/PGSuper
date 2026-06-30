@@ -46,7 +46,7 @@ public:
 	CHaunchedPierLayoutDlg(CWnd* pParent = nullptr);
 
 	void SetPierModelType(const pgsTypes::PierModelType& pierModelType);
-	void SetPierData(const CPierData2& pierData);
+	void SetPierData(const CPierData2& pierData) override;
 
 	// IPierLayoutDataSource implementation
 	const CPierData2* GetPierData() const override;

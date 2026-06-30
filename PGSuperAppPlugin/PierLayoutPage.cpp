@@ -292,6 +292,8 @@ BOOL CPierLayoutPage::OnInitDialog()
     pBox->GetWindowRect(&boxRect);
     ScreenToClient(boxRect);
 
+    m_pPier->SetPierLayoutType(m_PierLayoutType);
+
     m_CommonPierLayoutDlg.SetPierModelType(m_PierModelType);
     m_CommonPierLayoutDlg.SetPierData(*m_pPier);
     VERIFY(m_CommonPierLayoutDlg.Create(IDD_PIER_LAYOUT_COMMON, this));
@@ -317,8 +319,8 @@ BOOL CPierLayoutPage::OnInitDialog()
     OnUserEc();
 
     OnPierModelTypeChanged();
-    OnPierLayoutTypeChanged();
-    OnLayoutGraphicChanged();
+    //OnPierLayoutTypeChanged();
+    //OnLayoutGraphicChanged();
 
 
     return TRUE;  // return TRUE unless you set the focus to a control
@@ -579,6 +581,7 @@ void CPierLayoutPage::OnPierLayoutTypeChanged()
     m_PierLayoutType = (pgsTypes::PierLayoutType)pcbPierModel->GetItemData(curSel);
 
     SwapDialogs();
+    OnLayoutGraphicChanged();
 }
 
 void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
@@ -611,6 +614,7 @@ void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
         }
 
     }
+
 }
 
 LRESULT CPierLayoutPage::OnPierLayoutChanged(WPARAM, LPARAM)
