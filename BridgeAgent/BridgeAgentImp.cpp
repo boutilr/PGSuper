@@ -12882,64 +12882,239 @@ void CBridgeAgentImp::GetLowerXBeamProfile(const CPierData2& pierData, IPoint2dC
         LXBProfile.CopyTo(ppPoints);
 }
 
-void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData, IPoint2dCollection** ppPoints) const
+void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
+    IPoint2dCollection** ppPoints) const
 {
+    // Get top profile of lower cross beam
+    CComPtr<IPoint2dCollection> lxbProfile;
+    GetLowerXBeamProfile(pierData, &lxbProfile);
 
-        // get top profile of lower cross beam
-        CComPtr<IPoint2dCollection> lxbProfile;
-        GetLowerXBeamProfile(pierData, &lxbProfile);
+    CComPtr<IPoint2d> lxbTL;
+    lxbProfile->get_Item(0, &lxbTL);
 
-        // get the top left point
-        CComPtr<IPoint2d> lxbTL;
-        lxbProfile->get_Item(0, &lxbTL);
+    IndexType nPoints;
+    lxbProfile->get_Count(&nPoints);
 
-        IndexType nPoints;
-        lxbProfile->get_Count(&nPoints);
-        CComPtr<IPoint2d> lxbTR;
-        lxbProfile->get_Item(nPoints - 1, &lxbTR);
+    CComPtr<IPoint2d> lxbTR;
+    lxbProfile->get_Item(nPoints - 1, &lxbTR);
 
-        Float64 Xl, Yl;
-        lxbTL->Location(&Xl, &Yl);
+    Float64 Xl, Yl;
+    lxbTL->Location(&Xl, &Yl);
 
-        Float64 Xr, Yr;
-        lxbTR->Location(&Xr, &Yr);
+    Float64 Xr, Yr;
+    lxbTR->Location(&Xr, &Yr);
 
-        Float64 H1, H2, H3, H4;
-        Float64 X1, X2, X3, X4;
+    Float64 H1, H2, H3, H4;
+    Float64 X1, X2, X3, X4;
 
-        pierData.GetXBeamDimensions(
-            pgsTypes::stLeft,
-            &H1, &H2, &X1, &X2);
+    pierData.GetXBeamDimensions(
+        pgsTypes::stLeft,
+        &H1, &H2, &X1, &X2);
 
-        pierData.GetXBeamDimensions(
-            pgsTypes::stRight,
-            &H3, &H4, &X3, &X4);
+    pierData.GetXBeamDimensions(
+        pgsTypes::stRight,
+        &H3, &H4, &X3, &X4);
 
-        // interpolation parameters for depth of lower xbeam between tapers
-        Float64 Xs = Xl;
-        Float64 dX = Xr - Xl;
-        Float64 dyL = H1 + H2;
-        Float64 dyR = H3 + H4;
+    // Interpolation parameters for depth of lower xbeam between tapers
+    Float64 Xs = Xl;
+    Float64 dX = Xr - Xl;
+    Float64 dyL = H1 + H2;
+    Float64 dyR = H3 + H4;
 
-        // horizontal location of left/right tapers
-        Float64 Xlt = Xl + X1;
-        Float64 Xrt = Xr - X3;
+    // Horizontal location of left/right tapers
+    Float64 Xlt = Xl + X1;
+    Float64 Xrt = Xr - X3;
 
-        Xlt = IsZero(Xlt) ? 0 : Xlt;
-        Xrt = IsZero(Xrt) ? 0 : Xrt;
+    Xlt = IsZero(Xlt) ? 0 : Xlt;
+    Xrt = IsZero(Xrt) ? 0 : Xrt;
 
-        // horizontal location of left/right end points of bottom of xbeam
-        Xl += X2;
-        Xr -= X4;
+    // Horizontal location of left/right end points of bottom of xbeam
+    Xl += X2;
+    Xr -= X4;
 
-        CComPtr<IPoint2dCollection> BXBProfile;
-        BXBProfile.CoCreateInstance(CLSID_Point2dCollection);
-        for (IndexType idx = nPoints - 1; 0 <= idx && idx != INVALID_INDEX; idx--)
+    CComPtr<IPoint2dCollection> BXBProfile;
+    BXBProfile.CoCreateInstance(CLSID_Point2dCollection);
+
+    if (pierData.GetPierLayoutType() == pgsTypes::pltHaunched)
+    {
+        const Float64 R = pierData.GetXBeamRadius();
+        constexpr IndexType nSegs = 24;
+
+        auto AddPoint = [&](Float64 x, Float64 y)
+            {
+                CComPtr<IPoint2d> p;
+                p.CoCreateInstance(CLSID_Point2d);
+                p->Move(x, y);
+                BXBProfile->Add(p);
+            };
+
+        auto LowerTopY = [&](Float64 x) -> Float64
+            {
+                for (IndexType idx = 1; idx < nPoints; ++idx)
+                {
+                    CComPtr<IPoint2d> p0;
+                    CComPtr<IPoint2d> p1;
+
+                    lxbProfile->get_Item(idx - 1, &p0);
+                    lxbProfile->get_Item(idx, &p1);
+
+                    Float64 x0, y0;
+                    Float64 x1, y1;
+
+                    p0->Location(&x0, &y0);
+                    p1->Location(&x1, &y1);
+
+                    if (InRange(x0, x, x1))
+                        return ::LinInterp(x - x0, y0, y1, x1 - x0);
+                }
+
+                if (x <= Xs)
+                    return Yl;
+
+                return Yr;
+            };
+
+        auto LowerDepth = [&](Float64 x) -> Float64
+            {
+                return ::LinInterp(x - Xs, dyL, dyR, dX);
+            };
+
+        auto AddCircularHaunchBay =
+            [&](Float64 x0Full,
+                Float64 x1Full,
+                Float64 xClip0,
+                Float64 xClip1,
+                bool skipFirst)
+            {
+                if (x1Full <= x0Full || xClip1 <= xClip0 || R <= 0.0)
+                    return;
+
+                const Float64 L = x1Full - x0Full;
+                const Float64 xMid = 0.5 * (x0Full + x1Full);
+
+                // Constant-radius arc. If the bay is wider than the diameter,
+                // the arc occupies only 2R at the middle and the rest is straight.
+                const Float64 halfArcLen = min(0.5 * L, R);
+
+                const Float64 xArc0 = xMid - halfArcLen;
+                const Float64 xArc1 = xMid + halfArcLen;
+
+                auto CircularRise = [&](Float64 x) -> Float64
+                    {
+                        if (x < xArc0 || x > xArc1)
+                            return 0.0;
+
+                        const Float64 dx = x - xMid;
+
+                        const Float64 yAtEnd =
+                            std::sqrt(max(0.0, R * R - halfArcLen * halfArcLen));
+
+                        const Float64 yAtX =
+                            std::sqrt(max(0.0, R * R - dx * dx));
+
+                        return yAtX - yAtEnd;
+                    };
+
+                for (IndexType i = 0; i <= nSegs; ++i)
+                {
+                    if (skipFirst && i == 0)
+                        continue;
+
+                    const Float64 u = static_cast<Float64>(i) / nSegs;
+                    const Float64 x = xClip0 + u * (xClip1 - xClip0);
+
+                    const Float64 y =
+                        LowerTopY(x) -
+                        LowerDepth(x) +
+                        CircularRise(x);
+
+                    AddPoint(x, y);
+                }
+            };
+
+        std::vector<Float64> colStations;
+
+        const IndexType nCols = pierData.GetColumnCount();
+
+        for (IndexType colIdx = 0; colIdx < nCols; ++colIdx)
+        {
+            Float64 xCol = GetColumnLocation(pierData, colIdx);
+            Float64 xPierCol =
+                ConvertCrossBeamToPierCoordinate(pierData, xCol);
+
+            colStations.push_back(xPierCol);
+        }
+
+        std::sort(colStations.begin(), colStations.end());
+
+        colStations.erase(
+            std::unique(
+                colStations.begin(),
+                colStations.end(),
+                [](Float64 a, Float64 b)
+                {
+                    return std::fabs(a - b) < 1.0e-8;
+                }),
+            colStations.end());
+
+        if (colStations.size() >= 2)
+        {
+            const Float64 leftSpacing =
+                colStations[1] - colStations[0];
+
+            const Float64 rightSpacing =
+                colStations[colStations.size() - 1] -
+                colStations[colStations.size() - 2];
+
+            std::vector<Float64> fullStations;
+
+            fullStations.push_back(colStations.front() - leftSpacing);
+
+            for (Float64 xCol : colStations)
+                fullStations.push_back(xCol);
+
+            fullStations.push_back(colStations.back() + rightSpacing);
+
+            bool firstPoint = true;
+
+            for (size_t i = 1; i < fullStations.size(); ++i)
+            {
+                const Float64 x0Full = fullStations[i - 1];
+                const Float64 x1Full = fullStations[i];
+
+                const Float64 xClip0 = max(x0Full, Xlt);
+                const Float64 xClip1 = min(x1Full, Xrt);
+
+                if (xClip1 > xClip0)
+                {
+                    AddCircularHaunchBay(
+                        x0Full,
+                        x1Full,
+                        xClip0,
+                        xClip1,
+                        !firstPoint);
+
+                    firstPoint = false;
+                }
+            }
+        }
+        else
+        {
+            AddCircularHaunchBay(Xlt, Xrt, Xlt, Xrt, false);
+        }
+    }
+    else
+    {
+        for (IndexType idx = nPoints - 1;
+            0 <= idx && idx != INVALID_INDEX;
+            idx--)
         {
             CComPtr<IPoint2d> pnt;
             lxbProfile->get_Item(idx, &pnt);
+
             Float64 X;
             pnt->get_X(&X);
+
             if (InRange(Xlt, X, Xrt))
             {
                 // X is between tapers
@@ -12951,59 +13126,52 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData, IPoint2d
                 pntBXB->Offset(0, -dy);
                 BXBProfile->Insert(0, pntBXB);
             }
+
+            if (idx == 0)
+                break;
         }
+    }
 
-        Float64 Xltcl = ConvertPierToCurbLineCoordinate(pierData, Xlt);
-        Float64 Xrtcl = ConvertPierToCurbLineCoordinate(pierData, Xrt);
+    CComPtr<IPoint2d> bxbL;
+    bxbL.CoCreateInstance(CLSID_Point2d);
+    bxbL->Move(Xl, Yl - H1);
+    BXBProfile->Insert(0, bxbL);
 
-        // get deck elevations
-        Float64 Ylt = GetElevation(pierData, Xltcl);
-        Float64 Yrt = GetElevation(pierData, Xrtcl);
+    if (!IsZero(H2) && !IsZero(X1))
+    {
+        // There is a taper on the left side
+        CComPtr<IPoint2d> bxbLT;
+        bxbLT.CoCreateInstance(CLSID_Point2d);
 
-		Float64 tDeck = GetDeckThickness();
+        Float64 y;
+        bxbL->get_Y(&y);
 
-        Ylt -= tDeck;
-        Yrt -= tDeck;
+        bxbLT->Move(Xlt, y - H2);
+        BXBProfile->Insert(1, bxbLT);
+    }
 
-        CComPtr<IPoint2d> bxbL;
-        bxbL.CoCreateInstance(CLSID_Point2d);
-        bxbL->Move(Xl, Yl - H1);
-        BXBProfile->Insert(0, bxbL);
+    if (!IsZero(H4) && !IsZero(X3))
+    {
+        // There is a taper on the right side
+        CComPtr<IPoint2d> bxbRT;
+        bxbRT.CoCreateInstance(CLSID_Point2d);
 
-        if (!IsZero(H2) && !IsZero(X1))
-        {
-            // there is a taper on the left side
-            CComPtr<IPoint2d> bxbLT;
-            bxbLT.CoCreateInstance(CLSID_Point2d);
+        Float64 y = Yr - H3 - H4;
 
-            Float64 y;
-            bxbL->get_Y(&y);
+        bxbRT->Move(Xrt, y);
+        BXBProfile->Add(bxbRT);
+    }
 
-            bxbLT->Move(Xlt, y - H2);
-            BXBProfile->Insert(1, bxbLT);
-        }
+    CComPtr<IPoint2d> bxbR;
+    bxbR.CoCreateInstance(CLSID_Point2d);
+    bxbR->Move(Xr, Yr - H3);
+    BXBProfile->Add(bxbR);
 
-        if (!IsZero(H4) && !IsZero(X3))
-        {
-            // there is a taper on the right side
-            CComPtr<IPoint2d> bxbRT;
-            bxbRT.CoCreateInstance(CLSID_Point2d);
+    BXBProfile->RemoveDuplicatePoints();
 
-            Float64 y = Yr - H3 - H4; // this is bxbR->Y - m_H4
-
-            bxbRT->Move(Xrt, y);
-            BXBProfile->Add(bxbRT);
-        }
-
-        CComPtr<IPoint2d> bxbR;
-        bxbR.CoCreateInstance(CLSID_Point2d);
-        bxbR->Move(Xr, Yr - H3);
-        BXBProfile->Add(bxbR);
-
-        BXBProfile->RemoveDuplicatePoints();
-
-        BXBProfile.CopyTo(ppPoints); 
+    BXBProfile.CopyTo(ppPoints);
 }
+
 
 void CBridgeAgentImp::GetXBeamProfile(const CPierData2& pierData, pgsTypes::Stage stageIdx, IShape** ppShape) const
 {
