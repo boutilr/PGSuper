@@ -416,6 +416,7 @@ void CCommonPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierM
 void CCommonPierLayoutDlg::SetPierData(const CPierData2& pierData)
 {
     m_Pier = pierData;
+    m_Pier.SetPierLayoutType(pgsTypes::pltCommon);
 }
 
 const CPierData2* CCommonPierLayoutDlg::GetPierData() const

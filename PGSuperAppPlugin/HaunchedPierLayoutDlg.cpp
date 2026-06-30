@@ -389,6 +389,7 @@ void CHaunchedPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pie
 void CHaunchedPierLayoutDlg::SetPierData(const CPierData2& pierData)
 {
     m_Pier = pierData;
+    m_Pier.SetPierLayoutType(pgsTypes::pltHaunched);
 }
 
 const CPierData2* CHaunchedPierLayoutDlg::GetPierData() const
@@ -492,10 +493,6 @@ void CHaunchedPierLayoutDlg::OnPierLayoutChanged()
             spacingSum += m_Pier.GetColumnSpacing(spaIdx);
         }
     }
-
-
-
-
 
     RefreshDisplay();
 }
