@@ -723,34 +723,11 @@ void CPierLayoutPage::OnLayoutGraphicChanged()
         return;
     }
 
-    if (m_bShowGuide)
-    {
-        // SWITCH TO LIVE VIEW (use popout)
-        GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_SHOW);
-        SetDlgItemText(IDC_LAYOUT_GRAPHIC, _T("Hide Live"));
-
-        // hide the guide graphic inside the active dialog
-        if (CWnd* pGuide = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT_GUIDE))
-            pGuide->ShowWindow(SW_HIDE);
-
-        // hide the embedded control in the dialog (we use the popout for live)
-        if (CWnd* pEmbedded = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT))
-            pEmbedded->ShowWindow(SW_HIDE);
-
-        // Create / show a popout bound to the currently active dialog's data source
-        ShowPierLayoutPopout();
-
-        m_bShowGuide = false;
-    }
-    else
+    if (m_bShowLive)
     {
         // SWITCH TO GUIDE
         GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_HIDE);
         SetDlgItemText(IDC_LAYOUT_GRAPHIC, _T("Live View"));
-
-        // show the guide graphic inside the active dialog
-        if (CWnd* pGuide = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT_GUIDE))
-            pGuide->ShowWindow(SW_SHOW);
 
         // hide or collapse the embedded live control to avoid duplicate drawing
         if (CWnd* pEmbedded = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT))
@@ -763,7 +740,22 @@ void CPierLayoutPage::OnLayoutGraphicChanged()
             m_pPierLayoutPopout->ShowWindow(SW_HIDE);
         }
 
-        m_bShowGuide = true;
+        m_bShowLive = false;
+    }
+    else
+    {
+        // SWITCH TO LIVE VIEW (use popout)
+        GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_SHOW);
+        SetDlgItemText(IDC_LAYOUT_GRAPHIC, _T("Hide Live"));
+
+        // hide the embedded control in the dialog (we use the popout for live)
+        if (CWnd* pEmbedded = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT))
+            pEmbedded->ShowWindow(SW_HIDE);
+
+        // Create / show a popout bound to the currently active dialog's data source
+        ShowPierLayoutPopout();
+
+        m_bShowLive = true;
     }
 }
 
