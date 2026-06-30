@@ -220,6 +220,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClCompile Include="CopyPierPropertiesCallbacks.cpp" />
     <ClCompile Include="CopyTempSupportDlg.cpp" />
     <ClCompile Include="CopyTempSupportPropertiesCallbacks.cpp" />
+    <ClCompile Include="CustomPierLayoutDlg.cpp" />
     <ClCompile Include="DrawDeckRegionControl.cpp" />
     <ClCompile Include="DrawPierLayoutControl.cpp" />
     <ClCompile Include="EditHaunchACamberDlg.cpp" />
@@ -623,6 +624,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClInclude Include="CopyPierPropertiesCallbacks.h" />
     <ClInclude Include="CopyTempSupportDlg.h" />
     <ClInclude Include="CopyTempSupportPropertiesCallbacks.h" />
+    <ClInclude Include="CustomPierLayoutDlg.h" />
     <ClInclude Include="DrawDeckRegionControl.h" />
     <ClInclude Include="DrawPierLayoutControl.h" />
     <ClInclude Include="EditAnalysisType.h" />
