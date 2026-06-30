@@ -165,6 +165,40 @@ bool CPierLayoutPage::CommitHaunchedPierLayout()
     return true;
 }
 
+bool CPierLayoutPage::CommitCustomPierLayout()
+{
+
+    if (!m_CustomPierLayoutDlg.UpdateData(TRUE))
+    {
+        return false;
+    }
+
+    m_pPier->SetTransverseOffset(m_CustomPierLayoutDlg.m_RefColumnIdx,
+        m_CustomPierLayoutDlg.m_TransverseOffset, m_CustomPierLayoutDlg.m_TransverseOffsetMeasurement);
+    m_pPier->SetXBeamWidth(m_CustomPierLayoutDlg.m_XBeamWidth);
+
+    for (int i = 0; i < 2; i++)
+    {
+        pgsTypes::SideType side = (pgsTypes::SideType)i;
+        m_pPier->SetXBeamDimensions(side, m_CustomPierLayoutDlg.m_XBeamHeight[side], m_CustomPierLayoutDlg.m_XBeamTaperHeight[side],
+            m_CustomPierLayoutDlg.m_XBeamTaperLength[side], m_CustomPierLayoutDlg.m_XBeamEndSlopeOffset[side]);
+        m_pPier->SetXBeamOverhang(side, m_CustomPierLayoutDlg.m_XBeamOverhang[side]);
+    }
+
+    m_pPier->SetColumnFixity(m_CustomPierLayoutDlg.m_ColumnFixity);
+    m_CustomPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
+
+    ColumnIndexType nColumns = m_pPier->GetColumnCount();
+    for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        CColumnData column = m_pPier->GetColumnData(colIdx);
+        column.SetColumnHeightMeasurementType(m_CustomPierLayoutDlg.m_ColumnHeightMeasurementType);
+        m_pPier->SetColumnData(colIdx, column);
+    }
+
+    return true;
+}
+
 bool CPierLayoutPage::CommitHammerheadPierLayout()
 {
 
@@ -254,6 +288,13 @@ BOOL CPierLayoutPage::OnApply()
                 return FALSE;
             }
         }
+        else if (m_PierLayoutType == pgsTypes::pltCustom)
+        {
+            if (!CommitCustomPierLayout())
+            {
+                return FALSE;
+            }
+        }
     }
 
     SetModified(FALSE);
@@ -308,6 +349,11 @@ BOOL CPierLayoutPage::OnInitDialog()
     m_HaunchedPierLayoutDlg.SetPierData(*m_pPier);
     VERIFY(m_HaunchedPierLayoutDlg.Create(IDD_PIER_LAYOUT_HAUNCHED, this));
     VERIFY(m_HaunchedPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
+    
+    m_CustomPierLayoutDlg.SetPierModelType(m_PierModelType);
+    m_CustomPierLayoutDlg.SetPierData(*m_pPier);
+    VERIFY(m_CustomPierLayoutDlg.Create(IDD_PIER_LAYOUT_CUSTOM, this));
+    VERIFY(m_CustomPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
 
     CPropertyPage::OnInitDialog();
 
@@ -593,24 +639,35 @@ void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
             m_CommonPierLayoutDlg.ShowWindow(SW_SHOW);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_CustomPierLayoutDlg.ShowWindow(SW_HIDE);
         }
         else if (m_PierLayoutType == pgsTypes::pltHammerhead)
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_SHOW);
             m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_CustomPierLayoutDlg.ShowWindow(SW_HIDE);
         }
         else if (m_PierLayoutType == pgsTypes::pltHaunched)
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HaunchedPierLayoutDlg.ShowWindow(SW_SHOW);
+            m_CustomPierLayoutDlg.ShowWindow(SW_HIDE);
+        }
+        else if (m_PierLayoutType == pgsTypes::pltCustom)
+        {
+            m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_CustomPierLayoutDlg.ShowWindow(SW_SHOW);
         }
         else
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
             m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_CustomPierLayoutDlg.ShowWindow(SW_HIDE);
         }
 
     }
@@ -654,6 +711,9 @@ void CPierLayoutPage::ShowPierLayoutPopout()
             break;
         case pgsTypes::pltHaunched:
             pSource = &m_HaunchedPierLayoutDlg;
+            break;
+        case pgsTypes::pltCustom:
+            pSource = &m_CustomPierLayoutDlg;
             break;
         default:
             // No popout for custom/unknown layouts
@@ -714,6 +774,9 @@ void CPierLayoutPage::OnLayoutGraphicChanged()
             break;
         case pgsTypes::pltHaunched:
             pActiveDlg = &m_HaunchedPierLayoutDlg;
+            break;
+        case pgsTypes::pltCustom:
+            pActiveDlg = &m_CustomPierLayoutDlg;
             break;
         default:
             pActiveDlg = nullptr;
