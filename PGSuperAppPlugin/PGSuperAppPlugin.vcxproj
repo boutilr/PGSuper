@@ -368,6 +368,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClCompile Include="PierGirderSpacingPage.cpp" />
     <ClCompile Include="PierLayoutPage.cpp" />
     <ClCompile Include="PierLocationPage.cpp" />
+    <ClCompile Include="PierPointGrid.cpp" />
     <ClCompile Include="PluginManagerDlg.cpp" />
     <ClCompile Include="PluginPage.cpp" />
     <ClCompile Include="PointLoadDrawStrategyImpl.cpp" />
@@ -799,6 +800,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClInclude Include="PierGirderSpacingPage.h" />
     <ClInclude Include="PierLayoutPage.h" />
     <ClInclude Include="PierLocationPage.h" />
+    <ClInclude Include="PierPointGrid.h" />
     <ClInclude Include="PluginManagerDlg.h" />
     <ClInclude Include="PluginPage.h" />
     <ClInclude Include="PointLoadDrawStrategy.h" />

@@ -196,6 +196,15 @@ bool CPierLayoutPage::CommitCustomPierLayout()
         m_pPier->SetColumnData(colIdx, column);
     }
 
+    m_CustomPierLayoutDlg.m_PierPointGrid.GetPierPointData(*m_pPier);
+
+    PierPointIndexType nPierPoints = m_pPier->GetPierPointCount();
+    for (PierPointIndexType ppIdx = 0; ppIdx < nPierPoints; ppIdx++)
+    {
+        CPierPointData pierPoint = m_pPier->GetPierPointData(ppIdx);
+        m_pPier->SetPierPointData(ppIdx, pierPoint);
+    }
+
     return true;
 }
 

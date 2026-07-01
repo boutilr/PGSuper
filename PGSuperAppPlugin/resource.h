@@ -122,6 +122,9 @@
 #define IDC_COLUMN_GRID                 287
 #define IDC_ADD_COLUMN                  288
 #define IDC_REMOVE_COLUMN               289
+#define IDC_PIER_POINT_GRID             290
+#define IDC_ADD_PIERPOINT               291
+#define IDC_REMOVE_PIERPOINT            292
 #define IDR_REPORTS                     293
 #define IDR_GRAPHS                      294
 #define IDD_GIRDERLABELFORMAT           294
@@ -1333,6 +1336,7 @@
 #define IDC_DONT_WARN                   1925
 #define IDC_GCE_CHECK                   1925
 #define IDC_CHECK_FIXED_X_TRANS         1925
+#define IDC_MIRROR                      1925
 #define IDC_STRANDS_CG2                 1926
 #define IDC_SECTION_CG                  1926
 #define IDC_EDIT1                       1926
