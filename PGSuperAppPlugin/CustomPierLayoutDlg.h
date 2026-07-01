@@ -24,6 +24,7 @@
 #include "resource.h"
 #include <PsgLib\PierData2.h>
 #include "ColumnLayoutGrid.h"
+#include "PierPointGrid.h"
 #include <PgsExt\ColumnFixityComboBox.h>
 #include "DrawPierLayoutControl.h"
 
@@ -62,6 +63,8 @@ protected:
 	afx_msg void OnHeightMeasureChanged();
 	afx_msg void OnAddColumn();
 	afx_msg void OnRemoveColumns();
+	afx_msg void OnAddPierPoint();
+	afx_msg void OnRemovePierPoints();
 	afx_msg void OnPierLayoutChanged();
 	afx_msg void OnRefColumnChanged();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
@@ -78,6 +81,7 @@ protected:
 	CDrawPierLayoutControl m_ctrlDrawXBeam;
 
 	CColumnLayoutGrid m_ColumnLayoutGrid;
+	CPierPointGrid m_PierPointGrid;
 	CColumnFixityComboBox m_cbColumnFixity;
 	CColumnData::ColumnHeightMeasurementType m_ColumnHeightMeasurementType;
 

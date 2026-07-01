@@ -24,6 +24,7 @@
 #include "PsgLibLib.h"
 #include <PsgLib\GirderSpacing2.h>
 #include <PsgLib\ColumnData.h>
+#include <PsgLib\PierPointData.h>
 #include <PsgLib\ConcreteMaterial.h>
 #include <PsgLib\BearingData2.h>
 #include <psgLib/ConnectionLibraryEntry.h>
@@ -301,6 +302,21 @@ public:
    const CColumnData& GetColumnData(ColumnIndexType colIdx) const;
 
    // =================================================================================
+   // Bottom Profile Data
+   // =================================================================================
+
+   PierPointIndexType GetPierPointCount() const;
+
+   // Sets the definition of a pier point
+   void SetPierPointData(PierPointIndexType ppIdx, const CPierPointData& columnData);
+
+   void SetPierPointCount(PierPointIndexType nPierPoints);
+
+   // Returns the definition of a pier point
+   const CPierPointData& GetPierPointData(PierPointIndexType pplIdx) const;
+
+
+   // =================================================================================
    // Diaphragm
    // =================================================================================
 
@@ -388,6 +404,7 @@ private:
    pgsTypes::ColumnLongitudinalBaseFixityType m_ColumnFixity;
    std::vector<Float64> m_ColumnSpacing;
    std::vector<CColumnData> m_Columns;
+   std::vector<CPierPointData> m_PierPoints;
 
    std::array<Float64, 2> m_DiaphragmHeight;
    std::array<Float64, 2> m_DiaphragmWidth;
