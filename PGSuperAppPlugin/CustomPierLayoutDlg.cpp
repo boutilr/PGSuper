@@ -233,13 +233,18 @@ void CCustomPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 
 void CCustomPierLayoutDlg::RefreshDisplay()
 {
-    // Invalidate and update the drawing control to reflect the changes
-    m_ctrlDrawXBeam.UpdateDisplayObjects();
-    m_ctrlDrawXBeam.Invalidate();
-    m_ctrlDrawXBeam.UpdateWindow();
+    CPierLayoutPage* pPage =
+    DYNAMIC_DOWNCAST(CPierLayoutPage, GetParent());
+    if (pPage->m_pPierLayoutPopout != nullptr)
+    {
+        // Invalidate and update the drawing control to reflect the changes
+        m_ctrlDrawXBeam.UpdateDisplayObjects();
+        m_ctrlDrawXBeam.Invalidate();
+        m_ctrlDrawXBeam.UpdateWindow();
 
-    if (GetParent())
-        GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
+        if (GetParent())
+            GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
+    }
 }
 
 
@@ -350,8 +355,6 @@ void CCustomPierLayoutDlg::OnAddPierPoint()
 void CCustomPierLayoutDlg::OnRemovePierPoints()
 {
     m_PierPointGrid.RemoveSelectedPierPoints();
-
-    FillRefColumnComboBox();
 
     // Update pier data with current column data
 	const auto nPoints = m_Pier.GetPierPointCount();
