@@ -89,7 +89,7 @@ void CPierPointGrid::CustomInit()
    SetMergeCellsMode(gxnMergeDelayEval);
 
    const int num_rows = 0;
-   const int num_cols = 6;
+   const int num_cols = 2;
 
 	SetRowCount(num_rows);
 	SetColCount(num_cols);
