@@ -396,9 +396,9 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
 
     // Section Cut
     Float64 Lxb = pPier->GetXBeamLength();
-    Lxb = pBridge->ConvertCrossBeamToPierCoordinate(pierIdx, Lxb);
+    Lxb = pBridge->ConvertCrossBeamToPierCoordinate(*pPier, Lxb);
 
-    Float64 XxbCut = pBridge->ConvertPierToCrossBeamCoordinate(pierIdx, m_pCutLoc->GetCurrentCutLocation());
+    Float64 XxbCut = pBridge->ConvertPierToCrossBeamCoordinate(*pPier, m_pCutLoc->GetCurrentCutLocation());
 
     auto doXBeamSection = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
     doXBeamSection->SetPosition(point, false, false);
