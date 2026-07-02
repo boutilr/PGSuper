@@ -84,7 +84,7 @@ protected:
    afx_msg void OnMoreProperties();
    afx_msg void OnPierModelTypeChanged();
    afx_msg void OnPierLayoutTypeChanged();
-   afx_msg void OnLayoutGraphicChanged();
+   afx_msg void OnShowLiveClicked();
    afx_msg LRESULT OnPierLayoutChanged(WPARAM wParam, LPARAM lParam);
 
    void RefreshPierLayoutPopout();
