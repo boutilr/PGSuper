@@ -366,6 +366,8 @@ public:
    Float64 GetDelta(const CPierData2& pierData) const override;
    Float64 ConvertCrossBeamToPierCoordinate(PierIndexType pierIdx, Float64 Xxb) const override;
    Float64 ConvertCrossBeamToPierCoordinate(const CPierData2& pierData, Float64 Xxb) const override;
+   Float64 ConvertCurbLineToCrossBeamCoordinate(const CPierData2& pierData, Float64 Xcl) const override;
+   Float64 ConvertPierToCrossBeamCoordinate(const CPierData2& pierData, Float64 Xpier) const override;
    Float64 ConvertCrossBeamToCurbLineCoordinate(const CPierData2& pierData, Float64 Xxb) const override;
    bool ProcessNegativeMoments(SpanIndexType spanIdx) const override;
    pgsTypes::BoundaryConditionType GetBoundaryConditionType(PierIndexType pierIdx) const override;

@@ -674,6 +674,8 @@ public:
    virtual Float64 GetMaxColumnHeight(PierIndexType pierIdx) const = 0;
    virtual Float64 ConvertPierToCrossBeamCoordinate(PierIndexType pierIdx, Float64 Xpier) const = 0;
    virtual Float64 ConvertCurbLineToPierCoordinate(const CPierData2& pierData, Float64 Xcl) const = 0;
+   virtual Float64 ConvertCurbLineToCrossBeamCoordinate(const CPierData2& pierData, Float64 Xcl) const = 0;
+   virtual Float64 ConvertPierToCrossBeamCoordinate(const CPierData2& pierData, Float64 Xpier) const = 0;
    virtual void GetXBeamShape(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 Xxb, IShape** ppShape) const = 0;
    virtual void GetXBeamShape(const CPierData2& pierData, pgsTypes::Stage stage, Float64 Xxb, IShape** ppShape) const = 0;
    virtual void GetUpperXBeamShape(const CPierData2& pierData, Float64 Xxb, IShape** ppShape) const = 0;
