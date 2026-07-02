@@ -162,7 +162,6 @@ void CPierPointGrid::AddPierPoint()
     ROWCOL nRows = GetRowCount();
 
     CPierPointData pierPointData;
-    Float64 S;
 
     if (0 < nRows)
     {
@@ -180,6 +179,7 @@ void CPierPointGrid::AddPierPoint()
     {
         // set the default spacing in the last row
         SetPierPointData(nRows, pierPointData);
+        pierPointData.Set_X(pierPointData.Get_X() + WBFL::Units::ConvertToSysUnits(4.0, WBFL::Units::Measure::Feet));
         // add the new column (adds row to the grid)
         AddPierPoint(pierPointData);
     }
@@ -200,18 +200,6 @@ void CPierPointGrid::RemoveSelectedPierPoints()
    {
       ROWCOL selRow = selRows[r];
       RemoveRows(selRow,selRow);
-   }
-
-   ROWCOL nRows = GetRowCount();
-   if ( 0 < nRows )
-   {
-      SetStyleRange(CGXRange(nRows,6), CGXStyle()
-         .SetEnabled(FALSE)
-         .SetReadOnly(TRUE)
-         .SetInterior(::GetSysColor(COLOR_BTNFACE))
-         .SetTextColor(::GetSysColor(COLOR_BTNFACE))
-         .SetHorizontalAlignment(DT_RIGHT)
-            );
    }
 
    GetParam()->SetLockReadOnly(TRUE);

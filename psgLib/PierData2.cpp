@@ -2428,22 +2428,19 @@ void CPierData2::SetPierPointData(PierPointIndexType ppIdx, const CPierPointData
 
 void CPierData2::SetPierPointCount(PierPointIndexType nPierPoints)
 {
-    //if (nPierPoints < m_PierPoints.size() )
-    //{
-    //   // the number of columns is being reduced ... remove columns on the right side of the pier
-    //   m_PierPoints.erase(m_PierPoints.begin()+ nPierPoints,m_PierPoints.end());
-    //   m_ColumnSpacing.erase(m_ColumnSpacing.begin()+ nPierPoints -1,m_ColumnSpacing.end());
-    //}
-    //else if ( m_PierPoints.size() < nPierPoints)
-    //{
-    //   // the number of columns is being increased... add columns on the right side of the pier
-    //   ColumnIndexType nColumnsToAdd = nPierPoints - m_PierPoints.size();
-    //   CColumnData column = m_Columns.back(); // right-most column
-    //   Float64 spacing = (m_ColumnSpacing.size() == 0 ? WBFL::Units::ConvertToSysUnits(10.0,WBFL::Units::Measure::Feet) : m_ColumnSpacing.back()); // right-most spacing
-    //   m_Columns.insert(m_Columns.end(),nColumnsToAdd,column);
-    //   m_ColumnSpacing.insert(m_ColumnSpacing.end(),nColumnsToAdd,spacing);
-    //}
-    //ATLASSERT(m_Columns.size() == m_ColumnSpacing.size()+1);
+    if (nPierPoints < m_PierPoints.size())
+    {
+        m_PierPoints.erase(m_PierPoints.begin() + nPierPoints, m_PierPoints.end());
+    }
+    else if (m_PierPoints.size() < nPierPoints)
+    {
+        // the number of pier points is being increased... add pier points on the right side of the pier
+        PierPointIndexType nPierPointsToAdd = nPierPoints - m_PierPoints.size();
+        CPierPointData pp = m_PierPoints.back(); // right-most pier point
+        Float64 spacing = WBFL::Units::ConvertToSysUnits(4.0, WBFL::Units::Measure::Feet);
+		pp.Set_X(pp.Get_X() + spacing); // set the new pier point to be 4 feet to the right of the last pier point
+        m_PierPoints.insert(m_PierPoints.end(), nPierPointsToAdd, pp);
+    }
 }
 
 const CPierPointData& CPierData2::GetPierPointData(PierPointIndexType ppIdx) const
