@@ -13587,6 +13587,7 @@ void CBridgeAgentImp::GetLowerXBeamShape(const CPierData2& pierData, Float64 Xxb
     Y -= tDeck;
 
     Float64 D = GetPierDepth(pierData, pgsTypes::Stage::Stage1, Xxb);
+    Float64 Dx = GetPierDepth(pierData.GetIndex(), pgsTypes::Stage::Stage1, Xxb);
 
     CComPtr<IRectangle> lowerXBeamShape;
     lowerXBeamShape.CoCreateInstance(CLSID_Rect);
@@ -13789,18 +13790,7 @@ Float64 CBridgeAgentImp::GetPierDepth(const CPierData2& pierData, pgsTypes::Stag
     Float64 Y1 = fnTop.Evaluate(xLoc);
     Float64 Y2 = fnBottom.Evaluate(xLoc);
 
-    Float64 H = Y1 - Y2; // depth of the lower cross beam
-    Float64 depth = H;
-
-	pgsTypes::PierType pierType = GetPierType(pierData.GetIndex());
-
-    Float64 W2, H5;
-	GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
-
-    if (pgsTypes::Stage::Stage2 && pierType == ptIntegral)
-    {
-        depth += H5;
-    }
+    Float64 depth = Y1 - Y2; // depth of the lower cross beam
 
     return depth;
 }
