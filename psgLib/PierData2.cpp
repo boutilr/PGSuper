@@ -93,6 +93,9 @@ CPierData2::CPierData2()
    CColumnData defaultColumn(this);
    m_Columns.push_back(defaultColumn);
 
+   CPierPointData defaultPierPoint(this);
+   m_PierPoints.push_back(defaultPierPoint);
+
    for ( int i = 0; i < 2; i++ )
    {
       m_GirderEndDistance[i]            = WBFL::Units::ConvertToSysUnits(6.0,WBFL::Units::Measure::Inch);

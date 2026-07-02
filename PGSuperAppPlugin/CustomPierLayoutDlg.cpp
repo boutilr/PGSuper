@@ -210,6 +210,9 @@ void CCustomPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
     CColumnLayoutGrid::DDV_ColumnGrid(pDX, m_ColumnLayoutGrid);
     CColumnLayoutGrid::DDX_ColumnGrid(pDX, m_ColumnLayoutGrid, &m_Pier);
 
+    CPierPointGrid::DDV_PierPointGrid(pDX, m_PierPointGrid);
+    CPierPointGrid::DDX_PierPointGrid(pDX, m_PierPointGrid, &m_Pier);
+
     m_ColumnHeightMeasurementType = m_Pier.GetColumnData(0).GetColumnHeightMeasurementType();
     DDX_CBItemData(pDX, IDC_HEIGHT_MEASURE, m_ColumnHeightMeasurementType);
 
