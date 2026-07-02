@@ -317,7 +317,7 @@ BEGIN_MESSAGE_MAP(CPierLayoutPage, CPropertyPage)
     ON_BN_CLICKED(IDC_MORE_PROPERTIES, OnMoreProperties)
     ON_CBN_SELCHANGE(IDC_PIER_MODEL_TYPE, OnPierModelTypeChanged)
     ON_CBN_SELCHANGE(IDC_PIER_LAYOUT_TYPE, OnPierLayoutTypeChanged)
-    ON_BN_CLICKED(IDC_LAYOUT_GRAPHIC, OnLayoutGraphicChanged)
+    ON_BN_CLICKED(IDC_LAYOUT_GRAPHIC, OnShowLiveClicked)
     ON_MESSAGE(WM_PIER_LAYOUT_CHANGED, OnPierLayoutChanged)
     ON_COMMAND(ID_HELP, OnHelp)
     //}}AFX_MSG_MAP
@@ -374,9 +374,6 @@ BOOL CPierLayoutPage::OnInitDialog()
     OnUserEc();
 
     OnPierModelTypeChanged();
-    //OnPierLayoutTypeChanged();
-    //OnLayoutGraphicChanged();
-
 
     return TRUE;  // return TRUE unless you set the focus to a control
     // EXCEPTION: OCX Property Pages should return FALSE
@@ -636,7 +633,6 @@ void CPierLayoutPage::OnPierLayoutTypeChanged()
     m_PierLayoutType = (pgsTypes::PierLayoutType)pcbPierModel->GetItemData(curSel);
 
     SwapDialogs();
-    OnLayoutGraphicChanged();
 }
 
 void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
@@ -767,7 +763,7 @@ void CPierLayoutPage::ShowPierLayoutPopout()
 }
 
 
-void CPierLayoutPage::OnLayoutGraphicChanged()
+void CPierLayoutPage::OnShowLiveClicked()
 {
     // Determine the active embedded dialog (data source) based on current model/layout
     CDialog* pActiveDlg = nullptr;
