@@ -13109,6 +13109,34 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
             AddCircularHaunchBay(Xlt, Xrt, Xlt, Xrt, false);
         }
     }
+    else if (pierData.GetPierLayoutType() == pgsTypes::pltCustom)
+    {
+        IndexType nPierPoints = pierData.GetPierPointCount();
+
+        for (IndexType ppIdx = 0; ppIdx < nPierPoints; ppIdx++)
+        {
+            const CPierPointData& pierPoint =
+                pierData.GetPierPointData(ppIdx);
+
+            Float64 x = pierPoint.Get_X();
+            Float64 y = -pierPoint.Get_Y();
+
+            // Custom pier points are defined relative to the origin at the
+            // intersection of the alignment and the top of the lower x-beam.
+            //
+            // The final common code adds the left/right bottom end points.
+            // This branch only contributes the interior bottom profile.
+            if (InRange(Xlt, x, Xrt))
+            {
+                CComPtr<IPoint2d> pntBXB;
+                pntBXB.CoCreateInstance(CLSID_Point2d);
+
+                pntBXB->Move(x, y);
+
+                BXBProfile->Add(pntBXB);
+            }
+        }
+    }
     else
     {
         for (IndexType idx = nPoints - 1;
