@@ -220,7 +220,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClCompile Include="CopyPierPropertiesCallbacks.cpp" />
     <ClCompile Include="CopyTempSupportDlg.cpp" />
     <ClCompile Include="CopyTempSupportPropertiesCallbacks.cpp" />
-    <ClCompile Include="CustomPierLayoutDlg.cpp" />
+    <ClCompile Include="UserDefinedPierLayoutDlg.cpp" />
     <ClCompile Include="DrawDeckRegionControl.cpp" />
     <ClCompile Include="DrawPierLayoutControl.cpp" />
     <ClCompile Include="EditHaunchACamberDlg.cpp" />
@@ -310,12 +310,11 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClCompile Include="GMDisplayMgrEventsImpl.cpp" />
     <ClCompile Include="GraphView.cpp" />
     <ClCompile Include="GraphViewChildFrame.cpp" />
-    <ClCompile Include="HammerheadPierLayoutDlg.cpp" />
     <ClCompile Include="HaunchDirectEntireBridgeGrid.cpp" />
     <ClCompile Include="HaunchDirectSameAsGrid.cpp" />
     <ClCompile Include="HaunchDirectSegmentGrid.cpp" />
     <ClCompile Include="HaunchDirectSpansGrid.cpp" />
-    <ClCompile Include="HaunchedPierLayoutDlg.cpp" />
+    <ClCompile Include="ScallopedPierLayoutDlg.cpp" />
     <ClCompile Include="HorizontalAlignmentGrid.cpp" />
     <ClCompile Include="HorizontalAlignmentPage.cpp" />
     <ClCompile Include="InplaceEditDisplayObjectEvents.cpp" />
@@ -625,7 +624,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClInclude Include="CopyPierPropertiesCallbacks.h" />
     <ClInclude Include="CopyTempSupportDlg.h" />
     <ClInclude Include="CopyTempSupportPropertiesCallbacks.h" />
-    <ClInclude Include="CustomPierLayoutDlg.h" />
+    <ClInclude Include="UserDefinedPierLayoutDlg.h" />
     <ClInclude Include="DrawDeckRegionControl.h" />
     <ClInclude Include="DrawPierLayoutControl.h" />
     <ClInclude Include="EditAnalysisType.h" />
@@ -718,12 +717,11 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <ClInclude Include="GMDisplayMgrEventsImpl.h" />
     <ClInclude Include="GraphView.h" />
     <ClInclude Include="GraphViewChildFrame.h" />
-    <ClInclude Include="HammerheadPierLayoutDlg.h" />
     <ClInclude Include="HaunchDirectEntireBridgeGrid.h" />
     <ClInclude Include="HaunchDirectSameAsGrid.h" />
     <ClInclude Include="HaunchDirectSegmentGrid.h" />
     <ClInclude Include="HaunchDirectSpansGrid.h" />
-    <ClInclude Include="HaunchedPierLayoutDlg.h" />
+    <ClInclude Include="ScallopedPierLayoutDlg.h" />
     <ClInclude Include="HorizontalAlignmentGrid.h" />
     <ClInclude Include="HorizontalAlignmentPage.h" />
     <ClInclude Include="..\Include\BridgeModelViewController.h" />

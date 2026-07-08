@@ -874,9 +874,6 @@
     <ClCompile Include="CommonPierLayoutDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HammerheadPierLayoutDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ColumnLayoutGrid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -892,10 +889,10 @@
     <ClCompile Include="XBeamCutLocation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HaunchedPierLayoutDlg.cpp">
+    <ClCompile Include="ScallopedPierLayoutDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CustomPierLayoutDlg.cpp">
+    <ClCompile Include="UserDefinedPierLayoutDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PierPointGrid.cpp">
@@ -1884,9 +1881,6 @@
     <ClInclude Include="CommonPierLayoutDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HammerheadPierLayoutDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ColumnLayoutGrid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1902,10 +1896,10 @@
     <ClInclude Include="XBeamCutLocation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HaunchedPierLayoutDlg.h">
+    <ClInclude Include="ScallopedPierLayoutDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CustomPierLayoutDlg.h">
+    <ClInclude Include="UserDefinedPierLayoutDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PierPointGrid.h">

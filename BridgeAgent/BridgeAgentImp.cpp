@@ -12941,7 +12941,7 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
     CComPtr<IPoint2dCollection> BXBProfile;
     BXBProfile.CoCreateInstance(CLSID_Point2dCollection);
 
-    if (pierData.GetPierLayoutType() == pgsTypes::pltHaunched)
+    if (pierData.GetPierLayoutType() == pgsTypes::pltScalloped)
     {
         const Float64 R = pierData.GetXBeamRadius();
         constexpr IndexType nSegs = 24;
@@ -13109,7 +13109,7 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
             AddCircularHaunchBay(Xlt, Xrt, Xlt, Xrt, false);
         }
     }
-    else if (pierData.GetPierLayoutType() == pgsTypes::pltCustom)
+    else if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
     {
         IndexType nPierPoints = pierData.GetPierPointCount();
 
