@@ -298,29 +298,6 @@ bool CPierData2::operator==(const CPierData2& rOther) const
                   return false;
               }
           }
-          else if (m_PierLayoutType == pgsTypes::pltHammerhead)
-          {
-              if (!IsEqual(m_XBeamHeight[pgsTypes::stLeft], rOther.m_XBeamHeight[pgsTypes::stLeft]))
-              {
-                  return false;
-              }
-              if (!IsEqual(m_XBeamTaperHeight[pgsTypes::stLeft], rOther.m_XBeamTaperHeight[pgsTypes::stLeft]))
-              {
-                  return false;
-              }
-              if (!IsEqual(m_XBeamTaperLength[pgsTypes::stLeft], rOther.m_XBeamTaperLength[pgsTypes::stLeft]))
-              {
-                  return false;
-              }
-              if (!IsEqual(m_XBeamEndSlopeOffset[pgsTypes::stLeft], rOther.m_XBeamEndSlopeOffset[pgsTypes::stLeft]))
-              {
-                  return false;
-              }
-              if (!IsEqual(m_XBeamOverhang[pgsTypes::stLeft], rOther.m_XBeamOverhang[pgsTypes::stLeft]))
-              {
-                  return false;
-			  }
-          }
           else
           {
               if (!IsEqual(m_XBeamHeight[pgsTypes::stLeft], rOther.m_XBeamHeight[pgsTypes::stLeft]))
