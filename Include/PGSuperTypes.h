@@ -304,10 +304,9 @@ typedef struct pgsTypes
 
    typedef enum PierLayoutType
    {
-       pltCommon,      // common pier layout
-	   pltHammerhead,  // hammerhead pier / single-column pier layout
-	   pltHaunched,    // pier layout based on haunch radius
-       pltCustom       // lower cross-beam manually defined by adding points
+       pltCommon,       // common pier layout
+	   pltScalloped,    // pier layout based on haunch radius
+       pltUserDefined   // lower cross-beam manually defined by adding points
    } PierLayoutType;
 
    typedef enum PierType

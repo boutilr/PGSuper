@@ -20,7 +20,7 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 
-// HaunchedPierLayoutDlg.cpp : implementation file
+// UserDefinedPierLayoutDlg.cpp : implementation file
 //
 
 ///////////////////////////////////////////////////////////////////////////
@@ -35,13 +35,13 @@
 
 #include "stdafx.h"
 #include "PierLayoutPage.h"
-#include "HaunchedPierLayoutDlg.h"
+#include "UserDefinedPierLayoutDlg.h"
 #include <EAF\EAFDisplayUnits.h>
 #include <IFace\Project.h>
 #include <IFace/Tools.h>
 
-CHaunchedPierLayoutDlg::CHaunchedPierLayoutDlg(CWnd* pParent)
-    :CDialog(IDD_PIER_LAYOUT_HAUNCHED, pParent)
+CUserDefinedPierLayoutDlg::CUserDefinedPierLayoutDlg(CWnd* pParent)
+    :CDialog(IDD_PIER_LAYOUT_USERDEFINED, pParent)
 {
 
     // only using the fixed option (no pinned at base of column,
@@ -51,25 +51,32 @@ CHaunchedPierLayoutDlg::CHaunchedPierLayoutDlg(CWnd* pParent)
 }
 
 // Add to message map
-BEGIN_MESSAGE_MAP(CHaunchedPierLayoutDlg, CDialog)
+BEGIN_MESSAGE_MAP(CUserDefinedPierLayoutDlg, CDialog)
     ON_MESSAGE(WM_COLUMN_GRID_CELL_CHANGED, OnColumnGridCellChanged)
+    ON_MESSAGE(WM_PIERPOINT_GRID_CELL_CHANGED, OnPierPointGridCellChanged)
 
     ON_CBN_SELCHANGE(IDC_HEIGHT_MEASURE, OnHeightMeasureChanged)
-    ON_BN_CLICKED(IDC_ADD_COLUMN, &CHaunchedPierLayoutDlg::OnAddColumn)
-    ON_BN_CLICKED(IDC_REMOVE_COLUMN, &CHaunchedPierLayoutDlg::OnRemoveColumns)
+    ON_BN_CLICKED(IDC_ADD_COLUMN, &CUserDefinedPierLayoutDlg::OnAddColumn)
+    ON_BN_CLICKED(IDC_REMOVE_COLUMN, &CUserDefinedPierLayoutDlg::OnRemoveColumns)
 
-    ON_EN_CHANGE(IDC_W, &CHaunchedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_H1, &CHaunchedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_H2, &CHaunchedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_R, &CHaunchedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_X1, &CHaunchedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_X2, &CHaunchedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_X3, &CHaunchedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_X4, &CHaunchedPierLayoutDlg::OnPierLayoutChanged)
+    ON_BN_CLICKED(IDC_ADD_PIERPOINT, &CUserDefinedPierLayoutDlg::OnAddPierPoint)
+    ON_BN_CLICKED(IDC_REMOVE_PIERPOINT, &CUserDefinedPierLayoutDlg::OnRemovePierPoints)
 
-    ON_CBN_SELCHANGE(IDC_REFCOLUMN, &CHaunchedPierLayoutDlg::OnRefColumnChanged)
-    ON_EN_CHANGE(IDC_REFCOLUMN_OFFSET, &CHaunchedPierLayoutDlg::OnRefColumnChanged)
-    ON_CBN_SELCHANGE(IDC_REFCOLUMN_MEASUREMENT, &CHaunchedPierLayoutDlg::OnRefColumnChanged)
+    ON_EN_CHANGE(IDC_W, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_H1, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_H2, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_H3, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_H4, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X1, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X2, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X3, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X4, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X5, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X6, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+
+    ON_CBN_SELCHANGE(IDC_REFCOLUMN, &CUserDefinedPierLayoutDlg::OnRefColumnChanged)
+    ON_EN_CHANGE(IDC_REFCOLUMN_OFFSET, &CUserDefinedPierLayoutDlg::OnRefColumnChanged)
+    ON_CBN_SELCHANGE(IDC_REFCOLUMN_MEASUREMENT, &CUserDefinedPierLayoutDlg::OnRefColumnChanged)
 
     ON_WM_LBUTTONDOWN()
     ON_WM_LBUTTONUP()
@@ -79,7 +86,7 @@ BEGIN_MESSAGE_MAP(CHaunchedPierLayoutDlg, CDialog)
 END_MESSAGE_MAP()
 
 // Add these handler implementations at the end of the file
-void CHaunchedPierLayoutDlg::OnLButtonDown(UINT nFlags, CPoint point)
+void CUserDefinedPierLayoutDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
     CRect rcControl;
     m_ctrlDrawXBeam.GetWindowRect(&rcControl);
@@ -94,7 +101,7 @@ void CHaunchedPierLayoutDlg::OnLButtonDown(UINT nFlags, CPoint point)
     CDialog::OnLButtonDown(nFlags, point);
 }
 
-void CHaunchedPierLayoutDlg::OnLButtonUp(UINT nFlags, CPoint point)
+void CUserDefinedPierLayoutDlg::OnLButtonUp(UINT nFlags, CPoint point)
 {
     CRect rcControl;
     m_ctrlDrawXBeam.GetWindowRect(&rcControl);
@@ -109,7 +116,7 @@ void CHaunchedPierLayoutDlg::OnLButtonUp(UINT nFlags, CPoint point)
     CDialog::OnLButtonUp(nFlags, point);
 }
 
-void CHaunchedPierLayoutDlg::OnMouseMove(UINT nFlags, CPoint point)
+void CUserDefinedPierLayoutDlg::OnMouseMove(UINT nFlags, CPoint point)
 {
     CRect rcControl;
     m_ctrlDrawXBeam.GetWindowRect(&rcControl);
@@ -124,7 +131,7 @@ void CHaunchedPierLayoutDlg::OnMouseMove(UINT nFlags, CPoint point)
     CDialog::OnMouseMove(nFlags, point);
 }
 
-void CHaunchedPierLayoutDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
+void CUserDefinedPierLayoutDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
     CRect rcControl;
     m_ctrlDrawXBeam.GetWindowRect(&rcControl);
@@ -140,9 +147,9 @@ void CHaunchedPierLayoutDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CHaunchedPierLayoutDlg message handlers
+// CUserDefinedPierLayoutDlg message handlers
 
-BOOL CHaunchedPierLayoutDlg::OnInitDialog()
+BOOL CUserDefinedPierLayoutDlg::OnInitDialog()
 {
     m_ctrlDrawXBeam.SubclassDlgItem(IDC_PIER_LAYOUT, this);
     m_ctrlDrawXBeam.CustomInit(this);
@@ -150,9 +157,11 @@ BOOL CHaunchedPierLayoutDlg::OnInitDialog()
     m_ColumnLayoutGrid.SubclassDlgItem(IDC_COLUMN_GRID, this);
     m_ColumnLayoutGrid.CustomInit();
 
+    m_PierPointGrid.SubclassDlgItem(IDC_PIER_POINT_GRID, this);
+    m_PierPointGrid.CustomInit();
+
     m_Pier.GetTransverseOffset(&m_RefColumnIdx, &m_TransverseOffset, &m_TransverseOffsetMeasurement);
     m_XBeamWidth = m_Pier.GetXBeamWidth();
-	m_XBeamRadius = m_Pier.GetXBeamRadius();
 
     for (int i = 0; i < 2; i++)
     {
@@ -175,7 +184,7 @@ BOOL CHaunchedPierLayoutDlg::OnInitDialog()
     return TRUE;
 }
 
-void CHaunchedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
+void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialog::DoDataExchange(pDX);
 
@@ -187,15 +196,11 @@ void CHaunchedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
     DDX_MetaFileStatic(pDX, IDC_PIER_LAYOUT_GUIDE, m_LayoutPicture,_T("PIERLAYOUT"), _T("Metafile") );
 
     DDX_UnitValueAndTag(pDX, IDC_H1, IDC_H1_UNIT, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(pDX, IDC_H2, IDC_H2_UNIT, m_XBeamTaperHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(pDX, IDC_X1, IDC_X1_UNIT, m_XBeamTaperLength[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(pDX, IDC_X2, IDC_X2_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-
-    DDX_UnitValueAndTag(pDX, IDC_X3, IDC_X3_UNIT, m_XBeamTaperLength[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(pDX, IDC_X4, IDC_X4_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(pDX, IDC_X1, IDC_X1_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(pDX, IDC_H2, IDC_H2_UNIT, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(pDX, IDC_X2, IDC_X2_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
     DDX_UnitValueAndTag(pDX, IDC_W, IDC_W_UNIT, m_XBeamWidth, pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(pDX, IDC_R, IDC_R_UNIT,  m_XBeamRadius, pDisplayUnits->GetSpanLengthUnit());
 
     DDX_CBIndex(pDX, IDC_REFCOLUMN, m_RefColumnIdx);
     DDX_OffsetAndTag(pDX, IDC_REFCOLUMN_OFFSET, IDC_REFCOLUMN_OFFSET_UNIT, m_TransverseOffset, pDisplayUnits->GetSpanLengthUnit());
@@ -206,6 +211,9 @@ void CHaunchedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
     CColumnLayoutGrid::DDV_ColumnGrid(pDX, m_ColumnLayoutGrid);
     CColumnLayoutGrid::DDX_ColumnGrid(pDX, m_ColumnLayoutGrid, &m_Pier);
 
+    CPierPointGrid::DDV_PierPointGrid(pDX, m_PierPointGrid);
+    CPierPointGrid::DDX_PierPointGrid(pDX, m_PierPointGrid, &m_Pier);
+
     m_ColumnHeightMeasurementType = m_Pier.GetColumnData(0).GetColumnHeightMeasurementType();
     DDX_CBItemData(pDX, IDC_HEIGHT_MEASURE, m_ColumnHeightMeasurementType);
 
@@ -213,82 +221,35 @@ void CHaunchedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
     {
         // XBeam width, W, must be greater than zero
         DDV_UnitValueGreaterThanZero(pDX, IDC_W, m_XBeamWidth, pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueGreaterThanZero(pDX, IDC_R, m_XBeamRadius, pDisplayUnits->GetSpanLengthUnit());
 
         // H1 and H3 must be > 0
         DDV_UnitValueGreaterThanZero(pDX, IDC_H1, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueGreaterThanZero(pDX, IDC_H2, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
         // X1..X4 must be >= 0
-        DDV_UnitValueZeroOrMore(pDX, IDC_X1, m_XBeamTaperLength[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(pDX, IDC_X2, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(pDX, IDC_X3, m_XBeamTaperLength[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(pDX, IDC_X4, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-
-        // Left end
-        if (0 < m_XBeamTaperLength[pgsTypes::stLeft])
-        {
-            if (IsZero(m_XBeamTaperHeight[pgsTypes::stLeft]))
-            {
-                pDX->PrepareCtrl(IDC_H2);
-                AfxMessageBox(_T("H2 must be greater than zero when X1 is greater than zero."));
-                pDX->Fail();
-            }
-            else if (m_XBeamTaperLength[pgsTypes::stLeft] < m_XBeamEndSlopeOffset[pgsTypes::stLeft])
-            {
-                pDX->PrepareCtrl(IDC_X1);
-                AfxMessageBox(_T("X1 must be greater than X2 when X1 is greater than zero."));
-                pDX->Fail();
-            }
-        }
-        else if (!IsZero(m_XBeamTaperHeight[pgsTypes::stLeft]))
-        {
-            pDX->PrepareCtrl(IDC_H2);
-            AfxMessageBox(_T("H2 must be zero when X1 is zero."));
-            pDX->Fail();
-        }
-
-        // Right end
-        if (0 < m_XBeamTaperLength[pgsTypes::stRight])
-        {
-            if (m_XBeamTaperLength[pgsTypes::stRight] < m_XBeamEndSlopeOffset[pgsTypes::stRight])
-            {
-                pDX->PrepareCtrl(IDC_X3);
-                AfxMessageBox(_T("X3 must be greater than X4 when X3 is greater than zero."));
-                pDX->Fail();
-            }
-        }
-        else if (!IsZero(m_XBeamTaperHeight[pgsTypes::stRight]))
-        {
-            pDX->PrepareCtrl(IDC_H4);
-            AfxMessageBox(_T("H4 must be zero when X3 is zero."));
-            pDX->Fail();
-        }
-
-        // Overhangs must satisfy the first/last column radius limits.
-        Float64 D1 = 0.0, D2 = 0.0;
-        ATLASSERT(1 <= m_Pier.GetColumnCount());
-
-        Float64 spacingSum = 0.0;
-        for (SpacingIndexType spaIdx = 0; spaIdx < m_Pier.GetColumnCount() - 1; spaIdx++)
-        {
-            spacingSum += m_Pier.GetColumnSpacing(spaIdx);
-        }
+        DDV_UnitValueZeroOrMore(pDX, IDC_X1, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueZeroOrMore(pDX, IDC_X2, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
     }
 }
 
-void CHaunchedPierLayoutDlg::RefreshDisplay()
+void CUserDefinedPierLayoutDlg::RefreshDisplay()
 {
-    // Invalidate and update the drawing control to reflect the changes
-    m_ctrlDrawXBeam.UpdateDisplayObjects();
-    m_ctrlDrawXBeam.Invalidate();
-    m_ctrlDrawXBeam.UpdateWindow();
+    CPierLayoutPage* pPage =
+    DYNAMIC_DOWNCAST(CPierLayoutPage, GetParent());
+    if (pPage->m_pPierLayoutPopout != nullptr)
+    {
+        // Invalidate and update the drawing control to reflect the changes
+        m_ctrlDrawXBeam.UpdateDisplayObjects();
+        m_ctrlDrawXBeam.Invalidate();
+        m_ctrlDrawXBeam.UpdateWindow();
 
-    if (GetParent())
-        GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
+        if (GetParent())
+            GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
+    }
 }
 
 
-void CHaunchedPierLayoutDlg::FillTransverseLocationComboBox()
+void CUserDefinedPierLayoutDlg::FillTransverseLocationComboBox()
 {
     CComboBox* pcbMeasure = (CComboBox*)GetDlgItem(IDC_REFCOLUMN_MEASUREMENT);
     pcbMeasure->ResetContent();
@@ -298,7 +259,7 @@ void CHaunchedPierLayoutDlg::FillTransverseLocationComboBox()
     pcbMeasure->SetItemData(idx, (DWORD_PTR)pgsTypes::omtBridge);
 }
 
-void CHaunchedPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
+void CUserDefinedPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
 {
     CComboBox* pcbRefColumn = (CComboBox*)GetDlgItem(IDC_REFCOLUMN);
     int curSel = pcbRefColumn->GetCurSel();
@@ -322,7 +283,7 @@ void CHaunchedPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
     }
 }
 
-void CHaunchedPierLayoutDlg::FillHeightMeasureComboBox()
+void CUserDefinedPierLayoutDlg::FillHeightMeasureComboBox()
 {
     CComboBox* pcbHeightMeasure = (CComboBox*)GetDlgItem(IDC_HEIGHT_MEASURE);
     pcbHeightMeasure->ResetContent();
@@ -332,7 +293,7 @@ void CHaunchedPierLayoutDlg::FillHeightMeasureComboBox()
     pcbHeightMeasure->SetItemData(idx, (DWORD_PTR)CColumnData::chtBottomElevation);
 }
 
-void CHaunchedPierLayoutDlg::OnHeightMeasureChanged()
+void CUserDefinedPierLayoutDlg::OnHeightMeasureChanged()
 {
     CComboBox* pcbHeightMeasure = (CComboBox*)GetDlgItem(IDC_HEIGHT_MEASURE);
     int curSel = pcbHeightMeasure->GetCurSel();
@@ -340,7 +301,7 @@ void CHaunchedPierLayoutDlg::OnHeightMeasureChanged()
     m_ColumnLayoutGrid.SetHeightMeasurementType(measure);
 }
 
-LRESULT CHaunchedPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM lParam)
+LRESULT CUserDefinedPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM lParam)
 {
 
     FillRefColumnComboBox();
@@ -353,7 +314,17 @@ LRESULT CHaunchedPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM lP
     return 0;
 }
 
-void CHaunchedPierLayoutDlg::OnAddColumn()
+LRESULT CUserDefinedPierLayoutDlg::OnPierPointGridCellChanged(WPARAM wParam, LPARAM lParam)
+{
+    // Update pier data with current pier point data
+    m_PierPointGrid.GetPierPointData(m_Pier);
+
+    RefreshDisplay();
+
+    return 0;
+}
+
+void CUserDefinedPierLayoutDlg::OnAddColumn()
 {
     m_ColumnLayoutGrid.AddColumn();
     FillRefColumnComboBox();
@@ -365,7 +336,7 @@ void CHaunchedPierLayoutDlg::OnAddColumn()
 
 }
 
-void CHaunchedPierLayoutDlg::OnRemoveColumns()
+void CUserDefinedPierLayoutDlg::OnRemoveColumns()
 {
     m_ColumnLayoutGrid.RemoveSelectedColumns();
 
@@ -381,23 +352,48 @@ void CHaunchedPierLayoutDlg::OnRemoveColumns()
     RefreshDisplay();
 }
 
-void CHaunchedPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
+void CUserDefinedPierLayoutDlg::OnAddPierPoint()
+{
+    m_PierPointGrid.AddPierPoint();
+
+    // Update pier data with current pier point data
+    m_PierPointGrid.GetPierPointData(m_Pier);
+
+    RefreshDisplay();
+
+}
+
+void CUserDefinedPierLayoutDlg::OnRemovePierPoints()
+{
+    m_PierPointGrid.RemoveSelectedPierPoints();
+
+    // Update pier data with current column data
+	const auto nPoints = m_Pier.GetPierPointCount();
+	if (nPoints > 1)
+    {
+        m_PierPointGrid.GetPierPointData(m_Pier);
+    }
+
+    RefreshDisplay();
+}
+
+void CUserDefinedPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
 {
     m_PierModelType = pierModelType;
 }
 
-void CHaunchedPierLayoutDlg::SetPierData(const CPierData2& pierData)
+void CUserDefinedPierLayoutDlg::SetPierData(const CPierData2& pierData)
 {
     m_Pier = pierData;
-    m_Pier.SetPierLayoutType(pgsTypes::pltHaunched);
+    m_Pier.SetPierLayoutType(pgsTypes::pltUserDefined);
 }
 
-const CPierData2* CHaunchedPierLayoutDlg::GetPierData() const
+const CPierData2* CUserDefinedPierLayoutDlg::GetPierData() const
 {
     return &m_Pier;
 }
 
-void CHaunchedPierLayoutDlg::OnPierLayoutChanged()
+void CUserDefinedPierLayoutDlg::OnPierLayoutChanged()
 {
     // Get the current values from the edit controls into member variables
     CDataExchange dx(this, TRUE);
@@ -410,15 +406,12 @@ void CHaunchedPierLayoutDlg::OnPierLayoutChanged()
 
     // Exchange XBeam dimensions
     DDX_UnitValueAndTag(&dx, IDC_H1, IDC_H1_UNIT, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_H2, IDC_H2_UNIT, m_XBeamTaperHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_X1, IDC_X1_UNIT, m_XBeamTaperLength[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_X2, IDC_X2_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_X1, IDC_X1_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
 
-    DDX_UnitValueAndTag(&dx, IDC_X3, IDC_X3_UNIT, m_XBeamTaperLength[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_X4, IDC_X4_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_H2, IDC_H2_UNIT, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_X2, IDC_X2_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
     DDX_UnitValueAndTag(&dx, IDC_W, IDC_W_UNIT, m_XBeamWidth, pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_R, IDC_R_UNIT, m_XBeamRadius, pDisplayUnits->GetSpanLengthUnit());
 
     // Update the pier data with the current values
     m_Pier.SetXBeamDimensions(pgsTypes::stLeft, m_XBeamHeight[pgsTypes::stLeft], m_XBeamTaperHeight[pgsTypes::stLeft],
@@ -428,7 +421,6 @@ void CHaunchedPierLayoutDlg::OnPierLayoutChanged()
         m_XBeamTaperLength[pgsTypes::stRight], m_XBeamEndSlopeOffset[pgsTypes::stRight]);
 
     m_Pier.SetXBeamWidth(m_XBeamWidth);
-    m_Pier.SetXBeamRadius(m_XBeamRadius);
 
     m_Pier.SetXBeamOverhang(pgsTypes::stLeft, m_XBeamOverhang[pgsTypes::stLeft]);
     m_Pier.SetXBeamOverhang(pgsTypes::stRight, m_XBeamOverhang[pgsTypes::stRight]);
@@ -437,67 +429,20 @@ void CHaunchedPierLayoutDlg::OnPierLayoutChanged()
     {
         // XBeam width, W, must be greater than zero
         DDV_UnitValueGreaterThanZero(&dx, IDC_W, m_XBeamWidth, pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueGreaterThanZero(&dx, IDC_R, m_XBeamRadius, pDisplayUnits->GetSpanLengthUnit());
 
         // H1 and H3 must be > 0
         DDV_UnitValueGreaterThanZero(&dx, IDC_H1, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueGreaterThanZero(&dx, IDC_H2, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
         // X1..X4 must be >= 0
-        DDV_UnitValueZeroOrMore(&dx, IDC_X1, m_XBeamTaperLength[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(&dx, IDC_X2, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(&dx, IDC_X3, m_XBeamTaperLength[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(&dx, IDC_X4, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-
-        // Left end
-        if (0 < m_XBeamTaperLength[pgsTypes::stLeft])
-        {
-            if (IsZero(m_XBeamTaperHeight[pgsTypes::stLeft]))
-            {
-                dx.PrepareCtrl(IDC_H2);
-                AfxMessageBox(_T("H2 must be greater than zero when X1 is greater than zero."));
-                dx.Fail();
-            }
-            else if (m_XBeamTaperLength[pgsTypes::stLeft] < m_XBeamEndSlopeOffset[pgsTypes::stLeft])
-            {
-                dx.PrepareCtrl(IDC_X1);
-                AfxMessageBox(_T("X1 must be greater than X2 when X1 is greater than zero."));
-                dx.Fail();
-            }
-        }
-        else if (!IsZero(m_XBeamTaperHeight[pgsTypes::stLeft]))
-        {
-            dx.PrepareCtrl(IDC_H2);
-            AfxMessageBox(_T("H2 must be zero when X1 is zero."));
-            dx.Fail();
-        }
-
-        // Right end
-        if (0 < m_XBeamTaperLength[pgsTypes::stRight])
-        {
-            if (m_XBeamTaperLength[pgsTypes::stRight] < m_XBeamEndSlopeOffset[pgsTypes::stRight])
-            {
-                dx.PrepareCtrl(IDC_X3);
-                AfxMessageBox(_T("X3 must be greater than X4 when X3 is greater than zero."));
-                dx.Fail();
-            }
-        }
-
-        // Overhangs must satisfy the first/last column radius limits.
-        Float64 D1 = 0.0, D2 = 0.0;
-        ATLASSERT(1 <= m_Pier.GetColumnCount());
-
-
-        Float64 spacingSum = 0.0;
-        for (SpacingIndexType spaIdx = 0; spaIdx < m_Pier.GetColumnCount() - 1; spaIdx++)
-        {
-            spacingSum += m_Pier.GetColumnSpacing(spaIdx);
-        }
+        DDV_UnitValueZeroOrMore(&dx, IDC_X1, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueZeroOrMore(&dx, IDC_X2, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
     }
 
     RefreshDisplay();
 }
 
-void CHaunchedPierLayoutDlg::OnRefColumnChanged()
+void CUserDefinedPierLayoutDlg::OnRefColumnChanged()
 {
     // Get the current values from the edit controls into member variables
     CDataExchange dx(this, TRUE);
