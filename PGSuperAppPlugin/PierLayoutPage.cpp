@@ -738,40 +738,13 @@ void CPierLayoutPage::OnShowLiveClicked()
         return;
     }
 
-    if (m_bShowLive)
-    {
-        // SWITCH TO GUIDE
-        GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_HIDE);
-        SetDlgItemText(IDC_LAYOUT_GRAPHIC, _T("Live View"));
+    // hide the embedded control in the dialog (we use the popout for live)
+    if (CWnd* pEmbedded = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT))
+        pEmbedded->ShowWindow(SW_HIDE);
 
-        // hide or collapse the embedded live control to avoid duplicate drawing
-        if (CWnd* pEmbedded = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT))
-            pEmbedded->ShowWindow(SW_HIDE);
+    // Create / show a popout bound to the currently active dialog's data source
+    ShowPierLayoutPopout();
 
-        // hide the popout if present
-        if (m_pPierLayoutPopout &&
-            ::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
-        {
-            m_pPierLayoutPopout->ShowWindow(SW_HIDE);
-        }
-
-        m_bShowLive = false;
-    }
-    else
-    {
-        // SWITCH TO LIVE VIEW (use popout)
-        GetDlgItem(IDC_ZOOM_INSTRUCTIONS)->ShowWindow(SW_SHOW);
-        SetDlgItemText(IDC_LAYOUT_GRAPHIC, _T("Hide Live"));
-
-        // hide the embedded control in the dialog (we use the popout for live)
-        if (CWnd* pEmbedded = pActiveDlg->GetDlgItem(IDC_PIER_LAYOUT))
-            pEmbedded->ShowWindow(SW_HIDE);
-
-        // Create / show a popout bound to the currently active dialog's data source
-        ShowPierLayoutPopout();
-
-        m_bShowLive = true;
-    }
 }
 
 
