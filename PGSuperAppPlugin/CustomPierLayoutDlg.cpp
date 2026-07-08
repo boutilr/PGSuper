@@ -52,7 +52,8 @@ CCustomPierLayoutDlg::CCustomPierLayoutDlg(CWnd* pParent)
 
 // Add to message map
 BEGIN_MESSAGE_MAP(CCustomPierLayoutDlg, CDialog)
-    ON_MESSAGE(WM_USER + 100, OnColumnGridCellChanged)
+    ON_MESSAGE(WM_COLUMN_GRID_CELL_CHANGED, OnColumnGridCellChanged)
+    ON_MESSAGE(WM_PIERPOINT_GRID_CELL_CHANGED, OnPierPointGridCellChanged)
 
     ON_CBN_SELCHANGE(IDC_HEIGHT_MEASURE, OnHeightMeasureChanged)
     ON_BN_CLICKED(IDC_ADD_COLUMN, &CCustomPierLayoutDlg::OnAddColumn)
@@ -307,6 +308,16 @@ LRESULT CCustomPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM lPar
 
     // Update pier data with current column data
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
+
+    RefreshDisplay();
+
+    return 0;
+}
+
+LRESULT CCustomPierLayoutDlg::OnPierPointGridCellChanged(WPARAM wParam, LPARAM lParam)
+{
+    // Update pier data with current pier point data
+    m_PierPointGrid.GetPierPointData(m_Pier);
 
     RefreshDisplay();
 

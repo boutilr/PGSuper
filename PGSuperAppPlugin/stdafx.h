@@ -38,6 +38,12 @@
 #include <NoGrid.h>
 #else
 #include <grid\gxall.h>
+constexpr UINT WM_COLUMN_GRID_CELL_CHANGED =
+WM_USER + 100;
+
+constexpr UINT WM_PIERPOINT_GRID_CELL_CHANGED =
+WM_USER + 101;
+
 #endif
 
 #include <WBFLAtlExt.h>
