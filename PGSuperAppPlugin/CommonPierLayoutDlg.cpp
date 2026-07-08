@@ -52,7 +52,7 @@ CCommonPierLayoutDlg::CCommonPierLayoutDlg(CWnd* pParent)
 
 // Add to message map
 BEGIN_MESSAGE_MAP(CCommonPierLayoutDlg, CDialog)
-    ON_MESSAGE(WM_USER + 100, OnColumnGridCellChanged)
+    ON_MESSAGE(WM_COLUMN_GRID_CELL_CHANGED, OnColumnGridCellChanged)
 
     ON_CBN_SELCHANGE(IDC_HEIGHT_MEASURE, OnHeightMeasureChanged)
     ON_BN_CLICKED(IDC_ADD_COLUMN, &CCommonPierLayoutDlg::OnAddColumn)

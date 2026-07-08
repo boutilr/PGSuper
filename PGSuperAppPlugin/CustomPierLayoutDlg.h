@@ -60,6 +60,7 @@ protected:
 	virtual BOOL OnInitDialog() override;
 
 	afx_msg LRESULT OnColumnGridCellChanged(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPierPointGridCellChanged(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnHeightMeasureChanged();
 	afx_msg void OnAddColumn();
 	afx_msg void OnRemoveColumns();
