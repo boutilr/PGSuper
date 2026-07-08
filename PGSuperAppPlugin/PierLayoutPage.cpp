@@ -130,73 +130,73 @@ bool CPierLayoutPage::CommitCommonPierLayout()
     return true;
 }
 
-bool CPierLayoutPage::CommitHaunchedPierLayout()
+bool CPierLayoutPage::CommitScallopedPierLayout()
 {
 
-    if (!m_HaunchedPierLayoutDlg.UpdateData(TRUE))
+    if (!m_ScallopedPierLayoutDlg.UpdateData(TRUE))
     {
         return false;
     }
 
-    m_pPier->SetTransverseOffset(m_HaunchedPierLayoutDlg.m_RefColumnIdx, 
-    m_HaunchedPierLayoutDlg.m_TransverseOffset, m_HaunchedPierLayoutDlg.m_TransverseOffsetMeasurement);
-    m_pPier->SetXBeamWidth(m_HaunchedPierLayoutDlg.m_XBeamWidth);
-    m_pPier->SetXBeamRadius(m_HaunchedPierLayoutDlg.m_XBeamRadius);
+    m_pPier->SetTransverseOffset(m_ScallopedPierLayoutDlg.m_RefColumnIdx,
+    m_ScallopedPierLayoutDlg.m_TransverseOffset, m_ScallopedPierLayoutDlg.m_TransverseOffsetMeasurement);
+    m_pPier->SetXBeamWidth(m_ScallopedPierLayoutDlg.m_XBeamWidth);
+    m_pPier->SetXBeamRadius(m_ScallopedPierLayoutDlg.m_XBeamRadius);
 
     for (int i = 0; i < 2; i++)
     {
         pgsTypes::SideType side = (pgsTypes::SideType)i;
-        m_pPier->SetXBeamDimensions(side, m_HaunchedPierLayoutDlg.m_XBeamHeight[side], m_HaunchedPierLayoutDlg.m_XBeamTaperHeight[side],
-        m_HaunchedPierLayoutDlg.m_XBeamTaperLength[side], m_HaunchedPierLayoutDlg.m_XBeamEndSlopeOffset[side]);
-        m_pPier->SetXBeamOverhang(side, m_HaunchedPierLayoutDlg.m_XBeamOverhang[side]);
+        m_pPier->SetXBeamDimensions(side, m_ScallopedPierLayoutDlg.m_XBeamHeight[side], m_ScallopedPierLayoutDlg.m_XBeamTaperHeight[side],
+        m_ScallopedPierLayoutDlg.m_XBeamTaperLength[side], m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[side]);
+        m_pPier->SetXBeamOverhang(side, m_ScallopedPierLayoutDlg.m_XBeamOverhang[side]);
     }
 
-    m_pPier->SetColumnFixity(m_HaunchedPierLayoutDlg.m_ColumnFixity);
-    m_HaunchedPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
+    m_pPier->SetColumnFixity(m_ScallopedPierLayoutDlg.m_ColumnFixity);
+    m_ScallopedPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
 
     ColumnIndexType nColumns = m_pPier->GetColumnCount();
     for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
     {
         CColumnData column = m_pPier->GetColumnData(colIdx);
-        column.SetColumnHeightMeasurementType(m_HaunchedPierLayoutDlg.m_ColumnHeightMeasurementType);
+        column.SetColumnHeightMeasurementType(m_ScallopedPierLayoutDlg.m_ColumnHeightMeasurementType);
         m_pPier->SetColumnData(colIdx, column);
     }
 
     return true;
 }
 
-bool CPierLayoutPage::CommitCustomPierLayout()
+bool CPierLayoutPage::CommitUserDefinedPierLayout()
 {
 
-    if (!m_CustomPierLayoutDlg.UpdateData(TRUE))
+    if (!m_UserDefinedPierLayoutDlg.UpdateData(TRUE))
     {
         return false;
     }
 
-    m_pPier->SetTransverseOffset(m_CustomPierLayoutDlg.m_RefColumnIdx,
-        m_CustomPierLayoutDlg.m_TransverseOffset, m_CustomPierLayoutDlg.m_TransverseOffsetMeasurement);
-    m_pPier->SetXBeamWidth(m_CustomPierLayoutDlg.m_XBeamWidth);
+    m_pPier->SetTransverseOffset(m_UserDefinedPierLayoutDlg.m_RefColumnIdx,
+        m_UserDefinedPierLayoutDlg.m_TransverseOffset, m_UserDefinedPierLayoutDlg.m_TransverseOffsetMeasurement);
+    m_pPier->SetXBeamWidth(m_UserDefinedPierLayoutDlg.m_XBeamWidth);
 
     for (int i = 0; i < 2; i++)
     {
         pgsTypes::SideType side = (pgsTypes::SideType)i;
-        m_pPier->SetXBeamDimensions(side, m_CustomPierLayoutDlg.m_XBeamHeight[side], m_CustomPierLayoutDlg.m_XBeamTaperHeight[side],
-            m_CustomPierLayoutDlg.m_XBeamTaperLength[side], m_CustomPierLayoutDlg.m_XBeamEndSlopeOffset[side]);
-        m_pPier->SetXBeamOverhang(side, m_CustomPierLayoutDlg.m_XBeamOverhang[side]);
+        m_pPier->SetXBeamDimensions(side, m_UserDefinedPierLayoutDlg.m_XBeamHeight[side], m_UserDefinedPierLayoutDlg.m_XBeamTaperHeight[side],
+            m_UserDefinedPierLayoutDlg.m_XBeamTaperLength[side], m_UserDefinedPierLayoutDlg.m_XBeamEndSlopeOffset[side]);
+        m_pPier->SetXBeamOverhang(side, m_UserDefinedPierLayoutDlg.m_XBeamOverhang[side]);
     }
 
-    m_pPier->SetColumnFixity(m_CustomPierLayoutDlg.m_ColumnFixity);
-    m_CustomPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
+    m_pPier->SetColumnFixity(m_UserDefinedPierLayoutDlg.m_ColumnFixity);
+    m_UserDefinedPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
 
     ColumnIndexType nColumns = m_pPier->GetColumnCount();
     for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
     {
         CColumnData column = m_pPier->GetColumnData(colIdx);
-        column.SetColumnHeightMeasurementType(m_CustomPierLayoutDlg.m_ColumnHeightMeasurementType);
+        column.SetColumnHeightMeasurementType(m_UserDefinedPierLayoutDlg.m_ColumnHeightMeasurementType);
         m_pPier->SetColumnData(colIdx, column);
     }
 
-    m_CustomPierLayoutDlg.m_PierPointGrid.GetPierPointData(*m_pPier);
+    m_UserDefinedPierLayoutDlg.m_PierPointGrid.GetPierPointData(*m_pPier);
 
     PierPointIndexType nPierPoints = m_pPier->GetPierPointCount();
     for (PierPointIndexType ppIdx = 0; ppIdx < nPierPoints; ppIdx++)
@@ -207,37 +207,6 @@ bool CPierLayoutPage::CommitCustomPierLayout()
 
     return true;
 }
-
-bool CPierLayoutPage::CommitHammerheadPierLayout()
-{
-
-        //if (!m_CommonPierLayoutDlg.UpdateData(TRUE))
-        //{
-        //    return false;
-        //}
-
-        //pPier->SetTransverseOffset(m_CommonPierLayoutDlg.m_RefColumnIdx, dlg.m_TransverseOffset, dlg.m_TransverseOffsetMeasurement);
-        //pPier->SetXBeamWidth(dlg.m_XBeamWidth);
-
-        //for (int i = 0; i < 2; i++)
-        //{
-        //    pgsTypes::SideType side = (pgsTypes::SideType)i;
-        //    pPier->SetXBeamDimensions(side, dlg.m_XBeamHeight[side], dlg.m_XBeamTaperHeight[side], dlg.m_XBeamTaperLength[side], dlg.m_XBeamEndSlopeOffset[side]);
-        //    pPier->SetXBeamOverhang(side, dlg.m_XBeamOverhang[side]);
-        //}
-
-        //pPier->SetColumnFixity(dlg.m_ColumnFixity);
-
-        //CColumnData column = pPier->GetColumnData(0);
-        //column.SetColumnHeightMeasurementType(dlg.m_ColumnHeightMeasurementType);
-        //column.SetColumnShape(dlg.m_ColumnShapeType);
-        //column.SetColumnHeight(dlg.m_ColumnHeight);
-        //column.SetColumnDimensions(dlg.m_D1, dlg.m_D2);
-        //pPier->SetColumnData(0, column);
-
-        return true;
-}
-
 
 BOOL CPierLayoutPage::OnKillActive()
 {
@@ -255,9 +224,16 @@ BOOL CPierLayoutPage::OnKillActive()
                 return FALSE;
             }
         }
-        else if (m_PierLayoutType == pgsTypes::pltHammerhead)
+        else if (m_PierLayoutType == pgsTypes::pltScalloped)
         {
-            if (!CommitHammerheadPierLayout())
+            if (!CommitScallopedPierLayout())
+            {
+                return FALSE;
+            }
+        }
+        else if (m_PierLayoutType == pgsTypes::pltUserDefined)
+        {
+            if (!CommitScallopedPierLayout())
             {
                 return FALSE;
             }
@@ -283,23 +259,16 @@ BOOL CPierLayoutPage::OnApply()
                 return FALSE;
             }
         }
-        else if (m_PierLayoutType == pgsTypes::pltHammerhead)
+        else if (m_PierLayoutType == pgsTypes::pltScalloped)
         {
-            if (!CommitHammerheadPierLayout())
+            if (!CommitScallopedPierLayout())
             {
                 return FALSE;
             }
         }
-        else if (m_PierLayoutType == pgsTypes::pltHaunched)
+        else if (m_PierLayoutType == pgsTypes::pltUserDefined)
         {
-            if (!CommitHaunchedPierLayout())
-            {
-                return FALSE;
-            }
-        }
-        else if (m_PierLayoutType == pgsTypes::pltCustom)
-        {
-            if (!CommitCustomPierLayout())
+            if (!CommitUserDefinedPierLayout())
             {
                 return FALSE;
             }
@@ -349,20 +318,15 @@ BOOL CPierLayoutPage::OnInitDialog()
     VERIFY(m_CommonPierLayoutDlg.Create(IDD_PIER_LAYOUT_COMMON, this));
     VERIFY(m_CommonPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
 
-    m_HammerheadPierLayoutDlg.SetPierModelType(m_PierModelType);
-    m_HammerheadPierLayoutDlg.SetPierData(*m_pPier);
-    VERIFY(m_HammerheadPierLayoutDlg.Create(IDD_PIER_LAYOUT_HAMMERHEAD, this));
-    VERIFY(m_HammerheadPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
-
-    m_HaunchedPierLayoutDlg.SetPierModelType(m_PierModelType);
-    m_HaunchedPierLayoutDlg.SetPierData(*m_pPier);
-    VERIFY(m_HaunchedPierLayoutDlg.Create(IDD_PIER_LAYOUT_HAUNCHED, this));
-    VERIFY(m_HaunchedPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
+    m_ScallopedPierLayoutDlg.SetPierModelType(m_PierModelType);
+    m_ScallopedPierLayoutDlg.SetPierData(*m_pPier);
+    VERIFY(m_ScallopedPierLayoutDlg.Create(IDD_PIER_LAYOUT_SCALLOPED, this));
+    VERIFY(m_ScallopedPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
     
-    m_CustomPierLayoutDlg.SetPierModelType(m_PierModelType);
-    m_CustomPierLayoutDlg.SetPierData(*m_pPier);
-    VERIFY(m_CustomPierLayoutDlg.Create(IDD_PIER_LAYOUT_CUSTOM, this));
-    VERIFY(m_CustomPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
+    m_UserDefinedPierLayoutDlg.SetPierModelType(m_PierModelType);
+    m_UserDefinedPierLayoutDlg.SetPierData(*m_pPier);
+    VERIFY(m_UserDefinedPierLayoutDlg.Create(IDD_PIER_LAYOUT_USERDEFINED, this));
+    VERIFY(m_UserDefinedPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
 
     CPropertyPage::OnInitDialog();
 
@@ -453,14 +417,11 @@ void CPierLayoutPage::FillPierLayoutTypeComboBox()
     int idx = pcbPierModel->AddString(_T("Common"));
     pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pltCommon);
 
-    idx = pcbPierModel->AddString(_T("Hammerhead"));
-    pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pltHammerhead);
+    idx = pcbPierModel->AddString(_T("Scalloped"));
+    pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pltScalloped);
 
-    idx = pcbPierModel->AddString(_T("Haunched"));
-    pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pltHaunched);
-
-    idx = pcbPierModel->AddString(_T("Custom"));
-    pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pltCustom);
+    idx = pcbPierModel->AddString(_T("User-Defined"));
+    pcbPierModel->SetItemData(idx, (DWORD_PTR)pgsTypes::pltUserDefined);
 
 }
 
@@ -589,8 +550,8 @@ void CPierLayoutPage::OnPierModelTypeChanged()
 
         bool bIsEmbeddedPierDlg =
             (pWnd->GetSafeHwnd() == m_CommonPierLayoutDlg.GetSafeHwnd()) ||
-            (pWnd->GetSafeHwnd() == m_HammerheadPierLayoutDlg.GetSafeHwnd()) ||
-            (pWnd->GetSafeHwnd() == m_HaunchedPierLayoutDlg.GetSafeHwnd());
+            (pWnd->GetSafeHwnd() == m_ScallopedPierLayoutDlg.GetSafeHwnd()) ||
+            (pWnd->GetSafeHwnd() == m_UserDefinedPierLayoutDlg.GetSafeHwnd());
 
         if (!bIsEmbeddedPierDlg &&
             nID != IDC_PIER_MODEL_LABEL &&
@@ -617,8 +578,7 @@ void CPierLayoutPage::OnPierModelTypeChanged()
     else
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
-        m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
-        m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
+        m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
     }
 
     SetModified(TRUE);
@@ -642,37 +602,26 @@ void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
         if (m_PierLayoutType == pgsTypes::pltCommon)
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_SHOW);
-            m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_CustomPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
         }
-        else if (m_PierLayoutType == pgsTypes::pltHammerhead)
+        else if (m_PierLayoutType == pgsTypes::pltScalloped)
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_HammerheadPierLayoutDlg.ShowWindow(SW_SHOW);
-            m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_CustomPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_ScallopedPierLayoutDlg.ShowWindow(SW_SHOW);
+            m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
         }
-        else if (m_PierLayoutType == pgsTypes::pltHaunched)
+        else if (m_PierLayoutType == pgsTypes::pltUserDefined)
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_HaunchedPierLayoutDlg.ShowWindow(SW_SHOW);
-            m_CustomPierLayoutDlg.ShowWindow(SW_HIDE);
-        }
-        else if (m_PierLayoutType == pgsTypes::pltCustom)
-        {
-            m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_CustomPierLayoutDlg.ShowWindow(SW_SHOW);
+            m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_UserDefinedPierLayoutDlg.ShowWindow(SW_SHOW);
         }
         else
         {
             m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_HammerheadPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_HaunchedPierLayoutDlg.ShowWindow(SW_HIDE);
-            m_CustomPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
+            m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
         }
 
     }
@@ -711,14 +660,11 @@ void CPierLayoutPage::ShowPierLayoutPopout()
         case pgsTypes::pltCommon:
             pSource = &m_CommonPierLayoutDlg;
             break;
-        case pgsTypes::pltHammerhead:
-            pSource = &m_HammerheadPierLayoutDlg;
+        case pgsTypes::pltScalloped:
+            pSource = &m_ScallopedPierLayoutDlg;
             break;
-        case pgsTypes::pltHaunched:
-            pSource = &m_HaunchedPierLayoutDlg;
-            break;
-        case pgsTypes::pltCustom:
-            pSource = &m_CustomPierLayoutDlg;
+        case pgsTypes::pltUserDefined:
+            pSource = &m_UserDefinedPierLayoutDlg;
             break;
         default:
             // No popout for custom/unknown layouts
@@ -774,14 +720,11 @@ void CPierLayoutPage::OnShowLiveClicked()
         case pgsTypes::pltCommon:
             pActiveDlg = &m_CommonPierLayoutDlg;
             break;
-        case pgsTypes::pltHammerhead:
-            pActiveDlg = &m_HammerheadPierLayoutDlg;
+        case pgsTypes::pltScalloped:
+            pActiveDlg = &m_ScallopedPierLayoutDlg;
             break;
-        case pgsTypes::pltHaunched:
-            pActiveDlg = &m_HaunchedPierLayoutDlg;
-            break;
-        case pgsTypes::pltCustom:
-            pActiveDlg = &m_CustomPierLayoutDlg;
+        case pgsTypes::pltUserDefined:
+            pActiveDlg = &m_UserDefinedPierLayoutDlg;
             break;
         default:
             pActiveDlg = nullptr;

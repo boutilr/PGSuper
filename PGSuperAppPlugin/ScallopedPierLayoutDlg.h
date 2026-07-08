@@ -24,27 +24,26 @@
 #include "resource.h"
 #include <PsgLib\PierData2.h>
 #include "ColumnLayoutGrid.h"
-#include "PierPointGrid.h"
 #include <PgsExt\ColumnFixityComboBox.h>
 #include "DrawPierLayoutControl.h"
 
 
-// CustomPierLayoutDlg.h : header file
+// ScallopedPierLayoutDlg.h : header file
 //
 
 /////////////////////////////////////////////////////////////////////////////
-// CustomPierLayoutDlg dialog
+// ScallopedPierLayoutDlg dialog
 
 class CPierLayoutPage;
 
-class CCustomPierLayoutDlg : public CDialog, public IPierLayoutDataSource
+class CScallopedPierLayoutDlg : public CDialog, public IPierLayoutDataSource
 {
 
 	friend class CPierLayoutPage;
 
 // Construction
 public:
-	CCustomPierLayoutDlg(CWnd* pParent = nullptr);
+	CScallopedPierLayoutDlg(CWnd* pParent = nullptr);
 
 	void SetPierModelType(const pgsTypes::PierModelType& pierModelType);
 	void SetPierData(const CPierData2& pierData) override;
@@ -60,12 +59,9 @@ protected:
 	virtual BOOL OnInitDialog() override;
 
 	afx_msg LRESULT OnColumnGridCellChanged(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnPierPointGridCellChanged(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnHeightMeasureChanged();
 	afx_msg void OnAddColumn();
 	afx_msg void OnRemoveColumns();
-	afx_msg void OnAddPierPoint();
-	afx_msg void OnRemovePierPoints();
 	afx_msg void OnPierLayoutChanged();
 	afx_msg void OnRefColumnChanged();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
@@ -82,7 +78,6 @@ protected:
 	CDrawPierLayoutControl m_ctrlDrawXBeam;
 
 	CColumnLayoutGrid m_ColumnLayoutGrid;
-	CPierPointGrid m_PierPointGrid;
 	CColumnFixityComboBox m_cbColumnFixity;
 	CColumnData::ColumnHeightMeasurementType m_ColumnHeightMeasurementType;
 
@@ -95,6 +90,7 @@ protected:
 	Float64 m_TransverseOffset;
 	pgsTypes::OffsetMeasurementType m_TransverseOffsetMeasurement;
 	Float64 m_XBeamWidth;
+	Float64 m_XBeamRadius;
 	Float64 m_XBeamHeight[2];
 	Float64 m_XBeamTaperHeight[2];
 	Float64 m_XBeamTaperLength[2];

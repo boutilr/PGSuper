@@ -32,9 +32,8 @@
 #include "resource.h"
 #include <PsgLib\PierData2.h>
 #include "CommonPierLayoutDlg.h"
-#include "HammerheadPierLayoutDlg.h"
-#include "HaunchedPierLayoutDlg.h"
-#include "CustomPierLayoutDlg.h"
+#include "ScallopedPierLayoutDlg.h"
+#include "UserDefinedPierLayoutDlg.h"
 #include <WBFLGenericBridge.h>
 
 /////////////////////////////////////////////////////////////////////////////
@@ -42,9 +41,8 @@
 class CPierLayoutPage : public CPropertyPage
 {
 	friend class CCommonPierLayoutDlg;
-	friend class CHammerheadPierLayoutDlg;
-	friend class CHaunchedPierLayoutDlg;
-	friend class CCustomPierLayoutDlg;
+	friend class CScallopedPierLayoutDlg;
+	friend class CUserDefinedPierLayoutDlg;
 
 	DECLARE_DYNCREATE(CPierLayoutPage)
 
@@ -111,14 +109,12 @@ protected:
 
    // Embedded dialogs
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;
-   CHammerheadPierLayoutDlg m_HammerheadPierLayoutDlg;
-   CHaunchedPierLayoutDlg m_HaunchedPierLayoutDlg;
-   CCustomPierLayoutDlg m_CustomPierLayoutDlg;
+   CScallopedPierLayoutDlg m_ScallopedPierLayoutDlg;
+   CUserDefinedPierLayoutDlg m_UserDefinedPierLayoutDlg;
 
    bool CommitCommonPierLayout();
-   bool CommitHammerheadPierLayout();
-   bool CommitHaunchedPierLayout();
-   bool CommitCustomPierLayout();
+   bool CommitScallopedPierLayout();
+   bool CommitUserDefinedPierLayout();
 
    BOOL OnKillActive();
 

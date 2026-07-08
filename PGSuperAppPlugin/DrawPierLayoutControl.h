@@ -40,9 +40,8 @@ class CDrawPierLayoutControl : public CDisplayWnd
 
 	friend class CPierLayoutPage;
 	friend class CCommonPierLayoutDlg;
-	friend class CHammerheadPierLayoutDlg;
-	friend class CHaunchedPierLayoutDlg;
-	friend class CCustomPierLayoutDlg;
+	friend class CScallopedPierLayoutDlg;
+	friend class CUserDefinedPierLayoutDlg;
 
 public:
 	CDrawPierLayoutControl();
