@@ -1186,7 +1186,6 @@
 #define IDC_DIMENSIONS_NOTE             1850
 #define IDC_LOAD_RATING_EVENT_LABEL     1851
 #define IDC_PIER_LAYOUT_LABEL           1851
-#define IDC_ZOOM_INSTRUCTIONS           1852
 #define IDC_GROUP_RANGE_LABEL           1854
 #define IDC_GROUP_RANGE_TO              1855
 #define IDC_FIXITY_LABEL                1856
