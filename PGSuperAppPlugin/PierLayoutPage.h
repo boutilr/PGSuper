@@ -105,8 +105,6 @@ protected:
    pgsTypes::PierModelType m_PierModelType;
    pgsTypes::PierLayoutType m_PierLayoutType;
 
-   bool m_bShowLive{ false };
-
    // Embedded dialogs
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;
    CScallopedPierLayoutDlg m_ScallopedPierLayoutDlg;
