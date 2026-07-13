@@ -93,9 +93,6 @@ CPierData2::CPierData2()
    CColumnData defaultColumn(this);
    m_Columns.push_back(defaultColumn);
 
-   CPierPointData defaultPierPoint(this);
-   m_PierPoints.push_back(defaultPierPoint);
-
    for ( int i = 0; i < 2; i++ )
    {
       m_GirderEndDistance[i]            = WBFL::Units::ConvertToSysUnits(6.0,WBFL::Units::Measure::Inch);
@@ -2413,9 +2410,13 @@ void CPierData2::SetPierPointCount(PierPointIndexType nPierPoints)
     {
         // the number of pier points is being increased... add pier points on the right side of the pier
         PierPointIndexType nPierPointsToAdd = nPierPoints - m_PierPoints.size();
-        CPierPointData pp = m_PierPoints.back(); // right-most pier point
-        Float64 spacing = WBFL::Units::ConvertToSysUnits(4.0, WBFL::Units::Measure::Feet);
-		pp.Set_X(pp.Get_X() + spacing); // set the new pier point to be 4 feet to the right of the last pier point
+        CPierPointData pp;
+        if (!m_PierPoints.empty())
+        {
+            pp = m_PierPoints.back(); // right-most pier point
+            Float64 spacing = WBFL::Units::ConvertToSysUnits(4.0, WBFL::Units::Measure::Feet);
+            pp.Set_X(pp.Get_X() + spacing); // set the new pier point to be 4 feet to the right of the last pier point
+        }
         m_PierPoints.insert(m_PierPoints.end(), nPierPointsToAdd, pp);
     }
 }
