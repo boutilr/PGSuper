@@ -12944,6 +12944,7 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
     if (pierData.GetPierLayoutType() == pgsTypes::pltScalloped)
     {
         const Float64 R = pierData.GetXBeamRadius();
+        const Float64 D = pierData.GetXBeamDepth();
         constexpr IndexType nSegs = 24;
 
         auto AddPoint = [&](Float64 x, Float64 y)
@@ -12992,51 +12993,72 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
                 Float64 xClip1,
                 bool skipFirst)
             {
-                if (x1Full <= x0Full || xClip1 <= xClip0 || R <= 0.0)
+                if (x1Full <= x0Full ||
+                    xClip1 <= xClip0 ||
+                    R <= 0.0 ||
+                    D < 0.0)
+                {
                     return;
+                }
 
-                const Float64 L = x1Full - x0Full;
                 const Float64 xMid = 0.5 * (x0Full + x1Full);
 
-                // Constant-radius arc. If the bay is wider than the diameter,
-                // the arc occupies only 2R at the middle and the rest is straight.
-                const Float64 halfArcLen = min(0.5 * L, R);
-
-                const Float64 xArc0 = xMid - halfArcLen;
-                const Float64 xArc1 = xMid + halfArcLen;
-
-                auto CircularRise = [&](Float64 x) -> Float64
-                    {
-                        if (x < xArc0 || x > xArc1)
-                            return 0.0;
-
-                        const Float64 dx = x - xMid;
-
-                        const Float64 yAtEnd =
-                            std::sqrt(max(0.0, R * R - halfArcLen * halfArcLen));
-
-                        const Float64 yAtX =
-                            std::sqrt(max(0.0, R * R - dx * dx));
-
-                        return yAtX - yAtEnd;
-                    };
+                /*
+                 * The crown of the circular scallop is D below the top of the
+                 * lower crossbeam.
+                 *
+                 * lower xbeam top
+                 * ------------------------
+                 * | D
+                 * v
+                 * scallop crown
+                 *
+                 * The center of the circle is therefore R below the crown.
+                 */
+                const Float64 crownY = LowerTopY(xMid) - D;
+                const Float64 circleCenterY = crownY - R;
 
                 for (IndexType i = 0; i <= nSegs; ++i)
                 {
                     if (skipFirst && i == 0)
                         continue;
 
-                    const Float64 u = static_cast<Float64>(i) / nSegs;
-                    const Float64 x = xClip0 + u * (xClip1 - xClip0);
+                    const Float64 u =
+                        static_cast<Float64>(i) /
+                        static_cast<Float64>(nSegs);
 
-                    const Float64 y =
-                        LowerTopY(x) -
-                        LowerDepth(x) +
-                        CircularRise(x);
+                    const Float64 x =
+                        xClip0 + u * (xClip1 - xClip0);
+
+                    // Ordinary bottom of the lower crossbeam.
+                    const Float64 bottomY =
+                        LowerTopY(x) - LowerDepth(x);
+
+                    Float64 y = bottomY;
+
+                    const Float64 dx = x - xMid;
+
+                    if (std::fabs(dx) <= R)
+                    {
+                        // Upper half of the circle.
+                        const Float64 circleY =
+                            circleCenterY +
+                            std::sqrt(max(
+                                0.0,
+                                R * R - dx * dx));
+
+                        /*
+                         * The circle contributes only while it lies above the
+                         * normal bottom profile. This cuts off the ends according
+                         * to D, R, and the local crossbeam depth.
+                         */
+                        y = max(bottomY, circleY);
+                    }
 
                     AddPoint(x, y);
                 }
             };
+
 
         std::vector<Float64> colStations;
 
