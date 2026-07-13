@@ -88,6 +88,7 @@ CPierData2::CPierData2()
    m_XBeamOverhang[pgsTypes::stRight] = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
    m_XBeamWidth = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
    m_XBeamRadius = WBFL::Units::ConvertToSysUnits(25,WBFL::Units::Measure::Feet);
+   m_XBeamDepth = WBFL::Units::ConvertToSysUnits(4,WBFL::Units::Measure::Feet);
 
    m_ColumnFixity = pgsTypes::cftFixed;
    CColumnData defaultColumn(this);
@@ -335,6 +336,11 @@ bool CPierData2::operator==(const CPierData2& rOther) const
          return false;
       }
 
+      if ( !IsEqual(m_XBeamDepth,rOther.m_XBeamDepth) )
+      {
+         return false;
+      }
+
       pgsTypes::PierFaceType face = (pgsTypes::PierFaceType)i;
 
       if ( !IsEqual(m_GirderEndDistance[face], rOther.m_GirderEndDistance[face]) )
@@ -565,6 +571,7 @@ HRESULT CPierData2::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress>
       pStrSave->put_Property(_T("XBeamOverhang_Right"),CComVariant(m_XBeamOverhang[pgsTypes::stRight]));
       pStrSave->put_Property(_T("XBeamWidth"),CComVariant(m_XBeamWidth));
       pStrSave->put_Property(_T("XBeamRadius"),CComVariant(m_XBeamRadius));  // added in version 23
+      pStrSave->put_Property(_T("XBeamDepth"),CComVariant(m_XBeamDepth));  // added in version 23
 
       pStrSave->put_Property(_T("PierPointCount"), CComVariant(m_PierPoints.size()));  // added in version 23
       std::vector<CPierPointData>::iterator ppIterBegin = m_PierPoints.begin();
@@ -956,6 +963,9 @@ HRESULT CPierData2::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress>
                 {
                     hr = pStrLoad->get_Property(_T("XBeamRadius"), &var);
                     m_XBeamRadius = var.dblVal;
+
+                    hr = pStrLoad->get_Property(_T("XBeamDepth"), &var);
+                    m_XBeamDepth = var.dblVal;
 
                     m_PierPoints.clear();
                     var.vt = VT_INDEX;
@@ -1483,6 +1493,7 @@ void CPierData2::MakeCopy(const CPierData2& rOther,bool bCopyDataOnly)
    m_Concrete = rOther.m_Concrete;
    m_XBeamWidth = rOther.m_XBeamWidth;
    m_XBeamRadius = rOther.m_XBeamRadius;
+   m_XBeamDepth = rOther.m_XBeamDepth;
 
    for ( int i = 0; i < 2; i++ )
    {
@@ -2260,6 +2271,16 @@ void CPierData2::SetXBeamRadius(Float64 radius)
 Float64 CPierData2::GetXBeamRadius() const
 {
    return m_XBeamRadius;
+}
+
+void CPierData2::SetXBeamDepth(Float64 depth)
+{
+   m_XBeamDepth = depth;
+}
+
+Float64 CPierData2::GetXBeamDepth() const
+{
+   return m_XBeamDepth;
 }
 
 void CPierData2::SetXBeamOverhang(pgsTypes::SideType side,Float64 overhang)
