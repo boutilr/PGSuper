@@ -256,6 +256,8 @@ public:
    Float64 GetXBeamWidth() const;
    void SetXBeamRadius(Float64 radius);
    Float64 GetXBeamRadius() const;
+   void SetXBeamDepth(Float64 depth);
+   Float64 GetXBeamDepth() const;
    void SetXBeamOverhang(pgsTypes::SideType side,Float64 overhang);
    void SetXBeamOverhangs(Float64 leftOverhang,Float64 rightOverhang);
    Float64 GetXBeamOverhang(pgsTypes::SideType side) const;
@@ -399,6 +401,7 @@ private:
    std::array<Float64, 2> m_XBeamOverhang;
    Float64 m_XBeamWidth;
    Float64 m_XBeamRadius;
+   Float64 m_XBeamDepth;
 
    // Column Dimensions and Layout
    pgsTypes::ColumnLongitudinalBaseFixityType m_ColumnFixity;
