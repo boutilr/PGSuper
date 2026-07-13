@@ -124,7 +124,7 @@ void CPierPointGrid::CustomInit()
 
    CString cv;
 
-   cv.Format(_T("X"),pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.UnitTag().c_str());
+   cv.Format(_T("X pt."),pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.UnitTag().c_str());
 	SetStyleRange(CGXRange(0,pp++), CGXStyle()
          .SetWrapText(TRUE)
 			.SetEnabled(FALSE)          // disables usage as current cell
@@ -133,7 +133,7 @@ void CPierPointGrid::CustomInit()
 			.SetValue(cv)
 		);
 
-   cv.Format(_T("Y"),pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.UnitTag().c_str());
+   cv.Format(_T("Y pt."),pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.UnitTag().c_str());
 	SetStyleRange(CGXRange(0,pp++), CGXStyle()
          .SetWrapText(TRUE)
 			.SetEnabled(FALSE)          // disables usage as current cell
@@ -230,20 +230,12 @@ void CPierPointGrid::SetPierPointData(const CPierData2& pier)
       RemoveRows(1,nRows);
    }
 
-   if ( pier.GetPierPointCount() == 0 )
+
+   IndexType nPierPoints = pier.GetPierPointCount();
+   for ( IndexType ppIdx = 0; ppIdx < nPierPoints; ppIdx++ )
    {
-      // Always have one pier point
-      CPierPointData pierPoint;
-      AddPierPoint(pierPoint);
-   }
-   else
-   {
-      IndexType nPierPoints = pier.GetPierPointCount();
-      for ( IndexType ppIdx = 0; ppIdx < nPierPoints; ppIdx++ )
-      {
-         const CPierPointData& pierPoint = pier.GetPierPointData(ppIdx);
-         AddPierPoint(pierPoint);
-      }
+       const CPierPointData& pierPoint = pier.GetPierPointData(ppIdx);
+       AddPierPoint(pierPoint);
    }
 
    ResizeColWidthsToFit(CGXRange(0,0,GetRowCount(),GetColCount()));
