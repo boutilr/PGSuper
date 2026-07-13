@@ -368,12 +368,8 @@ void CUserDefinedPierLayoutDlg::OnRemovePierPoints()
     m_PierPointGrid.RemoveSelectedPierPoints();
 
     // Update pier data with current column data
-	const auto nPoints = m_Pier.GetPierPointCount();
-	if (nPoints > 1)
-    {
-        m_PierPointGrid.GetPierPointData(m_Pier);
-    }
-
+    m_PierPointGrid.GetPierPointData(m_Pier);
+    
     RefreshDisplay();
 }
 
