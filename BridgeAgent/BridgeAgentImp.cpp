@@ -12888,7 +12888,8 @@ void CBridgeAgentImp::GetLowerXBeamProfile(const CPierData2& pierData, IPoint2dC
         LXBProfile.CopyTo(ppPoints);
 }
 
-void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
+void CBridgeAgentImp::GetBottomXBeamProfile(
+    const CPierData2& pierData,
     IPoint2dCollection** ppPoints) const
 {
     // Get top profile of lower cross beam
@@ -12921,22 +12922,37 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
         pgsTypes::stRight,
         &H3, &H4, &X3, &X4);
 
-    // Interpolation parameters for depth of lower xbeam between tapers
+    // Interpolation parameters for depth of lower xbeam
     Float64 Xs = Xl;
     Float64 dX = Xr - Xl;
+
     Float64 dyL = H1 + H2;
     Float64 dyR = H3 + H4;
 
-    // Horizontal location of left/right tapers
+    // Horizontal location of the ordinary taper transition points
     Float64 Xlt = Xl + X1;
     Float64 Xrt = Xr - X3;
 
-    Xlt = IsZero(Xlt) ? 0 : Xlt;
-    Xrt = IsZero(Xrt) ? 0 : Xrt;
+    Xlt = IsZero(Xlt) ? 0.0 : Xlt;
+    Xrt = IsZero(Xrt) ? 0.0 : Xrt;
 
-    // Horizontal location of left/right end points of bottom of xbeam
-    Xl += X2;
-    Xr -= X4;
+    /*
+     * Horizontal locations at which the lower profile closes back to
+     * the top profile.
+     *
+     * For the scalloped profile these are also used as the clipping
+     * limits. This pulls the first and last circular points inward and
+     * creates the tapered outside faces without adding extra points
+     * that produce slivers.
+     */
+    Float64 XbottomLeft = Xl + X2;
+    Float64 XbottomRight = Xr - X4;
+
+    XbottomLeft =
+        IsZero(XbottomLeft) ? 0.0 : XbottomLeft;
+
+    XbottomRight =
+        IsZero(XbottomRight) ? 0.0 : XbottomRight;
 
     CComPtr<IPoint2dCollection> BXBProfile;
     BXBProfile.CoCreateInstance(CLSID_Point2dCollection);
@@ -12945,19 +12961,25 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
     {
         const Float64 R = pierData.GetXBeamRadius();
         const Float64 D = pierData.GetXBeamDepth();
+
         constexpr IndexType nSegs = 24;
 
-        auto AddPoint = [&](Float64 x, Float64 y)
+        auto AddPoint =
+            [&](Float64 x, Float64 y)
             {
                 CComPtr<IPoint2d> p;
                 p.CoCreateInstance(CLSID_Point2d);
+
                 p->Move(x, y);
                 BXBProfile->Add(p);
             };
 
-        auto LowerTopY = [&](Float64 x) -> Float64
+        auto LowerTopY =
+            [&](Float64 x) -> Float64
             {
-                for (IndexType idx = 1; idx < nPoints; ++idx)
+                for (IndexType idx = 1;
+                    idx < nPoints;
+                    ++idx)
                 {
                     CComPtr<IPoint2d> p0;
                     CComPtr<IPoint2d> p1;
@@ -12971,8 +12993,22 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
                     p0->Location(&x0, &y0);
                     p1->Location(&x1, &y1);
 
-                    if (InRange(x0, x, x1))
-                        return ::LinInterp(x - x0, y0, y1, x1 - x0);
+                    const Float64 xMin = min(x0, x1);
+                    const Float64 xMax = max(x0, x1);
+
+                    if (InRange(xMin, x, xMax))
+                    {
+                        const Float64 segmentDX = x1 - x0;
+
+                        if (IsZero(segmentDX))
+                            return y0;
+
+                        return ::LinInterp(
+                            x - x0,
+                            y0,
+                            y1,
+                            segmentDX);
+                    }
                 }
 
                 if (x <= Xs)
@@ -12981,9 +13017,17 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
                 return Yr;
             };
 
-        auto LowerDepth = [&](Float64 x) -> Float64
+        auto LowerDepth =
+            [&](Float64 x) -> Float64
             {
-                return ::LinInterp(x - Xs, dyL, dyR, dX);
+                if (IsZero(dX))
+                    return dyL;
+
+                return ::LinInterp(
+                    x - Xs,
+                    dyL,
+                    dyR,
+                    dX);
             };
 
         auto AddCircularHaunchBay =
@@ -13001,24 +13045,22 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
                     return;
                 }
 
-                const Float64 xMid = 0.5 * (x0Full + x1Full);
+                const Float64 xMid =
+                    0.5 * (x0Full + x1Full);
 
                 /*
-                 * The crown of the circular scallop is D below the top of the
-                 * lower crossbeam.
-                 *
-                 * lower xbeam top
-                 * ------------------------
-                 * | D
-                 * v
-                 * scallop crown
-                 *
-                 * The center of the circle is therefore R below the crown.
+                 * The crown of the circular scallop is D below the
+                 * top of the lower cross beam.
                  */
-                const Float64 crownY = LowerTopY(xMid) - D;
-                const Float64 circleCenterY = crownY - R;
+                const Float64 crownY =
+                    LowerTopY(xMid) - D;
 
-                for (IndexType i = 0; i <= nSegs; ++i)
+                const Float64 circleCenterY =
+                    crownY - R;
+
+                for (IndexType i = 0;
+                    i <= nSegs;
+                    ++i)
                 {
                     if (skipFirst && i == 0)
                         continue;
@@ -13028,51 +13070,64 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
                         static_cast<Float64>(nSegs);
 
                     const Float64 x =
-                        xClip0 + u * (xClip1 - xClip0);
+                        xClip0 +
+                        u * (xClip1 - xClip0);
 
-                    // Ordinary bottom of the lower crossbeam.
+                    // Ordinary bottom profile at this location
                     const Float64 bottomY =
-                        LowerTopY(x) - LowerDepth(x);
+                        LowerTopY(x) -
+                        LowerDepth(x);
 
                     Float64 y = bottomY;
 
-                    const Float64 dx = x - xMid;
+                    const Float64 dx =
+                        x - xMid;
 
                     if (std::fabs(dx) <= R)
                     {
-                        // Upper half of the circle.
                         const Float64 circleY =
                             circleCenterY +
-                            std::sqrt(max(
-                                0.0,
-                                R * R - dx * dx));
+                            std::sqrt(
+                                max(
+                                    0.0,
+                                    R * R - dx * dx));
 
                         /*
-                         * The circle contributes only while it lies above the
-                         * normal bottom profile. This cuts off the ends according
-                         * to D, R, and the local crossbeam depth.
+                         * Use the circle only where it is above the
+                         * ordinary lower-beam bottom.
                          */
                         y = max(bottomY, circleY);
                     }
 
                     AddPoint(x, y);
                 }
-        };
+            };
 
         std::vector<Float64> colStations;
 
-        const IndexType nCols = pierData.GetColumnCount();
+        const IndexType nCols =
+            pierData.GetColumnCount();
 
-        for (IndexType colIdx = 0; colIdx < nCols; ++colIdx)
+        for (IndexType colIdx = 0;
+            colIdx < nCols;
+            ++colIdx)
         {
-            Float64 xCol = GetColumnLocation(pierData, colIdx);
+            Float64 xCol =
+                GetColumnLocation(
+                    pierData,
+                    colIdx);
+
             Float64 xPierCol =
-                ConvertCrossBeamToPierCoordinate(pierData, xCol);
+                ConvertCrossBeamToPierCoordinate(
+                    pierData,
+                    xCol);
 
             colStations.push_back(xPierCol);
         }
 
-        std::sort(colStations.begin(), colStations.end());
+        std::sort(
+            colStations.begin(),
+            colStations.end());
 
         colStations.erase(
             std::unique(
@@ -13080,14 +13135,31 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
                 colStations.end(),
                 [](Float64 a, Float64 b)
                 {
-                    return std::fabs(a - b) < 1.0e-8;
+                    return
+                        std::fabs(a - b) <
+                        1.0e-8;
                 }),
             colStations.end());
+
+        /*
+         * For a scalloped cross beam, clip to the inset bottom
+         * endpoints instead of Xlt/Xrt.
+         *
+         * These coordinates make the outside polygon edges run from
+         * the top corners to the inset circular-profile endpoints,
+         * producing the desired taper.
+         */
+        const Float64 XscallopLeft =
+            XbottomLeft;
+
+        const Float64 XscallopRight =
+            XbottomRight;
 
         if (colStations.size() >= 2)
         {
             const Float64 leftSpacing =
-                colStations[1] - colStations[0];
+                colStations[1] -
+                colStations[0];
 
             const Float64 rightSpacing =
                 colStations[colStations.size() - 1] -
@@ -13095,22 +13167,38 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
 
             std::vector<Float64> fullStations;
 
-            fullStations.push_back(colStations.front() - leftSpacing);
+            fullStations.push_back(
+                colStations.front() -
+                leftSpacing);
 
             for (Float64 xCol : colStations)
                 fullStations.push_back(xCol);
 
-            fullStations.push_back(colStations.back() + rightSpacing);
+            fullStations.push_back(
+                colStations.back() +
+                rightSpacing);
 
             bool firstPoint = true;
 
-            for (size_t i = 1; i < fullStations.size(); ++i)
+            for (size_t i = 1;
+                i < fullStations.size();
+                ++i)
             {
-                const Float64 x0Full = fullStations[i - 1];
-                const Float64 x1Full = fullStations[i];
+                const Float64 x0Full =
+                    fullStations[i - 1];
 
-                const Float64 xClip0 = max(x0Full, Xlt);
-                const Float64 xClip1 = min(x1Full, Xrt);
+                const Float64 x1Full =
+                    fullStations[i];
+
+                const Float64 xClip0 =
+                    max(
+                        x0Full,
+                        XscallopLeft);
+
+                const Float64 xClip1 =
+                    min(
+                        x1Full,
+                        XscallopRight);
 
                 if (xClip1 > xClip0)
                 {
@@ -13127,35 +13215,54 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
         }
         else
         {
-            AddCircularHaunchBay(Xlt, Xrt, Xlt, Xrt, false);
+            AddCircularHaunchBay(
+                XscallopLeft,
+                XscallopRight,
+                XscallopLeft,
+                XscallopRight,
+                false);
         }
-    }
-	else
-    {
-        if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
-        {
-            IndexType nPierPoints = pierData.GetPierPointCount();
 
-            for (IndexType ppIdx = 0; ppIdx < nPierPoints; ppIdx++)
+        /*
+         * Do not add bxbL, bxbLT, bxbRT, or bxbR here.
+         *
+         * The polygon will close directly between:
+         *
+         * lower top-left -> first scallop point
+         * last scallop point -> lower top-right
+         *
+         * Since the first and last scallop points are inset by X2 and
+         * X4, those closing segments form the outside tapers.
+         */
+    }
+    else
+    {
+        if (pierData.GetPierLayoutType() ==
+            pgsTypes::pltUserDefined)
+        {
+            IndexType nPierPoints =
+                pierData.GetPierPointCount();
+
+            for (IndexType ppIdx = 0;
+                ppIdx < nPierPoints;
+                ++ppIdx)
             {
                 const CPierPointData& pierPoint =
                     pierData.GetPierPointData(ppIdx);
 
-                Float64 x = pierPoint.Get_X();
-                Float64 y = -pierPoint.Get_Y();
+                Float64 x =
+                    pierPoint.Get_X();
 
-                // Custom pier points are defined relative to the origin at the
-                // intersection of the alignment and the top of the lower x-beam.
-                //
-                // The final common code adds the left/right bottom end points.
-                // This branch only contributes the interior bottom profile.
+                Float64 y =
+                    -pierPoint.Get_Y();
+
                 if (InRange(Xlt, x, Xrt))
                 {
                     CComPtr<IPoint2d> pntBXB;
-                    pntBXB.CoCreateInstance(CLSID_Point2d);
+                    pntBXB.CoCreateInstance(
+                        CLSID_Point2d);
 
                     pntBXB->Move(x, y);
-
                     BXBProfile->Add(pntBXB);
                 }
             }
@@ -13163,8 +13270,9 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
         else
         {
             for (IndexType idx = nPoints - 1;
-                0 <= idx && idx != INVALID_INDEX;
-                idx--)
+                0 <= idx &&
+                idx != INVALID_INDEX;
+                --idx)
             {
                 CComPtr<IPoint2d> pnt;
                 lxbProfile->get_Item(idx, &pnt);
@@ -13174,13 +13282,19 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
 
                 if (InRange(Xlt, X, Xrt))
                 {
-                    // X is between tapers
                     CComPtr<IPoint2d> pntBXB;
                     pnt->Clone(&pntBXB);
 
-                    Float64 dy = ::LinInterp(X - Xs, dyL, dyR, dX);
+                    Float64 dy =
+                        IsZero(dX)
+                        ? dyL
+                        : ::LinInterp(
+                            X - Xs,
+                            dyL,
+                            dyR,
+                            dX);
 
-                    pntBXB->Offset(0, -dy);
+                    pntBXB->Offset(0.0, -dy);
                     BXBProfile->Insert(0, pntBXB);
                 }
 
@@ -13191,29 +13305,39 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
 
         CComPtr<IPoint2d> bxbL;
         bxbL.CoCreateInstance(CLSID_Point2d);
-        bxbL->Move(Xl, Yl - H1);
+
+        bxbL->Move(
+            XbottomLeft,
+            Yl - H1);
+
         BXBProfile->Insert(0, bxbL);
 
-        if (!IsZero(H2) && !IsZero(X1))
+        if (!IsZero(H2) &&
+            !IsZero(X1))
         {
-            // There is a taper on the left side
             CComPtr<IPoint2d> bxbLT;
-            bxbLT.CoCreateInstance(CLSID_Point2d);
+            bxbLT.CoCreateInstance(
+                CLSID_Point2d);
 
             Float64 y;
             bxbL->get_Y(&y);
 
-            bxbLT->Move(Xlt, y - H2);
+            bxbLT->Move(
+                Xlt,
+                y - H2);
+
             BXBProfile->Insert(1, bxbLT);
         }
 
-        if (!IsZero(H4) && !IsZero(X3))
+        if (!IsZero(H4) &&
+            !IsZero(X3))
         {
-            // There is a taper on the right side
             CComPtr<IPoint2d> bxbRT;
-            bxbRT.CoCreateInstance(CLSID_Point2d);
+            bxbRT.CoCreateInstance(
+                CLSID_Point2d);
 
-            Float64 y = Yr - H3 - H4;
+            Float64 y =
+                Yr - H3 - H4;
 
             bxbRT->Move(Xrt, y);
             BXBProfile->Add(bxbRT);
@@ -13221,12 +13345,15 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
 
         CComPtr<IPoint2d> bxbR;
         bxbR.CoCreateInstance(CLSID_Point2d);
-        bxbR->Move(Xr, Yr - H3);
+
+        bxbR->Move(
+            XbottomRight,
+            Yr - H3);
+
         BXBProfile->Add(bxbR);
     }
 
     BXBProfile->RemoveDuplicatePoints();
-
     BXBProfile.CopyTo(ppPoints);
 }
 
