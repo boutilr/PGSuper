@@ -13057,8 +13057,7 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
 
                     AddPoint(x, y);
                 }
-            };
-
+        };
 
         std::vector<Float64> colStations;
 
@@ -13131,103 +13130,105 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
             AddCircularHaunchBay(Xlt, Xrt, Xlt, Xrt, false);
         }
     }
-    else if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
+	else
     {
-        IndexType nPierPoints = pierData.GetPierPointCount();
-
-        for (IndexType ppIdx = 0; ppIdx < nPierPoints; ppIdx++)
+        if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
         {
-            const CPierPointData& pierPoint =
-                pierData.GetPierPointData(ppIdx);
+            IndexType nPierPoints = pierData.GetPierPointCount();
 
-            Float64 x = pierPoint.Get_X();
-            Float64 y = -pierPoint.Get_Y();
-
-            // Custom pier points are defined relative to the origin at the
-            // intersection of the alignment and the top of the lower x-beam.
-            //
-            // The final common code adds the left/right bottom end points.
-            // This branch only contributes the interior bottom profile.
-            if (InRange(Xlt, x, Xrt))
+            for (IndexType ppIdx = 0; ppIdx < nPierPoints; ppIdx++)
             {
-                CComPtr<IPoint2d> pntBXB;
-                pntBXB.CoCreateInstance(CLSID_Point2d);
+                const CPierPointData& pierPoint =
+                    pierData.GetPierPointData(ppIdx);
 
-                pntBXB->Move(x, y);
+                Float64 x = pierPoint.Get_X();
+                Float64 y = -pierPoint.Get_Y();
 
-                BXBProfile->Add(pntBXB);
+                // Custom pier points are defined relative to the origin at the
+                // intersection of the alignment and the top of the lower x-beam.
+                //
+                // The final common code adds the left/right bottom end points.
+                // This branch only contributes the interior bottom profile.
+                if (InRange(Xlt, x, Xrt))
+                {
+                    CComPtr<IPoint2d> pntBXB;
+                    pntBXB.CoCreateInstance(CLSID_Point2d);
+
+                    pntBXB->Move(x, y);
+
+                    BXBProfile->Add(pntBXB);
+                }
             }
         }
-    }
-    else
-    {
-        for (IndexType idx = nPoints - 1;
-            0 <= idx && idx != INVALID_INDEX;
-            idx--)
+        else
         {
-            CComPtr<IPoint2d> pnt;
-            lxbProfile->get_Item(idx, &pnt);
-
-            Float64 X;
-            pnt->get_X(&X);
-
-            if (InRange(Xlt, X, Xrt))
+            for (IndexType idx = nPoints - 1;
+                0 <= idx && idx != INVALID_INDEX;
+                idx--)
             {
-                // X is between tapers
-                CComPtr<IPoint2d> pntBXB;
-                pnt->Clone(&pntBXB);
+                CComPtr<IPoint2d> pnt;
+                lxbProfile->get_Item(idx, &pnt);
 
-                Float64 dy = ::LinInterp(X - Xs, dyL, dyR, dX);
+                Float64 X;
+                pnt->get_X(&X);
 
-                pntBXB->Offset(0, -dy);
-                BXBProfile->Insert(0, pntBXB);
+                if (InRange(Xlt, X, Xrt))
+                {
+                    // X is between tapers
+                    CComPtr<IPoint2d> pntBXB;
+                    pnt->Clone(&pntBXB);
+
+                    Float64 dy = ::LinInterp(X - Xs, dyL, dyR, dX);
+
+                    pntBXB->Offset(0, -dy);
+                    BXBProfile->Insert(0, pntBXB);
+                }
+
+                if (idx == 0)
+                    break;
             }
-
-            if (idx == 0)
-                break;
         }
+
+        CComPtr<IPoint2d> bxbL;
+        bxbL.CoCreateInstance(CLSID_Point2d);
+        bxbL->Move(Xl, Yl - H1);
+        BXBProfile->Insert(0, bxbL);
+
+        if (!IsZero(H2) && !IsZero(X1))
+        {
+            // There is a taper on the left side
+            CComPtr<IPoint2d> bxbLT;
+            bxbLT.CoCreateInstance(CLSID_Point2d);
+
+            Float64 y;
+            bxbL->get_Y(&y);
+
+            bxbLT->Move(Xlt, y - H2);
+            BXBProfile->Insert(1, bxbLT);
+        }
+
+        if (!IsZero(H4) && !IsZero(X3))
+        {
+            // There is a taper on the right side
+            CComPtr<IPoint2d> bxbRT;
+            bxbRT.CoCreateInstance(CLSID_Point2d);
+
+            Float64 y = Yr - H3 - H4;
+
+            bxbRT->Move(Xrt, y);
+            BXBProfile->Add(bxbRT);
+        }
+
+        CComPtr<IPoint2d> bxbR;
+        bxbR.CoCreateInstance(CLSID_Point2d);
+        bxbR->Move(Xr, Yr - H3);
+        BXBProfile->Add(bxbR);
     }
-
-    CComPtr<IPoint2d> bxbL;
-    bxbL.CoCreateInstance(CLSID_Point2d);
-    bxbL->Move(Xl, Yl - H1);
-    BXBProfile->Insert(0, bxbL);
-
-    if (!IsZero(H2) && !IsZero(X1))
-    {
-        // There is a taper on the left side
-        CComPtr<IPoint2d> bxbLT;
-        bxbLT.CoCreateInstance(CLSID_Point2d);
-
-        Float64 y;
-        bxbL->get_Y(&y);
-
-        bxbLT->Move(Xlt, y - H2);
-        BXBProfile->Insert(1, bxbLT);
-    }
-
-    if (!IsZero(H4) && !IsZero(X3))
-    {
-        // There is a taper on the right side
-        CComPtr<IPoint2d> bxbRT;
-        bxbRT.CoCreateInstance(CLSID_Point2d);
-
-        Float64 y = Yr - H3 - H4;
-
-        bxbRT->Move(Xrt, y);
-        BXBProfile->Add(bxbRT);
-    }
-
-    CComPtr<IPoint2d> bxbR;
-    bxbR.CoCreateInstance(CLSID_Point2d);
-    bxbR->Move(Xr, Yr - H3);
-    BXBProfile->Add(bxbR);
 
     BXBProfile->RemoveDuplicatePoints();
 
     BXBProfile.CopyTo(ppPoints);
 }
-
 
 void CBridgeAgentImp::GetXBeamProfile(const CPierData2& pierData, pgsTypes::Stage stageIdx, IShape** ppShape) const
 {
