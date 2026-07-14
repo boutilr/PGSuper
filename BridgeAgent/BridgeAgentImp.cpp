@@ -13230,31 +13230,68 @@ void CBridgeAgentImp::GetBottomXBeamProfile(const CPierData2& pierData,
     BXBProfile.CopyTo(ppPoints);
 }
 
-void CBridgeAgentImp::GetXBeamProfile(const CPierData2& pierData, pgsTypes::Stage stageIdx, IShape** ppShape) const
+void CBridgeAgentImp::GetXBeamProfile(
+    const CPierData2& pierData,
+    pgsTypes::Stage stageIdx,
+    IShape** ppShape) const
 {
-    CComPtr<IPoint2dCollection> txbProfile;
-    if (stageIdx == 0)
+    ATLASSERT(ppShape != nullptr);
+
+    if (ppShape == nullptr)
+        return;
+
+    *ppShape = nullptr;
+
+    CComPtr<IPoint2dCollection> topProfile;
+    CComPtr<IPoint2dCollection> bottomProfile;
+
+    if (stageIdx == pgsTypes::Stage::Stage1)
     {
-        // top profile is the top of the lower cross beam
-        GetLowerXBeamProfile(pierData, &txbProfile);
+        /*
+         * Lower cross beam:
+         *
+         * top = top of lower cross beam
+         * bottom = bottom of lower cross beam
+         */
+        GetLowerXBeamProfile(pierData, &topProfile);
+        GetBottomXBeamProfile(pierData, &bottomProfile);
     }
     else
     {
-        // top profile is the top of the upper cross beam
-        GetUpperXBeamProfile(pierData, &txbProfile);
+        /*
+         * Upper cross beam:
+         *
+         * top = underside of deck / top of upper cross beam
+         * bottom = top of lower cross beam
+         *
+         * Do not use GetBottomXBeamProfile() here. Doing so makes the
+         * upper cross beam extend to the bottom of the lower cross beam
+         * and creates the unwanted sliver/overlap.
+         */
+        GetUpperXBeamProfile(pierData, &topProfile);
+        GetLowerXBeamProfile(pierData, &bottomProfile);
     }
 
-    CComPtr<IPoint2dCollection> bxbProfile;
-    GetBottomXBeamProfile(pierData, &bxbProfile);
-    bxbProfile->Reverse(); // points are left to right... reverse them so they are right to left
+    if (topProfile == nullptr || bottomProfile == nullptr)
+        return;
+
+    /*
+     * Both profile functions return points from left to right.
+     * Reverse the bottom boundary so the polygon travels:
+     *
+     * upper-left -> upper-right -> lower-right -> lower-left
+     */
+    bottomProfile->Reverse();
 
     CComPtr<IPolyShape> shape;
     shape.CoCreateInstance(CLSID_PolyShape);
-    shape->AddPoints(txbProfile); // left to right across top of lower cross beam
-    shape->AddPoints(bxbProfile); // right to left across bottom of lower cross beam
+
+    shape->AddPoints(topProfile);
+    shape->AddPoints(bottomProfile);
 
     shape.QueryInterface(ppShape);
 }
+
 
 
 StageIndexType CBridgeAgentImp::GetStageIndex(pgsTypes::Stage stage) const
