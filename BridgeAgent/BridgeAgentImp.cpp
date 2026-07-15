@@ -12888,6 +12888,144 @@ void CBridgeAgentImp::GetLowerXBeamProfile(const CPierData2& pierData, IPoint2dC
         LXBProfile.CopyTo(ppPoints);
 }
 
+Float64 LowerDepth (Float64 x, Float64 Xs, Float64 dX, Float64 dyL, Float64 dyR)
+    {
+        if (IsZero(dX))
+            return dyL;
+
+        return ::LinInterp(
+            x - Xs,
+            dyL,
+            dyR,
+            dX);
+    };
+
+Float64 LowerTopY(Float64 x, Float64 Xs, Float64 Yl, Float64 Yr, IPoint2dCollection* lxbProfile)
+    {
+        IndexType nPoints;
+        lxbProfile->get_Count(&nPoints);
+
+        for (IndexType idx = 1;
+            idx < nPoints;
+            ++idx)
+        {
+            CComPtr<IPoint2d> p0;
+            CComPtr<IPoint2d> p1;
+
+            lxbProfile->get_Item(idx - 1, &p0);
+            lxbProfile->get_Item(idx, &p1);
+
+            Float64 x0, y0;
+            Float64 x1, y1;
+
+            p0->Location(&x0, &y0);
+            p1->Location(&x1, &y1);
+
+            const Float64 xMin = min(x0, x1);
+            const Float64 xMax = max(x0, x1);
+
+            if (InRange(xMin, x, xMax))
+            {
+                const Float64 segmentDX = x1 - x0;
+
+                if (IsZero(segmentDX))
+                    return y0;
+
+                return ::LinInterp(
+                    x - x0,
+                    y0,
+                    y1,
+                    segmentDX);
+            }
+        }
+
+        if (x <= Xs)
+            return Yl;
+
+        return Yr;
+};
+
+void AddCircularHaunchBay( 
+	Float64 R, Float64 D, Float64 Xs, Float64 Yl, Float64 Yr, Float64 dX, Float64 dyL, Float64 dyR,
+    Float64 x0Full,
+    Float64 x1Full,
+    Float64 xClip0,
+    Float64 xClip1,
+    bool skipFirst,
+    IPoint2dCollection* BXBProfile, IPoint2dCollection* lxbProfile)
+    {
+        if (x1Full <= x0Full ||
+            xClip1 <= xClip0 ||
+            R <= 0.0 ||
+            D < 0.0)
+        {
+            return;
+        }
+
+        const Float64 xMid =
+            0.5 * (x0Full + x1Full);
+
+        /*
+         * The crown of the circular scallop is D below the
+         * top of the lower cross beam.
+         */
+        const Float64 crownY =
+            LowerTopY(xMid, Xs, Yl, Yr, lxbProfile) - D;
+
+        const Float64 circleCenterY =
+            crownY - R;
+
+        IndexType nSegs = 24;
+
+        for (IndexType i = 0;
+            i <= nSegs;
+            ++i)
+        {
+            if (skipFirst && i == 0)
+                continue;
+
+            const Float64 u =
+                static_cast<Float64>(i) /
+                static_cast<Float64>(nSegs);
+
+            const Float64 x =
+                xClip0 +
+                u * (xClip1 - xClip0);
+
+            // Ordinary bottom profile at this location
+            const Float64 bottomY =
+                LowerTopY(x, Xs, Yl, Yr, lxbProfile) -
+                LowerDepth(x, Xs, dX, dyL, dyR);
+
+            Float64 y = bottomY;
+
+            const Float64 dx =
+                x - xMid;
+
+            if (std::fabs(dx) <= R)
+            {
+                const Float64 circleY =
+                    circleCenterY +
+                    std::sqrt(
+                        max(
+                            0.0,
+                            R * R - dx * dx));
+
+                /*
+                 * Use the circle only where it is above the
+                 * ordinary lower-beam bottom.
+                 */
+                y = max(bottomY, circleY);
+            }
+
+            CComPtr<IPoint2d> p;
+            p.CoCreateInstance(CLSID_Point2d);
+
+            p->Move(x, y);
+            BXBProfile->Add(p);
+        }
+};
+
 void CBridgeAgentImp::GetBottomXBeamProfile(
     const CPierData2& pierData,
     IPoint2dCollection** ppPoints) const
@@ -12962,147 +13100,6 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
         const Float64 R = pierData.GetXBeamRadius();
         const Float64 D = pierData.GetXBeamDepth();
 
-        constexpr IndexType nSegs = 24;
-
-        auto AddPoint =
-            [&](Float64 x, Float64 y)
-            {
-                CComPtr<IPoint2d> p;
-                p.CoCreateInstance(CLSID_Point2d);
-
-                p->Move(x, y);
-                BXBProfile->Add(p);
-            };
-
-        auto LowerTopY =
-            [&](Float64 x) -> Float64
-            {
-                for (IndexType idx = 1;
-                    idx < nPoints;
-                    ++idx)
-                {
-                    CComPtr<IPoint2d> p0;
-                    CComPtr<IPoint2d> p1;
-
-                    lxbProfile->get_Item(idx - 1, &p0);
-                    lxbProfile->get_Item(idx, &p1);
-
-                    Float64 x0, y0;
-                    Float64 x1, y1;
-
-                    p0->Location(&x0, &y0);
-                    p1->Location(&x1, &y1);
-
-                    const Float64 xMin = min(x0, x1);
-                    const Float64 xMax = max(x0, x1);
-
-                    if (InRange(xMin, x, xMax))
-                    {
-                        const Float64 segmentDX = x1 - x0;
-
-                        if (IsZero(segmentDX))
-                            return y0;
-
-                        return ::LinInterp(
-                            x - x0,
-                            y0,
-                            y1,
-                            segmentDX);
-                    }
-                }
-
-                if (x <= Xs)
-                    return Yl;
-
-                return Yr;
-            };
-
-        auto LowerDepth =
-            [&](Float64 x) -> Float64
-            {
-                if (IsZero(dX))
-                    return dyL;
-
-                return ::LinInterp(
-                    x - Xs,
-                    dyL,
-                    dyR,
-                    dX);
-            };
-
-        auto AddCircularHaunchBay =
-            [&](Float64 x0Full,
-                Float64 x1Full,
-                Float64 xClip0,
-                Float64 xClip1,
-                bool skipFirst)
-            {
-                if (x1Full <= x0Full ||
-                    xClip1 <= xClip0 ||
-                    R <= 0.0 ||
-                    D < 0.0)
-                {
-                    return;
-                }
-
-                const Float64 xMid =
-                    0.5 * (x0Full + x1Full);
-
-                /*
-                 * The crown of the circular scallop is D below the
-                 * top of the lower cross beam.
-                 */
-                const Float64 crownY =
-                    LowerTopY(xMid) - D;
-
-                const Float64 circleCenterY =
-                    crownY - R;
-
-                for (IndexType i = 0;
-                    i <= nSegs;
-                    ++i)
-                {
-                    if (skipFirst && i == 0)
-                        continue;
-
-                    const Float64 u =
-                        static_cast<Float64>(i) /
-                        static_cast<Float64>(nSegs);
-
-                    const Float64 x =
-                        xClip0 +
-                        u * (xClip1 - xClip0);
-
-                    // Ordinary bottom profile at this location
-                    const Float64 bottomY =
-                        LowerTopY(x) -
-                        LowerDepth(x);
-
-                    Float64 y = bottomY;
-
-                    const Float64 dx =
-                        x - xMid;
-
-                    if (std::fabs(dx) <= R)
-                    {
-                        const Float64 circleY =
-                            circleCenterY +
-                            std::sqrt(
-                                max(
-                                    0.0,
-                                    R * R - dx * dx));
-
-                        /*
-                         * Use the circle only where it is above the
-                         * ordinary lower-beam bottom.
-                         */
-                        y = max(bottomY, circleY);
-                    }
-
-                    AddPoint(x, y);
-                }
-            };
-
         std::vector<Float64> colStations;
 
         const IndexType nCols =
@@ -13141,14 +13138,6 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
                 }),
             colStations.end());
 
-        /*
-         * For a scalloped cross beam, clip to the inset bottom
-         * endpoints instead of Xlt/Xrt.
-         *
-         * These coordinates make the outside polygon edges run from
-         * the top corners to the inset circular-profile endpoints,
-         * producing the desired taper.
-         */
         const Float64 XscallopLeft =
             XbottomLeft;
 
@@ -13202,12 +13191,12 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
 
                 if (xClip1 > xClip0)
                 {
-                    AddCircularHaunchBay(
+					AddCircularHaunchBay(R, D, Xs, Yl, Yr, dX, dyL, dyR,
                         x0Full,
                         x1Full,
                         xClip0,
                         xClip1,
-                        !firstPoint);
+                        !firstPoint, BXBProfile, lxbProfile);
 
                     firstPoint = false;
                 }
@@ -13215,25 +13204,14 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
         }
         else
         {
-            AddCircularHaunchBay(
+			AddCircularHaunchBay(R, D, Xs, Yl, Yr, dX, dyL, dyR,
                 XscallopLeft,
                 XscallopRight,
                 XscallopLeft,
                 XscallopRight,
-                false);
+                false, BXBProfile, lxbProfile);
         }
 
-        /*
-         * Do not add bxbL, bxbLT, bxbRT, or bxbR here.
-         *
-         * The polygon will close directly between:
-         *
-         * lower top-left -> first scallop point
-         * last scallop point -> lower top-right
-         *
-         * Since the first and last scallop points are inset by X2 and
-         * X4, those closing segments form the outside tapers.
-         */
     }
     else
     {
