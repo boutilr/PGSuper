@@ -2675,40 +2675,75 @@ bool CBridgeAgentImp::LayoutPiers()
 
          pier->put_Type((PierType)pierType);
 
-         CComPtr<ILinearCrossBeam> xbeam;
-         xbeam.CoCreateInstance(CLSID_LinearCrossBeam);
-
-         Float64 H1, H2, H3, H4;
-         Float64 X1, X2, X3, X4;
-         pPierData->GetXBeamDimensions(pgsTypes::stLeft,&H1,&H2,&X1,&X2);
-         pPierData->GetXBeamDimensions(pgsTypes::stRight,&H3,&H4,&X3,&X4);
-
-         Float64 W1 = pPierData->GetXBeamWidth();
-
          Float64 X5, X6;
-         pPierData->GetXBeamOverhangs(&X5,&X6);
+         pPierData->GetXBeamOverhangs(&X5, &X6);
 
-         Float64 H5, W2;
-		 GetUpperXBeamDimensions(pierIdx, &H5, &W2);
+         if (pPierData->GetPierLayoutType() == pgsTypes::pltCommon)
+         {
+             CComPtr<IBasicCrossBeam> bxbeam;
 
-         xbeam->put_H1(H1);
-         xbeam->put_H2(H2);
-         xbeam->put_H3(H3);
-         xbeam->put_H4(H4);
-         xbeam->put_H5(H5);
+             HRESULT hr = bxbeam.CoCreateInstance(CLSID_BasicCrossBeam);
 
-         xbeam->put_X1(X1);
-         xbeam->put_X2(X2);
-         xbeam->put_X3(X3);
-         xbeam->put_X4(X4);
+             Float64 H1L, H2L, H1R, H2R;
+             Float64 X2L, X1L, X2R, X1R;
+             pPierData->GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
+             pPierData->GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
 
-         xbeam->put_W1(W1);
-         xbeam->put_W2(W2);
+             Float64 W1 = pPierData->GetXBeamWidth();
 
-         //CComQIPtr<ICrossBeam> crossBeam(xbeam);
-         //pier->putref_CrossBeam(crossBeam);
-         pier->putref_CrossBeam(xbeam);
-         
+             Float64 HU, W2;
+             GetUpperXBeamDimensions(pierIdx, &HU, &W2);
+
+             bxbeam->put_H1L(H1L);
+             bxbeam->put_H2L(H2L);
+             bxbeam->put_H1R(H1R);
+             bxbeam->put_H2R(H2R);
+             bxbeam->put_HU(HU);
+             
+             bxbeam->put_X2L(X2L);
+             bxbeam->put_X1L(X1L);
+             bxbeam->put_X2R(X2R);
+             bxbeam->put_X1R(X1R);
+             
+             bxbeam->put_W1(W1);
+             bxbeam->put_W2(W2);
+
+             pier->putref_CrossBeam(bxbeam);
+         }
+         //else if (pPierData->GetPierLayoutType() == pgsTypes::pltScalloped)
+         //{
+         //    CComPtr<IBasicCrossBeam> sxbeam;
+
+         //    HRESULT hr = sxbeam.CoCreateInstance(CLSID_ScallopedCrossBeam);
+
+         //    Float64 H1L, H2L, H1R, H2R;
+         //    Float64 X2L, X1L, X2R, X1R;
+         //    pPierData->GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
+         //    pPierData->GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
+
+         //    Float64 W1 = pPierData->GetXBeamWidth();
+
+         //    Float64 HU, W2;
+         //    GetUpperXBeamDimensions(pierIdx, &HU, &W2);
+
+         //    bxbeam->put_H1L(H1L);
+         //    bxbeam->put_H2L(H2L);
+         //    bxbeam->put_H1R(H1R);
+         //    bxbeam->put_H2R(H2R);
+         //    bxbeam->put_HU(HU);
+         //    
+         //    bxbeam->put_X2L(X2L);
+         //    bxbeam->put_X1L(X1L);
+         //    bxbeam->put_X2R(X2R);
+         //    bxbeam->put_X1R(X1R);
+         //    
+         //    bxbeam->put_W1(W1);
+         //    bxbeam->put_W2(W2);
+
+         //    pier->putref_CrossBeam(bxbeam);
+         //}
+
+
          //
          // Bearing Layout
          //
@@ -12945,7 +12980,7 @@ Float64 LowerTopY(Float64 x, Float64 Xs, Float64 Yl, Float64 Yr, IPoint2dCollect
         return Yr;
 };
 
-void AddCircularHaunchBay( 
+void AddScallop( 
 	Float64 R, Float64 D, Float64 Xs, Float64 Yl, Float64 Yr, Float64 dX, Float64 dyL, Float64 dyR,
     Float64 x0Full,
     Float64 x1Full,
@@ -13191,7 +13226,7 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
 
                 if (xClip1 > xClip0)
                 {
-					AddCircularHaunchBay(R, D, Xs, Yl, Yr, dX, dyL, dyR,
+					AddScallop(R, D, Xs, Yl, Yr, dX, dyL, dyR,
                         x0Full,
                         x1Full,
                         xClip0,
@@ -13204,7 +13239,7 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
         }
         else
         {
-			AddCircularHaunchBay(R, D, Xs, Yl, Yr, dX, dyL, dyR,
+			AddScallop(R, D, Xs, Yl, Yr, dX, dyL, dyR,
                 XscallopLeft,
                 XscallopRight,
                 XscallopLeft,
