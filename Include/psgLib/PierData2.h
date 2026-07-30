@@ -314,8 +314,8 @@ public:
 
    void SetPierPointCount(PierPointIndexType nPierPoints);
 
-   // Returns the definition of a pier point
    const CPierPointData& GetPierPointData(PierPointIndexType pplIdx) const;
+   const std::vector<CPierPointData>& GetPierPointData() const;
 
 
    // =================================================================================
