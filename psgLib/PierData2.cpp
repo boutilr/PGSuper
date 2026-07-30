@@ -21,7 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include <PsgLib/PierData2.h>
+
 #include <PsgLib/SpanData2.h>
 #include <PsgLib/BridgeDescription2.h>
 #include <PsgLib/GirderSpacing2.h>
@@ -2446,6 +2446,11 @@ const CPierPointData& CPierData2::GetPierPointData(PierPointIndexType ppIdx) con
 {
     ATLASSERT(ppIdx < m_PierPoints.size());
     return m_PierPoints[ppIdx];
+}
+
+const std::vector<CPierPointData>& CPierData2::GetPierPointData() const
+{
+    return m_PierPoints;
 }
 
 PierPointIndexType CPierData2::GetPierPointCount() const
