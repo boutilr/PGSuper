@@ -233,7 +233,7 @@ BOOL CPierLayoutPage::OnKillActive()
         }
         else if (m_PierLayoutType == pgsTypes::pltUserDefined)
         {
-            if (!CommitScallopedPierLayout())
+            if (!CommitUserDefinedPierLayout())
             {
                 return FALSE;
             }
