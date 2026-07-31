@@ -256,6 +256,11 @@ bool CPierData2::operator==(const CPierData2& rOther) const
       {
          return false;
       }
+
+      if ( m_PierPoints != rOther.m_PierPoints )
+      {
+         return false;
+      }
    }
 
    // Must update mutable bearing data before comparison
@@ -555,7 +560,7 @@ HRESULT CPierData2::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress>
       //pStrSave->put_Property(_T("Ec"),CComVariant(m_Ec)); // removed in version 15
       m_Concrete.Save(pStrSave,pProgress); // added in version 15
 
-      pStrSave->put_Property(_T("PierLayoutType"),CComVariant(m_PierLayoutType)); //added in verion 22
+      pStrSave->put_Property(_T("PierLayoutType"),CComVariant(m_PierLayoutType)); //added in verion 23
       pStrSave->put_Property(_T("RefColumnIndex"),CComVariant(m_RefColumnIdx));
       pStrSave->put_Property(_T("TransverseOffset"),CComVariant(m_TransverseOffset));
       pStrSave->put_Property(_T("TransverseOffsetMeasurement"),CComVariant(m_TransverseOffsetMeasurement));
@@ -1489,6 +1494,7 @@ void CPierData2::MakeCopy(const CPierData2& rOther,bool bCopyDataOnly)
    m_ColumnFixity = rOther.m_ColumnFixity;
    m_ColumnSpacing = rOther.m_ColumnSpacing;
    m_Columns = rOther.m_Columns;
+   m_PierPoints = rOther.m_PierPoints;
 
    m_Concrete = rOther.m_Concrete;
    m_XBeamWidth = rOther.m_XBeamWidth;
