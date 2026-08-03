@@ -142,6 +142,7 @@ bool CPierLayoutPage::CommitScallopedPierLayout()
     m_ScallopedPierLayoutDlg.m_TransverseOffset, m_ScallopedPierLayoutDlg.m_TransverseOffsetMeasurement);
     m_pPier->SetXBeamWidth(m_ScallopedPierLayoutDlg.m_XBeamWidth);
     m_pPier->SetXBeamRadius(m_ScallopedPierLayoutDlg.m_XBeamRadius);
+    m_pPier->SetXBeamDepth(m_ScallopedPierLayoutDlg.m_XBeamDepth);
 
     for (int i = 0; i < 2; i++)
     {
