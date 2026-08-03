@@ -2667,6 +2667,16 @@ bool CBridgeAgentImp::LayoutPiers()
       pier->put_CurbLineOffset(qcbLeft, leftCLO);
       pier->put_CurbLineOffset(qcbRight, rightCLO);
 
+      Float64 H1L, H2L, H1R, H2R;
+      Float64 X2L, X1L, X2R, X1R;
+      pPierData->GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
+      pPierData->GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
+
+      Float64 W1 = pPierData->GetXBeamWidth();
+
+      Float64 HU, W2;
+      GetUpperXBeamDimensions(pierIdx, &HU, &W2);
+
       if ( pPierData->GetPierModelType() == pgsTypes::pmtPhysical )
       {
 
@@ -2678,70 +2688,81 @@ bool CBridgeAgentImp::LayoutPiers()
          Float64 X5, X6;
          pPierData->GetXBeamOverhangs(&X5, &X6);
 
-         if (pPierData->GetPierLayoutType() == pgsTypes::pltCommon)
+         if (pPierData->GetPierLayoutType() == pgsTypes::pltUserDefined)
+         {
+             CComPtr<IPointDefinedCrossBeam> uxbeam;
+
+             HRESULT hr = uxbeam.CoCreateInstance(CLSID_PointDefinedCrossBeam);
+
+             uxbeam->put_H1L(H1L);
+             uxbeam->put_H1R(H1R);
+             uxbeam->put_X1L(X1L);
+             uxbeam->put_X1R(X1R);
+             uxbeam->put_W1(W1);
+             uxbeam->put_HU(HU);
+             uxbeam->put_W2(W2);
+             CComPtr<IPoint2dCollection> points;
+             points.CoCreateInstance(CLSID_Point2dCollection);
+
+             const auto& vPoints = pPierData->GetPierPointData();
+
+             for (const auto& pointData : vPoints)
+             {
+                 CComPtr<IPoint2d> point;
+                 point.CoCreateInstance(CLSID_Point2d);
+                 point->Move(pointData.Get_X(), -pointData.Get_Y());
+                 points->Add(point);
+             }
+             uxbeam->SetPoints(points);
+
+             pier->putref_CrossBeam(uxbeam);
+         }
+         else if (pPierData->GetPierLayoutType() == pgsTypes::pltScalloped)
+         {
+             CComPtr<IScallopedCrossBeam> sxbeam;
+
+             HRESULT hr = sxbeam.CoCreateInstance(CLSID_ScallopedCrossBeam);
+
+             sxbeam->put_H1L(H1L);
+             sxbeam->put_H1R(H1R);
+             sxbeam->put_HU(HU);
+             
+             sxbeam->put_X1L(X1L);
+             sxbeam->put_X1R(X1R);
+             
+             sxbeam->put_W1(W1);
+             sxbeam->put_W2(W2);
+
+             Float64 R = pPierData->GetXBeamRadius();
+			 Float64 D = pPierData->GetXBeamDepth();
+
+			 sxbeam->put_R(R);
+			 sxbeam->put_D(D);
+
+             pier->putref_CrossBeam(sxbeam);
+         }
+         else
          {
              CComPtr<IBasicCrossBeam> bxbeam;
 
              HRESULT hr = bxbeam.CoCreateInstance(CLSID_BasicCrossBeam);
-
-             Float64 H1L, H2L, H1R, H2R;
-             Float64 X2L, X1L, X2R, X1R;
-             pPierData->GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
-             pPierData->GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
-
-             Float64 W1 = pPierData->GetXBeamWidth();
-
-             Float64 HU, W2;
-             GetUpperXBeamDimensions(pierIdx, &HU, &W2);
 
              bxbeam->put_H1L(H1L);
              bxbeam->put_H2L(H2L);
              bxbeam->put_H1R(H1R);
              bxbeam->put_H2R(H2R);
              bxbeam->put_HU(HU);
-             
+
              bxbeam->put_X2L(X2L);
              bxbeam->put_X1L(X1L);
              bxbeam->put_X2R(X2R);
              bxbeam->put_X1R(X1R);
-             
+
              bxbeam->put_W1(W1);
              bxbeam->put_W2(W2);
 
              pier->putref_CrossBeam(bxbeam);
          }
-         //else if (pPierData->GetPierLayoutType() == pgsTypes::pltScalloped)
-         //{
-         //    CComPtr<IBasicCrossBeam> sxbeam;
-
-         //    HRESULT hr = sxbeam.CoCreateInstance(CLSID_ScallopedCrossBeam);
-
-         //    Float64 H1L, H2L, H1R, H2R;
-         //    Float64 X2L, X1L, X2R, X1R;
-         //    pPierData->GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
-         //    pPierData->GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
-
-         //    Float64 W1 = pPierData->GetXBeamWidth();
-
-         //    Float64 HU, W2;
-         //    GetUpperXBeamDimensions(pierIdx, &HU, &W2);
-
-         //    bxbeam->put_H1L(H1L);
-         //    bxbeam->put_H2L(H2L);
-         //    bxbeam->put_H1R(H1R);
-         //    bxbeam->put_H2R(H2R);
-         //    bxbeam->put_HU(HU);
-         //    
-         //    bxbeam->put_X2L(X2L);
-         //    bxbeam->put_X1L(X1L);
-         //    bxbeam->put_X2R(X2R);
-         //    bxbeam->put_X1R(X1R);
-         //    
-         //    bxbeam->put_W1(W1);
-         //    bxbeam->put_W2(W2);
-
-         //    pier->putref_CrossBeam(bxbeam);
-         //}
 
 
          //
