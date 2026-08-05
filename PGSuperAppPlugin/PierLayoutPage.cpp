@@ -580,6 +580,7 @@ void CPierLayoutPage::OnPierModelTypeChanged()
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
         m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
+        m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
     }
 
     SetModified(TRUE);
