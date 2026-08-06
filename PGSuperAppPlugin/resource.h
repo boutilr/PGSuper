@@ -1328,7 +1328,6 @@
 #define IDC_DONT_WARN                   1925
 #define IDC_GCE_CHECK                   1925
 #define IDC_CHECK_FIXED_X_TRANS         1925
-#define IDC_MIRROR                      1925
 #define IDC_STRANDS_CG2                 1926
 #define IDC_SECTION_CG                  1926
 #define IDC_EDIT1                       1926
