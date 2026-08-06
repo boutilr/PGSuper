@@ -371,18 +371,25 @@ void CScallopedPierLayoutDlg::OnAddColumn()
 
 void CScallopedPierLayoutDlg::OnRemoveColumns()
 {
-    m_ColumnLayoutGrid.RemoveSelectedColumns();
-
-    FillRefColumnComboBox();
-
-    // Update pier data with current column data
-	const auto nCols = m_Pier.GetColumnCount();
-	if (nCols > 1)
+    if (m_ColumnLayoutGrid.GetRowCount() > 1)
     {
-        m_ColumnLayoutGrid.GetColumnData(m_Pier);
-    }
+        m_ColumnLayoutGrid.RemoveSelectedColumns();
 
-    RefreshDisplay();
+        FillRefColumnComboBox();
+
+        // Update pier data with current column data
+        const auto nCols = m_Pier.GetColumnCount();
+        if (nCols > 1)
+        {
+            m_ColumnLayoutGrid.GetColumnData(m_Pier);
+        }
+
+        RefreshDisplay();
+    }
+    else
+    {
+        AfxMessageBox(_T("The pier must have at least one column"), MB_OK | MB_ICONEXCLAMATION);
+    }
 }
 
 void CScallopedPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
