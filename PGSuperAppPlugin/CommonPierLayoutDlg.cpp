@@ -345,7 +345,6 @@ void CCommonPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
     if (pcbRefColumn->SetCurSel(curSel) == CB_ERR)
     {
         pcbRefColumn->SetCurSel(m_RefColumnIdx);
-        OnRefColumnChanged();
     }
 }
 
@@ -398,6 +397,7 @@ void CCommonPierLayoutDlg::OnRemoveColumns()
     {
         m_ColumnLayoutGrid.RemoveSelectedColumns();
 
+
         FillRefColumnComboBox();
 
         // Update pier data with current column data
@@ -407,12 +407,13 @@ void CCommonPierLayoutDlg::OnRemoveColumns()
             m_ColumnLayoutGrid.GetColumnData(m_Pier);
         }
 
-        RefreshDisplay();
     }
     else
     {
         AfxMessageBox(_T("The pier must have at least one column"), MB_OK | MB_ICONEXCLAMATION);
     }
+        
+    RefreshDisplay();
 }
 
 void CCommonPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
@@ -556,10 +557,6 @@ void CCommonPierLayoutDlg::OnPierLayoutChanged()
             dx.Fail();
         }
     }
-
-
-
-
 
     RefreshDisplay();
 }

@@ -293,6 +293,15 @@ void CColumnLayoutGrid::GetColumnData(CPierData2& pier)
          pier.SetColumnSpacing(colIdx,S);
       }
    }
+   const auto& nCols = pier.GetColumnCount();
+   ColumnIndexType refColumnIdx;
+   Float64 offset;
+   pgsTypes::OffsetMeasurementType offsetType;
+   pier.GetTransverseOffset(&refColumnIdx, &offset, &offsetType);
+   if (refColumnIdx >= nCols)
+   {
+	   pier.SetTransverseOffset(nCols - 1, offset, offsetType);
+   }
 }
 
 void CColumnLayoutGrid::SetColumnData(const CPierData2& pier)
