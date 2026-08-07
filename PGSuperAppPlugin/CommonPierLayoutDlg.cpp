@@ -306,9 +306,14 @@ void CCommonPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 void CCommonPierLayoutDlg::RefreshDisplay()
 {
     // Invalidate and update the drawing control to reflect the changes
-    m_ctrlDrawXBeam.UpdateDisplayObjects();
-    m_ctrlDrawXBeam.Invalidate();
-    m_ctrlDrawXBeam.UpdateWindow();
+    CPierLayoutPage* pPage =
+        DYNAMIC_DOWNCAST(CPierLayoutPage, GetParent());
+    if (pPage->m_pPierLayoutPopout != nullptr)
+    {
+        m_ctrlDrawXBeam.UpdateDisplayObjects();
+        m_ctrlDrawXBeam.Invalidate();
+        m_ctrlDrawXBeam.UpdateWindow();
+    }
 
     if (GetParent())
         GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
