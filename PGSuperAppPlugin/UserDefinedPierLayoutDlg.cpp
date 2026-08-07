@@ -234,18 +234,18 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 
 void CUserDefinedPierLayoutDlg::RefreshDisplay()
 {
+    // Invalidate and update the drawing control to reflect the changes
     CPierLayoutPage* pPage =
-    DYNAMIC_DOWNCAST(CPierLayoutPage, GetParent());
+        DYNAMIC_DOWNCAST(CPierLayoutPage, GetParent());
     if (pPage->m_pPierLayoutPopout != nullptr)
     {
-        // Invalidate and update the drawing control to reflect the changes
         m_ctrlDrawXBeam.UpdateDisplayObjects();
         m_ctrlDrawXBeam.Invalidate();
         m_ctrlDrawXBeam.UpdateWindow();
-
-        if (GetParent())
-            GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
     }
+
+    if (GetParent())
+        GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
 }
 
 
