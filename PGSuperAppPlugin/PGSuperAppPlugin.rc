@@ -4683,7 +4683,7 @@ STRANDSPACING           METAFILE                "res\\StrandSpacing.emf"
 
 HARPPOINTLOCATION       METAFILE                "res\\HarpPointLocations.emf"
 
-PIERLAYOUT              METAFILE                "res\\PierLayout.emf"
+COMMONPIERLAYOUT              METAFILE                "res\\CommonPierLayout.emf"
 
 BEARINGDIMENSIONS       METAFILE                "res\\BearingDimensions.emf"
 

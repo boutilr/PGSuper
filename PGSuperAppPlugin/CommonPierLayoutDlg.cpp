@@ -186,7 +186,7 @@ void CCommonPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
     auto pBroker = EAFGetBroker();
     GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
-    DDX_MetaFileStatic(pDX, IDC_PIER_LAYOUT_GUIDE, m_LayoutPicture,_T("PIERLAYOUT"), _T("Metafile") );
+    DDX_MetaFileStatic(pDX, IDC_PIER_LAYOUT_GUIDE, m_LayoutPicture,_T("COMMONPIERLAYOUT"), _T("Metafile") );
 
     DDX_UnitValueAndTag(pDX, IDC_H1L, IDC_H1L_UNIT, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
     DDX_UnitValueAndTag(pDX, IDC_H2L, IDC_H2L_UNIT, m_XBeamTaperHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
