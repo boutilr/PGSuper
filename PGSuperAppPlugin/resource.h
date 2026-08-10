@@ -868,6 +868,7 @@
 #define IDC_DAY                         1617
 #define IDC_FRICTION_PT                 1617
 #define IDC_X5                          1617
+#define IDC_OHL                         1617
 #define IDC_RIGHT_SIDEWALK_RIGHT_DEPTH  1618
 #define IDC_DESIGN_PEDES_STATIC         1618
 #define IDC_GDR_TYPE_LABEL              1618
@@ -1071,10 +1072,12 @@
 #define IDC_FC1                         1749
 #define IDC_H3                          1749
 #define IDC_R                           1749
+#define IDC_H1R                         1749
 #define IDC_FC2                         1750
 #define IDS_E_INVALIDVERSION            1750
 #define IDC_H4                          1750
 #define IDC_D                           1750
+#define IDC_H2R                         1750
 #define IDC_LEFT_EC                     1751
 #define IDC_X1                          1751
 #define IDC_X2                          1752
@@ -1082,6 +1085,7 @@
 #define IDC_W                           1753
 #define IDC_OVERLAY_NOTE                1754
 #define IDC_X6                          1754
+#define IDC_OHR                         1754
 #define IDC_LEFT_MORE                   1755
 #define IDC_REFCOLUMN_OFFSET            1755
 #define IDC_REFCOLUMN_OFFSET_UNIT       1756
@@ -1162,12 +1166,16 @@
 #define IDC_H2_UNIT                     1815
 #define IDC_H3_LABEL                    1816
 #define IDC_R_LABEL                     1816
+#define IDC_H1R_LABEL                   1816
 #define IDC_H3_UNIT                     1817
 #define IDC_R_UNIT                      1817
+#define IDC_H1R_UNIT                    1817
 #define IDC_H4_LABEL                    1818
 #define IDC_D_LABEL                     1818
+#define IDC_H2R_LABEL                   1818
 #define IDC_H4_UNIT                     1819
 #define IDC_D_UNIT                      1819
+#define IDC_H2R_UNIT                    1819
 #define IDC_X1_LABEL                    1820
 #define IDC_X1_UNIT                     1821
 #define IDC_X2_LABEL                    1822
@@ -1176,7 +1184,9 @@
 #define IDC_X4_LABEL                    1825
 #define IDC_W_UNIT                      1826
 #define IDC_X5_LABEL                    1827
+#define IDC_OHL_LABEL                   1827
 #define IDC_X5_UNIT                     1828
+#define IDC_OHL_UNIT                    1828
 #define IDC_W_LABEL                     1829
 #define IDC_X3                          1830
 #define IDC_X3_UNIT                     1831
@@ -1509,6 +1519,37 @@
 #define IDC_STATIC_BRG_NOTE             2069
 #define IDC_STATIC_BOUNDS               2070
 #define IDC_TRANS_GROUP                 2071
+#define IDC_WEB_THICKENING_WIDTH_HEADER 2071
+#define IDC_WEB_THICKENING_LENGTH_HEADER 2072
+#define IDC_WEB_THICKENING_TRANSITION_HEADER 2073
+#define IDC_WEB_THICKENING_LABEL        2074
+#define IDC_WEB_THICKENING_WIDTH        2075
+#define IDC_WEB_THICKENING_WIDTH_UNIT   2076
+#define IDC_WEB_THICKENING_LENGTH       2077
+#define IDC_WEB_THICKENING_LENGTH_UNIT  2078
+#define IDC_WEB_THICKENING_TRANSITION   2079
+#define IDC_WEB_THICKENING_TRANSITION_UNIT 2080
+#define IDC_INTERIOR_PIER_LOCATION_LABEL 2081
+#define IDC_H1L_LABEL                   2081
+#define IDC_INTERIOR_PIER_LOCATION      2082
+#define IDC_H1L                         2082
+#define IDC_INTERIOR_PIER_LOCATION_UNIT 2083
+#define IDC_H1L_UNIT                    2083
+#define IDC_H2L_LABEL                   2084
+#define IDC_H2L                         2085
+#define IDC_H2L_UNIT                    2086
+#define IDC_X1L_LABEL                   2087
+#define IDC_X1L                         2088
+#define IDC_X1L_UNIT                    2089
+#define IDC_X2L_LABEL                   2090
+#define IDC_X2L                         2091
+#define IDC_X2L_UNIT                    2092
+#define IDC_X1R_LABEL                   2093
+#define IDC_X1R                         2094
+#define IDC_X1R_UNIT                    2095
+#define IDC_X2R_LABEL                   2096
+#define IDC_X2R                         2097
+#define IDC_X2R_UNIT                    2098
 #define IDS_E_WRITE                     2500
 #define IDS_E_UNSAFESAVE                2501
 #define IDS_E_SAVERECOVER1              2502
@@ -1533,7 +1574,9 @@
 #define IDC_EXPAND                      12878
 #define IDC_JOIN                        12879
 #define IDC_X6_LABEL                    12880
+#define IDC_OHR_LABEL                   12880
 #define IDC_X6_UNIT                     12881
+#define IDC_OHR_UNIT                    12881
 #define IDS_INCOMPATIBLE_BEARING_MSG    13100
 #define IDS_INCOMPATIBLE_BEARING_MSG2   13101
 #define ID_HELP_JOINARPLIST             33024
@@ -1695,19 +1738,6 @@
 #define ID_COPY_BRG_PROPS               37022
 #define IDD_BEARING_DETAIL              37040
 #define IDC_STATIC_MULTI_SELECT_ITEM    37060
-#define IDC_WEB_THICKENING_WIDTH_HEADER    2071
-#define IDC_WEB_THICKENING_LENGTH_HEADER   2072
-#define IDC_WEB_THICKENING_TRANSITION_HEADER 2073
-#define IDC_WEB_THICKENING_LABEL           2074
-#define IDC_WEB_THICKENING_WIDTH           2075
-#define IDC_WEB_THICKENING_WIDTH_UNIT      2076
-#define IDC_WEB_THICKENING_LENGTH          2077
-#define IDC_WEB_THICKENING_LENGTH_UNIT     2078
-#define IDC_WEB_THICKENING_TRANSITION      2079
-#define IDC_WEB_THICKENING_TRANSITION_UNIT 2080
-#define IDC_INTERIOR_PIER_LOCATION_LABEL   2081
-#define IDC_INTERIOR_PIER_LOCATION         2082
-#define IDC_INTERIOR_PIER_LOCATION_UNIT    2083
 
 // Next default values for new objects
 // 
@@ -1715,7 +1745,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        411
 #define _APS_NEXT_COMMAND_VALUE         37026
-#define _APS_NEXT_CONTROL_VALUE         2081
+#define _APS_NEXT_CONTROL_VALUE         2099
 #define _APS_NEXT_SYMED_VALUE           115
 #endif
 #endif
