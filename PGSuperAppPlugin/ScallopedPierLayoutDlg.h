@@ -93,8 +93,6 @@ protected:
 	Float64 m_XBeamRadius;
 	Float64 m_XBeamDepth;
 	Float64 m_XBeamHeight[2];
-	Float64 m_XBeamTaperHeight[2];
-	Float64 m_XBeamTaperLength[2];
 	Float64 m_XBeamEndSlopeOffset[2];
 	Float64 m_XBeamOverhang[2];
 	pgsTypes::ColumnLongitudinalBaseFixityType m_ColumnFixity;

@@ -59,14 +59,14 @@ BEGIN_MESSAGE_MAP(CScallopedPierLayoutDlg, CDialog)
     ON_BN_CLICKED(IDC_REMOVE_COLUMN, &CScallopedPierLayoutDlg::OnRemoveColumns)
 
     ON_EN_CHANGE(IDC_W, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_H1, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_H2, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_H1L, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_H1R, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
     ON_EN_CHANGE(IDC_R, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
     ON_EN_CHANGE(IDC_D, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_X1, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_X2, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_X3, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_X4, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X1L, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_X1R, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_OHL, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_CHANGE(IDC_OHR, &CScallopedPierLayoutDlg::OnPierLayoutChanged)
 
     ON_CBN_SELCHANGE(IDC_REFCOLUMN, &CScallopedPierLayoutDlg::OnRefColumnChanged)
     ON_EN_CHANGE(IDC_REFCOLUMN_OFFSET, &CScallopedPierLayoutDlg::OnRefColumnChanged)
@@ -159,7 +159,8 @@ BOOL CScallopedPierLayoutDlg::OnInitDialog()
     for (int i = 0; i < 2; i++)
     {
         pgsTypes::SideType side = (pgsTypes::SideType)i;
-        m_Pier.GetXBeamDimensions(side, &m_XBeamHeight[side], &m_XBeamTaperHeight[side], &m_XBeamTaperLength[side], &m_XBeamEndSlopeOffset[side]);
+		Float64 xBeamHeight, xBeamTaperHeight, xBeamTaperLength;
+        m_Pier.GetXBeamDimensions(side, &m_XBeamHeight[side], &xBeamTaperHeight, &xBeamTaperLength, &m_XBeamEndSlopeOffset[side]);
         m_XBeamOverhang[side] = m_Pier.GetXBeamOverhang(side);
     }
 
@@ -186,15 +187,16 @@ void CScallopedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
     auto pBroker = EAFGetBroker();
     GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
-    DDX_MetaFileStatic(pDX, IDC_PIER_LAYOUT_GUIDE, m_LayoutPicture,_T("COMMONPIERLAYOUT"), _T("Metafile") );
+    DDX_MetaFileStatic(pDX, IDC_PIER_LAYOUT_GUIDE, m_LayoutPicture,_T("SCALLOPEDPIERLAYOUT"), _T("Metafile") );
 
-    DDX_UnitValueAndTag(pDX, IDC_H1, IDC_H1_UNIT, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(pDX, IDC_H2, IDC_H2_UNIT, m_XBeamTaperHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(pDX, IDC_X1, IDC_X1_UNIT, m_XBeamTaperLength[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(pDX, IDC_X2, IDC_X2_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(pDX, IDC_H1L, IDC_H1L_UNIT, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(pDX, IDC_H1R, IDC_H1R_UNIT, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
-    DDX_UnitValueAndTag(pDX, IDC_X3, IDC_X3_UNIT, m_XBeamTaperLength[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(pDX, IDC_X4, IDC_X4_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(pDX, IDC_X1L, IDC_X1L_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(pDX, IDC_X1R, IDC_X1R_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+
+    DDX_UnitValueAndTag(pDX, IDC_OHL, IDC_OHL_UNIT, m_XBeamOverhang[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(pDX, IDC_OHR, IDC_OHR_UNIT, m_XBeamOverhang[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
     DDX_UnitValueAndTag(pDX, IDC_W, IDC_W_UNIT, m_XBeamWidth, pDisplayUnits->GetSpanLengthUnit());
     DDX_UnitValueAndTag(pDX, IDC_R, IDC_R_UNIT,  m_XBeamRadius, pDisplayUnits->GetSpanLengthUnit());
@@ -220,53 +222,15 @@ void CScallopedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
         DDV_UnitValueGreaterThanZero(pDX, IDC_D, m_XBeamDepth, pDisplayUnits->GetSpanLengthUnit());
 
         // H1 and H3 must be > 0
-        DDV_UnitValueGreaterThanZero(pDX, IDC_H1, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueGreaterThanZero(pDX, IDC_H1L, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueGreaterThanZero(pDX, IDC_H1R, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
         // X1..X4 must be >= 0
-        DDV_UnitValueZeroOrMore(pDX, IDC_X1, m_XBeamTaperLength[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(pDX, IDC_X2, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(pDX, IDC_X3, m_XBeamTaperLength[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(pDX, IDC_X4, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueZeroOrMore(pDX, IDC_X1L, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueZeroOrMore(pDX, IDC_X1R, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
-        // Left end
-        if (0 < m_XBeamTaperLength[pgsTypes::stLeft])
-        {
-            if (IsZero(m_XBeamTaperHeight[pgsTypes::stLeft]))
-            {
-                pDX->PrepareCtrl(IDC_H2);
-                AfxMessageBox(_T("H2 must be greater than zero when X1 is greater than zero."));
-                pDX->Fail();
-            }
-            else if (m_XBeamTaperLength[pgsTypes::stLeft] < m_XBeamEndSlopeOffset[pgsTypes::stLeft])
-            {
-                pDX->PrepareCtrl(IDC_X1);
-                AfxMessageBox(_T("X1 must be greater than X2 when X1 is greater than zero."));
-                pDX->Fail();
-            }
-        }
-        else if (!IsZero(m_XBeamTaperHeight[pgsTypes::stLeft]))
-        {
-            pDX->PrepareCtrl(IDC_H2);
-            AfxMessageBox(_T("H2 must be zero when X1 is zero."));
-            pDX->Fail();
-        }
-
-        // Right end
-        if (0 < m_XBeamTaperLength[pgsTypes::stRight])
-        {
-            if (m_XBeamTaperLength[pgsTypes::stRight] < m_XBeamEndSlopeOffset[pgsTypes::stRight])
-            {
-                pDX->PrepareCtrl(IDC_X3);
-                AfxMessageBox(_T("X3 must be greater than X4 when X3 is greater than zero."));
-                pDX->Fail();
-            }
-        }
-        else if (!IsZero(m_XBeamTaperHeight[pgsTypes::stRight]))
-        {
-            pDX->PrepareCtrl(IDC_H4);
-            AfxMessageBox(_T("H4 must be zero when X3 is zero."));
-            pDX->Fail();
-        }
+        DDV_UnitValueZeroOrMore(pDX, IDC_OHL, m_XBeamOverhang[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueZeroOrMore(pDX, IDC_OHR, m_XBeamOverhang[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
         // Overhangs must satisfy the first/last column radius limits.
         Float64 D1 = 0.0, D2 = 0.0;
@@ -425,24 +389,22 @@ void CScallopedPierLayoutDlg::OnPierLayoutChanged()
         DYNAMIC_DOWNCAST(CPierLayoutPage, GetParent());
 
     // Exchange XBeam dimensions
-    DDX_UnitValueAndTag(&dx, IDC_H1, IDC_H1_UNIT, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_H2, IDC_H2_UNIT, m_XBeamTaperHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_X1, IDC_X1_UNIT, m_XBeamTaperLength[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_X2, IDC_X2_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_H1L, IDC_H1L_UNIT, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_H1R, IDC_H1R_UNIT, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
-    DDX_UnitValueAndTag(&dx, IDC_X3, IDC_X3_UNIT, m_XBeamTaperLength[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_X4, IDC_X4_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_X1L, IDC_X1L_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_X1R, IDC_X1R_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+
+    DDX_UnitValueAndTag(&dx, IDC_OHL, IDC_OHL_UNIT, m_XBeamOverhang[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+    DDX_UnitValueAndTag(&dx, IDC_OHR, IDC_OHR_UNIT, m_XBeamOverhang[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
     DDX_UnitValueAndTag(&dx, IDC_W, IDC_W_UNIT, m_XBeamWidth, pDisplayUnits->GetSpanLengthUnit());
     DDX_UnitValueAndTag(&dx, IDC_R, IDC_R_UNIT, m_XBeamRadius, pDisplayUnits->GetSpanLengthUnit());
     DDX_UnitValueAndTag(&dx, IDC_D, IDC_D_UNIT, m_XBeamDepth, pDisplayUnits->GetSpanLengthUnit());
 
     // Update the pier data with the current values
-    m_Pier.SetXBeamDimensions(pgsTypes::stLeft, m_XBeamHeight[pgsTypes::stLeft], m_XBeamTaperHeight[pgsTypes::stLeft],
-        m_XBeamTaperLength[pgsTypes::stLeft], m_XBeamEndSlopeOffset[pgsTypes::stLeft]);
-
-    m_Pier.SetXBeamDimensions(pgsTypes::stRight, m_XBeamHeight[pgsTypes::stRight], m_XBeamTaperHeight[pgsTypes::stRight],
-        m_XBeamTaperLength[pgsTypes::stRight], m_XBeamEndSlopeOffset[pgsTypes::stRight]);
+    m_Pier.SetXBeamDimensions(pgsTypes::stLeft, m_XBeamHeight[pgsTypes::stLeft], 0.0, 0.0, m_XBeamEndSlopeOffset[pgsTypes::stLeft]);
+    m_Pier.SetXBeamDimensions(pgsTypes::stRight, m_XBeamHeight[pgsTypes::stRight], 0.0, 0.0, m_XBeamEndSlopeOffset[pgsTypes::stRight]);
 
     m_Pier.SetXBeamWidth(m_XBeamWidth);
     m_Pier.SetXBeamRadius(m_XBeamRadius);
@@ -459,47 +421,14 @@ void CScallopedPierLayoutDlg::OnPierLayoutChanged()
         DDV_UnitValueGreaterThanZero(&dx, IDC_D, m_XBeamDepth, pDisplayUnits->GetSpanLengthUnit());
 
         // H1 and H3 must be > 0
-        DDV_UnitValueGreaterThanZero(&dx, IDC_H1, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueGreaterThanZero(&dx, IDC_H1L, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueGreaterThanZero(&dx, IDC_H1R, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
         // X1..X4 must be >= 0
-        DDV_UnitValueZeroOrMore(&dx, IDC_X1, m_XBeamTaperLength[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(&dx, IDC_X2, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(&dx, IDC_X3, m_XBeamTaperLength[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-        DDV_UnitValueZeroOrMore(&dx, IDC_X4, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-
-        // Left end
-        if (0 < m_XBeamTaperLength[pgsTypes::stLeft])
-        {
-            if (IsZero(m_XBeamTaperHeight[pgsTypes::stLeft]))
-            {
-                dx.PrepareCtrl(IDC_H2);
-                AfxMessageBox(_T("H2 must be greater than zero when X1 is greater than zero."));
-                dx.Fail();
-            }
-            else if (m_XBeamTaperLength[pgsTypes::stLeft] < m_XBeamEndSlopeOffset[pgsTypes::stLeft])
-            {
-                dx.PrepareCtrl(IDC_X1);
-                AfxMessageBox(_T("X1 must be greater than X2 when X1 is greater than zero."));
-                dx.Fail();
-            }
-        }
-        else if (!IsZero(m_XBeamTaperHeight[pgsTypes::stLeft]))
-        {
-            dx.PrepareCtrl(IDC_H2);
-            AfxMessageBox(_T("H2 must be zero when X1 is zero."));
-            dx.Fail();
-        }
-
-        // Right end
-        if (0 < m_XBeamTaperLength[pgsTypes::stRight])
-        {
-            if (m_XBeamTaperLength[pgsTypes::stRight] < m_XBeamEndSlopeOffset[pgsTypes::stRight])
-            {
-                dx.PrepareCtrl(IDC_X3);
-                AfxMessageBox(_T("X3 must be greater than X4 when X3 is greater than zero."));
-                dx.Fail();
-            }
-        }
+        DDV_UnitValueZeroOrMore(&dx, IDC_X1L, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueZeroOrMore(&dx, IDC_X1R, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueZeroOrMore(&dx, IDC_OHL, m_XBeamOverhang[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
+        DDV_UnitValueZeroOrMore(&dx, IDC_OHR, m_XBeamOverhang[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
         // Overhangs must satisfy the first/last column radius limits.
         Float64 D1 = 0.0, D2 = 0.0;
