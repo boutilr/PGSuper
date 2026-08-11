@@ -521,6 +521,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
   <ItemGroup>
     <None Include="..\PGSplice.tip" />
     <None Include="..\PGSuper.tip" />
+    <None Include="res\CommonPierLayout.emf" />
     <None Include="res\Connection_BrgAlongGdr_EndAlongGdrFromBrg.emf" />
     <None Include="res\Connection_BrgAlongGdr_EndAlongGdrFromPier.emf" />
     <None Include="res\Connection_BrgAlongGdr_EndAlongNormalFromBrg.emf" />
@@ -583,6 +584,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <None Include="res\SA_BrgAlongNormal_EndAlongGdrFromPier.emf" />
     <None Include="res\SA_BrgAlongNormal_EndAlongNormalFromBrg.emf" />
     <None Include="res\SA_BrgAlongNormal_EndAlongNormalFromPier.emf" />
+    <None Include="res\ScallopedPierLayout.emf" />
     <None Include="res\StrandSpacing.emf" />
     <None Include="res\TempSupportClosure_BrgAlongGdr_EndAlongGdrFromBrg.emf" />
     <None Include="res\TempSupportClosure_BrgAlongGdr_EndAlongGdrFromPier.emf" />
@@ -593,6 +595,7 @@ xcopy /y/d/s $(ARPDIR)\PGSuper\Configurations $(ARPDIR)\BridgeLink\Configuration
     <None Include="res\TempSupportClosure_BrgAlongNormal_EndAlongNormalFromBrg.emf" />
     <None Include="res\TempSupportClosure_BrgAlongNormal_EndAlongNormalFromPier.emf" />
     <None Include="res\TempSupportContinuousSegment.emf" />
+    <None Include="res\UserDefinedPierLayout.emf" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Include\Hints.h" />
