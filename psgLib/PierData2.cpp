@@ -87,8 +87,8 @@ CPierData2::CPierData2()
    m_XBeamOverhang[pgsTypes::stLeft]  = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
    m_XBeamOverhang[pgsTypes::stRight] = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
    m_XBeamWidth = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
-   m_XBeamRadius = WBFL::Units::ConvertToSysUnits(25,WBFL::Units::Measure::Feet);
-   m_XBeamDepth = WBFL::Units::ConvertToSysUnits(4,WBFL::Units::Measure::Feet);
+   m_XBeamRadius = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
+   m_XBeamDepth = WBFL::Units::ConvertToSysUnits(2,WBFL::Units::Measure::Feet);
 
    m_ColumnFixity = pgsTypes::cftFixed;
    CColumnData defaultColumn(this);
