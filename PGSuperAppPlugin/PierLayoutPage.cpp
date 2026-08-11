@@ -147,8 +147,8 @@ bool CPierLayoutPage::CommitScallopedPierLayout()
     for (int i = 0; i < 2; i++)
     {
         pgsTypes::SideType side = (pgsTypes::SideType)i;
-        m_pPier->SetXBeamDimensions(side, m_ScallopedPierLayoutDlg.m_XBeamHeight[side], m_ScallopedPierLayoutDlg.m_XBeamTaperHeight[side],
-        m_ScallopedPierLayoutDlg.m_XBeamTaperLength[side], m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[side]);
+        m_pPier->SetXBeamDimensions(side, m_ScallopedPierLayoutDlg.m_XBeamHeight[side], 0.0,
+        0.0, m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[side]);
         m_pPier->SetXBeamOverhang(side, m_ScallopedPierLayoutDlg.m_XBeamOverhang[side]);
     }
 
