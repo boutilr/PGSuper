@@ -2320,6 +2320,9 @@
     <None Include="res\TempSupportClosure_BrgAlongNormal_EndAlongNormalFromPier.emf">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="res\CommonPierLayout.emf" />
+    <None Include="res\ScallopedPierLayout.emf" />
+    <None Include="res\UserDefinedPierLayout.emf" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
