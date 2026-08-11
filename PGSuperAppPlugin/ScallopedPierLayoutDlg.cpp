@@ -79,75 +79,11 @@ BEGIN_MESSAGE_MAP(CScallopedPierLayoutDlg, CDialog)
 
 END_MESSAGE_MAP()
 
-// Add these handler implementations at the end of the file
-void CScallopedPierLayoutDlg::OnLButtonDown(UINT nFlags, CPoint point)
-{
-    CRect rcControl;
-    m_ctrlDrawXBeam.GetWindowRect(&rcControl);
-    ScreenToClient(&rcControl);
-
-    if (rcControl.PtInRect(point))
-    {
-        m_ctrlDrawXBeam.SendMessage(WM_LBUTTONDOWN, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
-        return;
-    }
-
-    CDialog::OnLButtonDown(nFlags, point);
-}
-
-void CScallopedPierLayoutDlg::OnLButtonUp(UINT nFlags, CPoint point)
-{
-    CRect rcControl;
-    m_ctrlDrawXBeam.GetWindowRect(&rcControl);
-    ScreenToClient(&rcControl);
-
-    if (rcControl.PtInRect(point))
-    {
-        m_ctrlDrawXBeam.SendMessage(WM_LBUTTONUP, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
-        return;
-    }
-
-    CDialog::OnLButtonUp(nFlags, point);
-}
-
-void CScallopedPierLayoutDlg::OnMouseMove(UINT nFlags, CPoint point)
-{
-    CRect rcControl;
-    m_ctrlDrawXBeam.GetWindowRect(&rcControl);
-    ScreenToClient(&rcControl);
-
-    if (rcControl.PtInRect(point))
-    {
-        m_ctrlDrawXBeam.SendMessage(WM_MOUSEMOVE, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
-        return;
-    }
-
-    CDialog::OnMouseMove(nFlags, point);
-}
-
-void CScallopedPierLayoutDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
-{
-    CRect rcControl;
-    m_ctrlDrawXBeam.GetWindowRect(&rcControl);
-    ScreenToClient(&rcControl);
-
-    if (rcControl.PtInRect(point))
-    {
-        m_ctrlDrawXBeam.SendMessage(WM_LBUTTONDBLCLK, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
-        return;
-    }
-
-    CDialog::OnLButtonDblClk(nFlags, point);
-}
-
 /////////////////////////////////////////////////////////////////////////////
 // CScallopedPierLayoutDlg message handlers
 
 BOOL CScallopedPierLayoutDlg::OnInitDialog()
 {
-    m_ctrlDrawXBeam.SubclassDlgItem(IDC_PIER_LAYOUT, this);
-    m_ctrlDrawXBeam.CustomInit(this);
-
     m_ColumnLayoutGrid.SubclassDlgItem(IDC_COLUMN_GRID, this);
     m_ColumnLayoutGrid.CustomInit();
 
@@ -246,16 +182,6 @@ void CScallopedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 
 void CScallopedPierLayoutDlg::RefreshDisplay()
 {
-    // Invalidate and update the drawing control to reflect the changes
-    CPierLayoutPage* pPage =
-        DYNAMIC_DOWNCAST(CPierLayoutPage, GetParent());
-    if (pPage->m_pPierLayoutPopout != nullptr)
-    {
-        m_ctrlDrawXBeam.UpdateDisplayObjects();
-        m_ctrlDrawXBeam.Invalidate();
-        m_ctrlDrawXBeam.UpdateWindow();
-    }
-
     if (GetParent())
         GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
 }
