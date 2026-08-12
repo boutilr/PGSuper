@@ -2685,8 +2685,8 @@ bool CBridgeAgentImp::LayoutPiers()
       
       pier->put_Type((PierType)pierType);
       
-      Float64 X5, X6;
-      pPierData->GetXBeamOverhangs(&X5, &X6);
+      Float64 OHL, OHR;
+      pPierData->GetXBeamOverhangs(&OHL, &OHR);
       
       if (pPierData->GetPierLayoutType() == pgsTypes::pltUserDefined)
       {
@@ -2777,8 +2777,8 @@ bool CBridgeAgentImp::LayoutPiers()
       //
       CComPtr<IColumnLayout> columnLayout;
       columnLayout.CoCreateInstance(CLSID_ColumnLayout);
-      columnLayout->put_Overhang(qcbLeft, X5);
-      columnLayout->put_Overhang(qcbRight, X6);
+      columnLayout->put_Overhang(qcbLeft, OHL);
+      columnLayout->put_Overhang(qcbRight, OHR);
       
       ColumnIndexType nColumns = GetColumnCount(pierIdx);
       SpacingIndexType nSpaces = nColumns - 1;
@@ -12700,21 +12700,21 @@ void CBridgeAgentImp::GetUpperXBeamProfile(const CPierData2& pierData, IPoint2dC
         // Reconstruct xbeam geometry from pier data
         // ---------------------------------------------------------
 
-        Float64 H1, H2, H3, H4;
-        Float64 X1, X2, X3, X4;
+        Float64 H1L, H2L, H1R, H2R;
+        Float64 X1L, X2L, X1R, X2R;
 
         pierData.GetXBeamDimensions(
             pgsTypes::stLeft,
-            &H1, &H2, &X1, &X2);
+            &H1L, &H2L, &X2L, &X1L);
 
         pierData.GetXBeamDimensions(
             pgsTypes::stRight,
-            &H3, &H4, &X3, &X4);
+            &H1R, &H2R, &X2R, &X1R);
 
         Float64 W1 = pierData.GetXBeamWidth();
 
-        Float64 X5, X6;
-        pierData.GetXBeamOverhangs(&X5, &X6);
+        Float64 OHL, OHR;
+        pierData.GetXBeamOverhangs(&OHL, &OHR);
 
         // ---------------------------------------------------------
         // Get deck profile information
@@ -12754,11 +12754,11 @@ void CBridgeAgentImp::GetUpperXBeamProfile(const CPierData2& pierData, IPoint2dC
         Float64 H5, W2;
         GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
 
-        Float64 deltaXl = -X2 * H5 / H1;
-        Float64 deltaXr = X4 * H5 / H3;
+        Float64 deltaXl = -X1L * H5 / H1L;
+        Float64 deltaXr = X1R * H5 / H1R;
 
-        XxbStart += deltaXl - X2;
-        XxbEnd += deltaXr + X4;
+        XxbStart += deltaXl - X1L;
+        XxbEnd += deltaXr + X1R;
 
         // ---------------------------------------------------------
         // Convert into pier coordinates
@@ -12851,19 +12851,19 @@ void CBridgeAgentImp::GetLowerXBeamProfile(const CPierData2& pierData, IPoint2dC
         Float64 H5, W2;
         GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
 
-        Float64 H1, H2, H3, H4;
-        Float64 X1, X2, X3, X4;
+        Float64 H1L, H2L, H1R, H2R;
+        Float64 X2L, X1L, X2R, X1R;
 
         pierData.GetXBeamDimensions(
             pgsTypes::stLeft,
-            &H1, &H2, &X1, &X2);
+            &H1L, &H2L, &X2L, &X1L);
 
         pierData.GetXBeamDimensions(
             pgsTypes::stRight,
-            &H3, &H4, &X3, &X4);
+            &H1R, &H2R, &X2R, &X1R);
 
-        Float64 deltaXl = -X2 * H5 / H1;
-        Float64 deltaXr = X4 * H5 / H3;
+        Float64 deltaXl = -X1L * H5 / H1L;
+        Float64 deltaXr = X1R * H5 / H1R;
 
         CComPtr<IPoint2d> uxbTL;
         uxbProfile->get_Item(0, &uxbTL);  /// why this makes it null??
@@ -13093,27 +13093,27 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
     Float64 Xr, Yr;
     lxbTR->Location(&Xr, &Yr);
 
-    Float64 H1, H2, H3, H4;
-    Float64 X1, X2, X3, X4;
+    Float64 H1L, H1R, H2L, H2R;
+    Float64 X1L, X1R, X2L, X2R;
 
     pierData.GetXBeamDimensions(
         pgsTypes::stLeft,
-        &H1, &H2, &X1, &X2);
+        &H1L, &H2L, &X2L, &X1L);
 
     pierData.GetXBeamDimensions(
         pgsTypes::stRight,
-        &H3, &H4, &X3, &X4);
+        &H1R, &H2R, &X2R, &X1R);
 
     // Interpolation parameters for depth of lower xbeam
     Float64 Xs = Xl;
     Float64 dX = Xr - Xl;
 
-    Float64 dyL = H1 + H2;
-    Float64 dyR = H3 + H4;
+    Float64 dyL = H1L + H2L;
+    Float64 dyR = H1R + H2R;
 
     // Horizontal location of the ordinary taper transition points
-    Float64 Xlt = Xl + X1;
-    Float64 Xrt = Xr - X3;
+    Float64 Xlt = Xl + X2L;
+    Float64 Xrt = Xr - X2R;
 
     Xlt = IsZero(Xlt) ? 0.0 : Xlt;
     Xrt = IsZero(Xrt) ? 0.0 : Xrt;
@@ -13127,8 +13127,8 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
      * creates the tapered outside faces without adding extra points
      * that produce slivers.
      */
-    Float64 XbottomLeft = Xl + X2;
-    Float64 XbottomRight = Xr - X4;
+    Float64 XbottomLeft = Xl + X1L;
+    Float64 XbottomRight = Xr - X1R;
 
     XbottomLeft =
         IsZero(XbottomLeft) ? 0.0 : XbottomLeft;
@@ -13235,26 +13235,61 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
 
                 if (xClip1 > xClip0)
                 {
-					AddScallop(R, D, Xs, Yl, Yr, dX, dyL, dyR,
+                    AddScallop(
+                        R, D,
+                        Xs, Yl, Yr,
+                        dX, dyL, dyR,
                         x0Full,
                         x1Full,
                         xClip0,
                         xClip1,
-                        !firstPoint, BXBProfile, lxbProfile);
+                        !firstPoint,
+                        BXBProfile,
+                        lxbProfile);
 
                     firstPoint = false;
                 }
             }
         }
-        else
+        else if (colStations.size() == 1)
         {
-			AddScallop(R, D, Xs, Yl, Yr, dX, dyL, dyR,
-                XscallopLeft,
-                XscallopRight,
-                XscallopLeft,
-                XscallopRight,
-                false, BXBProfile, lxbProfile);
+            const Float64 xCol = colStations.front();
+
+            // Left hammerhead scallop:
+            // exterior end -> column center
+            if (xCol > XscallopLeft)
+            {
+                AddScallop(
+                    R, D,
+                    Xs, Yl, Yr,
+                    dX, dyL, dyR,
+                    XscallopLeft,
+                    xCol,
+                    XscallopLeft,
+                    xCol,
+                    false,
+                    BXBProfile,
+                    lxbProfile);
+            }
+
+            // Right hammerhead scallop:
+            // column center -> exterior end
+            if (XscallopRight > xCol)
+            {
+                AddScallop(
+                    R, D,
+                    Xs, Yl, Yr,
+                    dX, dyL, dyR,
+                    xCol,
+                    XscallopRight,
+                    xCol,
+                    XscallopRight,
+                    true,
+                    BXBProfile,
+                    lxbProfile);
+            }
         }
+
 
     }
     else
@@ -13330,12 +13365,12 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
 
         bxbL->Move(
             XbottomLeft,
-            Yl - H1);
+            Yl - H1L);
 
         BXBProfile->Insert(0, bxbL);
 
-        if (!IsZero(H2) &&
-            !IsZero(X1))
+        if (!IsZero(H2L) &&
+            !IsZero(X2L))
         {
             CComPtr<IPoint2d> bxbLT;
             bxbLT.CoCreateInstance(
@@ -13346,20 +13381,20 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
 
             bxbLT->Move(
                 Xlt,
-                y - H2);
+                y - H2L);
 
             BXBProfile->Insert(1, bxbLT);
         }
 
-        if (!IsZero(H4) &&
-            !IsZero(X3))
+        if (!IsZero(H2R) &&
+            !IsZero(X2R))
         {
             CComPtr<IPoint2d> bxbRT;
             bxbRT.CoCreateInstance(
                 CLSID_Point2d);
 
             Float64 y =
-                Yr - H3 - H4;
+                Yr - H1R - H2R;
 
             bxbRT->Move(Xrt, y);
             BXBProfile->Add(bxbRT);
@@ -13370,7 +13405,7 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
 
         bxbR->Move(
             XbottomRight,
-            Yr - H3);
+            Yr - H1R);
 
         BXBProfile->Add(bxbR);
     }
