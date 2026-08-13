@@ -499,9 +499,23 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
         // Create the shape of the column
         auto columnShape = std::make_shared<WBFL::Geometry::Polygon>();
         Float64 X1, X2, X3;
-        X2 = pntTop.X();
+
+
+		X2 = pntTop.X();
         X1 = X2 - d1 / 2;
         X3 = X2 + d1 / 2;
+        pgsTypes::OffsetMeasurementType refColMeasure;
+        ColumnIndexType refColIdx;
+        Float64 refColOffset;
+        pPier->GetTransverseOffset(&refColIdx, &refColOffset, &refColMeasure);
+        if (colIdx == refColIdx)
+        {
+            Float64 H1L, H2L, H1R, H2R;
+            Float64 X2L, X1L, X2R, X1R;
+            pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
+            pPier->GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
+            X2 -= refColOffset + X1L;
+        }
         Float64 Y1 = fn.Evaluate(X1);
         Float64 Y2 = fn.Evaluate(X2);
         Float64 Y3 = fn.Evaluate(X3);
