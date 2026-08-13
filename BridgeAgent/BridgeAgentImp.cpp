@@ -13476,24 +13476,24 @@ void CBridgeAgentImp::GetPierBottomSurface(const CPierData2& pierData, IPoint2dC
     Float64 Xs = Xl;
     Float64 dX = Xr - Xl;
 
-    Float64 H1, H2, H3, H4;
-    Float64 X1, X2, X3, X4;
-    pierData.GetXBeamDimensions(pgsTypes::stLeft, &H1, &H2, &X1, &X2);
-    pierData.GetXBeamDimensions(pgsTypes::stRight, &H3, &H4, &X3, &X4);
+    Float64 H1L, H2L, H1R, H2R;
+    Float64 X2L, X1L, X2R, X1R;
+    pierData.GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
+    pierData.GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
 
-    Float64 dyL = H1 + H2;
-    Float64 dyR = H3 + H4;
+    Float64 dyL = H1L + H2L;
+    Float64 dyR = H1R + H2R;
 
     // horizontal location of left/right tapers
-    Float64 Xlt = Xl + X1;
-    Float64 Xrt = Xr - X3;
+    Float64 Xlt = Xl + X2L;
+    Float64 Xrt = Xr - X2R;
 
     Xlt = IsZero(Xlt) ? 0 : Xlt;
     Xrt = IsZero(Xrt) ? 0 : Xrt;
 
     // horizontal location of left/right end points of bottom of xbeam
-    Xl += X2;
-    Xr -= X4;
+    Xl += X1L;
+    Xr -= X1R;
 
     CComPtr<IPoint2dCollection> BXBProfile;
     BXBProfile.CoCreateInstance(CLSID_Point2dCollection);
@@ -13529,10 +13529,10 @@ void CBridgeAgentImp::GetPierBottomSurface(const CPierData2& pierData, IPoint2dC
 
     CComPtr<IPoint2d> bxbL;
     bxbL.CoCreateInstance(CLSID_Point2d);
-    bxbL->Move(Xl, Yl - H1);
+    bxbL->Move(Xl, Yl - H1L);
     BXBProfile->Insert(0, bxbL);
 
-    if (!IsZero(H2) && !IsZero(X1))
+    if (!IsZero(H2L) && !IsZero(X2L))
     {
         // there is a taper on the left side
         CComPtr<IPoint2d> bxbLT;
@@ -13541,17 +13541,17 @@ void CBridgeAgentImp::GetPierBottomSurface(const CPierData2& pierData, IPoint2dC
         Float64 y;
         bxbL->get_Y(&y);
 
-        bxbLT->Move(Xlt, y - H2);
+        bxbLT->Move(Xlt, y - H2L);
         BXBProfile->Insert(1, bxbLT);
     }
 
-    if (!IsZero(H4) && !IsZero(X3))
+    if (!IsZero(H1R) && !IsZero(X2R))
     {
         // there is a taper on the right side
         CComPtr<IPoint2d> bxbRT;
         bxbRT.CoCreateInstance(CLSID_Point2d);
 
-        Float64 y = Yr - H3 - H4; // this is bxbR->Y - m_H4
+        Float64 y = Yr - H1R- H2R; // this is bxbR->Y - m_H4
 
         bxbRT->Move(Xrt, y);
         BXBProfile->Add(bxbRT);
@@ -13559,7 +13559,7 @@ void CBridgeAgentImp::GetPierBottomSurface(const CPierData2& pierData, IPoint2dC
 
     CComPtr<IPoint2d> bxbR;
     bxbR.CoCreateInstance(CLSID_Point2d);
-    bxbR->Move(Xr, Yr - H3);
+    bxbR->Move(Xr, Yr - H1R);
     BXBProfile->Add(bxbR);
 
     BXBProfile->RemoveDuplicatePoints();
