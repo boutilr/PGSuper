@@ -12696,132 +12696,132 @@ void CBridgeAgentImp::GetUpperXBeamProfile(PierIndexType pierIdx, IShape** ppSha
 
 void CBridgeAgentImp::GetUpperXBeamProfile(const CPierData2& pierData, IPoint2dCollection** ppPoints) const
 {
-        // ---------------------------------------------------------
-        // Reconstruct xbeam geometry from pier data
-        // ---------------------------------------------------------
+    // ---------------------------------------------------------
+    // Reconstruct xbeam geometry from pier data
+    // ---------------------------------------------------------
 
-        Float64 H1L, H2L, H1R, H2R;
-        Float64 X1L, X2L, X1R, X2R;
+    Float64 H1L, H2L, H1R, H2R;
+    Float64 X1L, X2L, X1R, X2R;
 
-        pierData.GetXBeamDimensions(
-            pgsTypes::stLeft,
-            &H1L, &H2L, &X2L, &X1L);
+    pierData.GetXBeamDimensions(
+        pgsTypes::stLeft,
+        &H1L, &H2L, &X2L, &X1L);
 
-        pierData.GetXBeamDimensions(
-            pgsTypes::stRight,
-            &H1R, &H2R, &X2R, &X1R);
+    pierData.GetXBeamDimensions(
+        pgsTypes::stRight,
+        &H1R, &H2R, &X2R, &X1R);
 
-        Float64 W1 = pierData.GetXBeamWidth();
+    Float64 W1 = pierData.GetXBeamWidth();
 
-        Float64 OHL, OHR;
-        pierData.GetXBeamOverhangs(&OHL, &OHR);
+    Float64 OHL, OHR;
+    pierData.GetXBeamOverhangs(&OHL, &OHR);
 
-        // ---------------------------------------------------------
-        // Get deck profile information
-        // ---------------------------------------------------------
+    // ---------------------------------------------------------
+    // Get deck profile information
+    // ---------------------------------------------------------
 
-        GET_IFACE(IBridgeDescription, pIBridgeDesc);
+    GET_IFACE(IBridgeDescription, pIBridgeDesc);
 
-        const CBridgeDescription2* pBridgeDesc =
-            pIBridgeDesc->GetBridgeDescription();
+    const CBridgeDescription2* pBridgeDesc =
+        pIBridgeDesc->GetBridgeDescription();
 
-        PierIndexType pierIdx = pierData.GetIndex();
+    PierIndexType pierIdx = pierData.GetIndex();
 
-        GET_IFACE(IBridge, pBridge);
-        GET_IFACE(IRoadway, pRoadway);
+    GET_IFACE(IBridge, pBridge);
+    GET_IFACE(IRoadway, pRoadway);
 
-        Float64 pierStation =
-            pBridge->GetPierStation(pierIdx);
+    Float64 pierStation =
+        pBridge->GetPierStation(pierIdx);
 
-        CComPtr<IAngle> skewAngle;
-        pBridge->GetPierSkew(pierIdx, &skewAngle);
+    CComPtr<IAngle> skewAngle;
+    pBridge->GetPierSkew(pierIdx, &skewAngle);
 
-        CComPtr<IPoint2dCollection> deckProfile;
-        pRoadway->GetRoadwaySurface(
-            pierStation,
-            skewAngle,
-            &deckProfile);
+    CComPtr<IPoint2dCollection> deckProfile;
+    pRoadway->GetRoadwaySurface(
+        pierStation,
+        skewAngle,
+        &deckProfile);
 
-        // ---------------------------------------------------------
-        // Compute upper xbeam extents
-        // ---------------------------------------------------------
+    // ---------------------------------------------------------
+    // Compute upper xbeam extents
+    // ---------------------------------------------------------
 
-        Float64 xbLength = pierData.GetXBeamLength();
+    Float64 xbLength = pierData.GetXBeamLength();
 
-        Float64 XxbStart = 0.0;
-        Float64 XxbEnd = xbLength;
+    Float64 XxbStart = 0.0;
+    Float64 XxbEnd = xbLength;
 
-        Float64 H5, W2;
-        GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
+    Float64 H5, W2;
+    GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
 
-        Float64 deltaXl = -X1L * H5 / H1L;
-        Float64 deltaXr = X1R * H5 / H1R;
+    Float64 deltaXl = -X1L * H5 / H1L;
+    Float64 deltaXr = X1R * H5 / H1R;
 
-        XxbStart += deltaXl - X1L;
-        XxbEnd += deltaXr + X1R;
+    XxbStart += deltaXl - X1L;
+    XxbEnd += deltaXr + X1R;
 
-        // ---------------------------------------------------------
-        // Convert into pier coordinates
-        // ---------------------------------------------------------
-        
-        Float64 XpStart = ConvertCrossBeamToPierCoordinate(pierData, XxbStart);
+    // ---------------------------------------------------------
+    // Convert into pier coordinates
+    // ---------------------------------------------------------
 
-        Float64 XpEnd = ConvertCrossBeamToPierCoordinate(pierData, XxbEnd);
+    Float64 XpStart = ConvertCrossBeamToPierCoordinate(pierData, XxbStart);
 
-        Float64 XclStart = ConvertCrossBeamToCurbLineCoordinate(pierData, XxbStart);
+    Float64 XpEnd = ConvertCrossBeamToPierCoordinate(pierData, XxbEnd);
 
-        Float64 XclEnd = ConvertCrossBeamToCurbLineCoordinate(pierData, XxbEnd);
+    Float64 XclStart = ConvertCrossBeamToCurbLineCoordinate(pierData, XxbStart);
 
-        // ---------------------------------------------------------
-        // Elevations
-        // ---------------------------------------------------------
+    Float64 XclEnd = ConvertCrossBeamToCurbLineCoordinate(pierData, XxbEnd);
 
-
-        Float64 YxbStart = GetElevation(pierData, XclStart);
-
-        Float64 YxbEnd = GetElevation(pierData, XclEnd);
-
-		Float64 tDeck = GetDeckThickness();
-
-        YxbStart -= tDeck;
-        YxbEnd -= tDeck;
+    // ---------------------------------------------------------
+    // Elevations
+    // ---------------------------------------------------------
 
 
-        CComPtr<IPoint2d> pntStart;
-        pntStart.CoCreateInstance(CLSID_Point2d);
-        pntStart->Move(XpStart, YxbStart);
-        CComPtr<IPoint2dCollection> UXBProfile;
-        UXBProfile.CoCreateInstance(CLSID_Point2dCollection);
-        UXBProfile->Add(pntStart);
+    Float64 YxbStart = GetElevation(pierData, XclStart);
 
-        // Work left to right across the deck profile, offsetting by tDeck to get the top of Xbeam profile
-        CComPtr<IEnumPoint2d> enumPoints;
-        deckProfile->get__Enum(&enumPoints);
-        CComPtr<IPoint2d> pnt;
-        while (enumPoints->Next(1, &pnt, nullptr) != S_FALSE)
+    Float64 YxbEnd = GetElevation(pierData, XclEnd);
+
+    Float64 tDeck = GetDeckThickness();
+
+    YxbStart -= tDeck;
+    YxbEnd -= tDeck;
+
+
+    CComPtr<IPoint2d> pntStart;
+    pntStart.CoCreateInstance(CLSID_Point2d);
+    pntStart->Move(XpStart, YxbStart);
+    CComPtr<IPoint2dCollection> UXBProfile;
+    UXBProfile.CoCreateInstance(CLSID_Point2dCollection);
+    UXBProfile->Add(pntStart);
+
+    // Work left to right across the deck profile, offsetting by tDeck to get the top of Xbeam profile
+    CComPtr<IEnumPoint2d> enumPoints;
+    deckProfile->get__Enum(&enumPoints);
+    CComPtr<IPoint2d> pnt;
+    while (enumPoints->Next(1, &pnt, nullptr) != S_FALSE)
+    {
+        Float64 x, y;
+        pnt->Location(&x, &y);
+        if (XpStart < x && x < XpEnd && !IsEqual(XpStart, x) && !IsEqual(XpEnd, x))
         {
-            Float64 x, y;
-            pnt->Location(&x, &y);
-            if (XpStart < x && x < XpEnd && !IsEqual(XpStart, x) && !IsEqual(XpEnd, x))
-            {
-                // point is within the extents of the cross beam
-                y -= tDeck;
-                CComPtr<IPoint2d> xbPoint;
-                xbPoint.CoCreateInstance(CLSID_Point2d);
-                xbPoint->Move(x, y);
-                UXBProfile->Add(xbPoint);
-            }
-            pnt.Release();
+            // point is within the extents of the cross beam
+            y -= tDeck;
+            CComPtr<IPoint2d> xbPoint;
+            xbPoint.CoCreateInstance(CLSID_Point2d);
+            xbPoint->Move(x, y);
+            UXBProfile->Add(xbPoint);
         }
+        pnt.Release();
+    }
 
-        CComPtr<IPoint2d> pntEnd;
-        pntEnd.CoCreateInstance(CLSID_Point2d);
-        pntEnd->Move(XpEnd, YxbEnd);
-        UXBProfile->Add(pntEnd);
+    CComPtr<IPoint2d> pntEnd;
+    pntEnd.CoCreateInstance(CLSID_Point2d);
+    pntEnd->Move(XpEnd, YxbEnd);
+    UXBProfile->Add(pntEnd);
 
-        UXBProfile->RemoveDuplicatePoints();
+    UXBProfile->RemoveDuplicatePoints();
 
-        UXBProfile.CopyTo(ppPoints);
+    UXBProfile.CopyTo(ppPoints);
 }
 
 void CBridgeAgentImp::GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppShape) const
@@ -12844,230 +12844,235 @@ void CBridgeAgentImp::GetLowerXBeamProfile(PierIndexType pierIdx, IShape** ppSha
 
 void CBridgeAgentImp::GetLowerXBeamProfile(const CPierData2& pierData, IPoint2dCollection** ppPoints) const
 {
-        CComPtr<IPoint2dCollection> uxbProfile;
-        GetUpperXBeamProfile(pierData, &uxbProfile);
+    CComPtr<IPoint2dCollection> uxbProfile;
+    GetUpperXBeamProfile(pierData, &uxbProfile);
 
-        // Determine the horizontal limits of the lower xbeam top profile
-        Float64 H5, W2;
-        GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
+    // Determine the horizontal limits of the lower xbeam top profile
+    Float64 H5, W2;
+    GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
 
-        Float64 H1L, H2L, H1R, H2R;
-        Float64 X2L, X1L, X2R, X1R;
+    Float64 H1L, H2L, H1R, H2R;
+    Float64 X2L, X1L, X2R, X1R;
 
-        pierData.GetXBeamDimensions(
-            pgsTypes::stLeft,
-            &H1L, &H2L, &X2L, &X1L);
+    pierData.GetXBeamDimensions(
+        pgsTypes::stLeft,
+        &H1L, &H2L, &X2L, &X1L);
 
-        pierData.GetXBeamDimensions(
-            pgsTypes::stRight,
-            &H1R, &H2R, &X2R, &X1R);
+    pierData.GetXBeamDimensions(
+        pgsTypes::stRight,
+        &H1R, &H2R, &X2R, &X1R);
 
-        Float64 deltaXl = -X1L * H5 / H1L;
-        Float64 deltaXr = X1R * H5 / H1R;
+    Float64 deltaXl = -X1L * H5 / H1L;
+    Float64 deltaXr = X1R * H5 / H1R;
 
-        CComPtr<IPoint2d> uxbTL;
-        uxbProfile->get_Item(0, &uxbTL);  /// why this makes it null??
+    CComPtr<IPoint2d> uxbTL;
+    uxbProfile->get_Item(0, &uxbTL);  /// why this makes it null??
 
-        IndexType nPoints;
-        uxbProfile->get_Count(&nPoints);
-        CComPtr<IPoint2d> uxbTR;
-        uxbProfile->get_Item(nPoints - 1, &uxbTR);
+    IndexType nPoints;
+    uxbProfile->get_Count(&nPoints);
+    CComPtr<IPoint2d> uxbTR;
+    uxbProfile->get_Item(nPoints - 1, &uxbTR);
 
-        Float64 Xl, Xr;
-        uxbTL->get_X(&Xl);
-        Xl -= deltaXl;
+    Float64 Xl, Xr;
+    uxbTL->get_X(&Xl);
+    Xl -= deltaXl;
 
-        uxbTR->get_X(&Xr);
-        Xr -= deltaXr;
+    uxbTR->get_X(&Xr);
+    Xr -= deltaXr;
 
-        CComPtr<IPoint2dCollection> LXBProfile;
-        LXBProfile.CoCreateInstance(CLSID_Point2dCollection);
+    CComPtr<IPoint2dCollection> LXBProfile;
+    LXBProfile.CoCreateInstance(CLSID_Point2dCollection);
 
-        // copy all points from the upper xbeam profile within the limits Xl and Xr
-        // to the lower xbeam profile, offsetting by H5
-        for (IndexType idx = nPoints - 1; 0 <= idx && idx != INVALID_INDEX; idx--)
+    // copy all points from the upper xbeam profile within the limits Xl and Xr
+    // to the lower xbeam profile, offsetting by H5
+    for (IndexType idx = nPoints - 1; 0 <= idx && idx != INVALID_INDEX; idx--)
+    {
+        CComPtr<IPoint2d> pnt;
+        uxbProfile->get_Item(idx, &pnt);
+        Float64 X;
+        pnt->get_X(&X);
+        if (InRange(Xl, X, Xr))
         {
-            CComPtr<IPoint2d> pnt;
-            uxbProfile->get_Item(idx, &pnt);
-            Float64 X;
-            pnt->get_X(&X);
-            if (InRange(Xl, X, Xr))
-            {
-                CComPtr<IPoint2d> pntLXB;
-                pnt->Clone(&pntLXB);
-                pntLXB->Offset(0, -H5);
-                LXBProfile->Insert(0, pntLXB);
-            }
+            CComPtr<IPoint2d> pntLXB;
+            pnt->Clone(&pntLXB);
+            pntLXB->Offset(0, -H5);
+            LXBProfile->Insert(0, pntLXB);
         }
+    }
 
-        // now locate and add the left and right points of the lower xbeam profile
-        // the horizonal position is Xl and Xr, which are in Pier Coordinates
+    // now locate and add the left and right points of the lower xbeam profile
+    // the horizonal position is Xl and Xr, which are in Pier Coordinates
 
-        // convert Xl and Xr to curb line coordinates
-        Float64 Xlcl = ConvertPierToCurbLineCoordinate(pierData, Xl);
-        Float64 Xrcl = ConvertPierToCurbLineCoordinate(pierData, Xr);
+    // convert Xl and Xr to curb line coordinates
+    Float64 Xlcl = ConvertPierToCurbLineCoordinate(pierData, Xl);
+    Float64 Xrcl = ConvertPierToCurbLineCoordinate(pierData, Xr);
 
-        // get deck elevations
-        Float64 Yl = GetElevation(pierData, Xlcl);
-        Float64 Yr = GetElevation(pierData, Xrcl);
+    // get deck elevations
+    Float64 Yl = GetElevation(pierData, Xlcl);
+    Float64 Yr = GetElevation(pierData, Xrcl);
 
-		Float64 tDeck = GetDeckThickness();
+    Float64 tDeck = GetDeckThickness();
 
-        // adjust for deck thickness
-        Yl -= tDeck;
-        Yr -= tDeck;
+    // adjust for deck thickness
+    Yl -= tDeck;
+    Yr -= tDeck;
 
-        CComPtr<IPoint2d> lxbTL;
-        lxbTL.CoCreateInstance(CLSID_Point2d);
-        lxbTL->Move(Xl, Yl - H5);
-        LXBProfile->Insert(0, lxbTL);
+    CComPtr<IPoint2d> lxbTL;
+    lxbTL.CoCreateInstance(CLSID_Point2d);
+    lxbTL->Move(Xl, Yl - H5);
+    LXBProfile->Insert(0, lxbTL);
 
-        CComPtr<IPoint2d> lxbTR;
-        lxbTR.CoCreateInstance(CLSID_Point2d);
-        lxbTR->Move(Xr, Yr - H5);
-        LXBProfile->Add(lxbTR);
+    CComPtr<IPoint2d> lxbTR;
+    lxbTR.CoCreateInstance(CLSID_Point2d);
+    lxbTR->Move(Xr, Yr - H5);
+    LXBProfile->Add(lxbTR);
 
-        LXBProfile->RemoveDuplicatePoints();
+    LXBProfile->RemoveDuplicatePoints();
 
-        LXBProfile.CopyTo(ppPoints);
+    LXBProfile.CopyTo(ppPoints);
 }
 
-Float64 LowerDepth (Float64 x, Float64 Xs, Float64 dX, Float64 dyL, Float64 dyR)
-    {
-        if (IsZero(dX))
-            return dyL;
-
-        return ::LinInterp(
-            x - Xs,
-            dyL,
-            dyR,
-            dX);
-    };
-
 Float64 LowerTopY(Float64 x, Float64 Xs, Float64 Yl, Float64 Yr, IPoint2dCollection* lxbProfile)
+{
+    IndexType nPoints;
+    lxbProfile->get_Count(&nPoints);
+
+    for (IndexType idx = 1;
+        idx < nPoints;
+        ++idx)
     {
-        IndexType nPoints;
-        lxbProfile->get_Count(&nPoints);
+        CComPtr<IPoint2d> p0;
+        CComPtr<IPoint2d> p1;
 
-        for (IndexType idx = 1;
-            idx < nPoints;
-            ++idx)
+        lxbProfile->get_Item(idx - 1, &p0);
+        lxbProfile->get_Item(idx, &p1);
+
+        Float64 x0, y0;
+        Float64 x1, y1;
+
+        p0->Location(&x0, &y0);
+        p1->Location(&x1, &y1);
+
+        const Float64 xMin = min(x0, x1);
+        const Float64 xMax = max(x0, x1);
+
+        if (InRange(xMin, x, xMax))
         {
-            CComPtr<IPoint2d> p0;
-            CComPtr<IPoint2d> p1;
+            const Float64 segmentDX = x1 - x0;
 
-            lxbProfile->get_Item(idx - 1, &p0);
-            lxbProfile->get_Item(idx, &p1);
+            if (IsZero(segmentDX))
+                return y0;
 
-            Float64 x0, y0;
-            Float64 x1, y1;
-
-            p0->Location(&x0, &y0);
-            p1->Location(&x1, &y1);
-
-            const Float64 xMin = min(x0, x1);
-            const Float64 xMax = max(x0, x1);
-
-            if (InRange(xMin, x, xMax))
-            {
-                const Float64 segmentDX = x1 - x0;
-
-                if (IsZero(segmentDX))
-                    return y0;
-
-                return ::LinInterp(
-                    x - x0,
-                    y0,
-                    y1,
-                    segmentDX);
-            }
+            return ::LinInterp(
+                x - x0,
+                y0,
+                y1,
+                segmentDX);
         }
+    }
 
-        if (x <= Xs)
-            return Yl;
+    if (x <= Xs)
+        return Yl;
 
-        return Yr;
+    return Yr;
 };
 
-void AddScallop( 
-	Float64 R, Float64 D, Float64 Xs, Float64 Yl, Float64 Yr, Float64 dX, Float64 dyL, Float64 dyR,
-    Float64 x0Full,
-    Float64 x1Full,
-    Float64 xClip0,
-    Float64 xClip1,
+void AddCircularArcByEndpoints(
+    Float64 x0,
+    Float64 y0,
+    Float64 x1,
+    Float64 y1,
+    Float64 R,
     bool skipFirst,
-    IPoint2dCollection* BXBProfile, IPoint2dCollection* lxbProfile)
+    IPoint2dCollection* BXBProfile)
+{
+    const Float64 dx = x1 - x0;
+    const Float64 dy = y1 - y0;
+    const Float64 chord = std::sqrt(dx * dx + dy * dy);
+
+    if (IsZero(chord) || R <= 0.0)
+        return;
+
+    // A circle of radius R can pass through the two end points only when
+    // the chord length is no greater than the diameter.
+    if (chord > 2.0 * R)
     {
-        if (x1Full <= x0Full ||
-            xClip1 <= xClip0 ||
-            R <= 0.0 ||
-            D < 0.0)
+        ATLASSERT(chord <= 2.0 * R);
+        return;
+    }
+
+    const Float64 xm = 0.5 * (x0 + x1);
+    const Float64 ym = 0.5 * (y0 + y1);
+
+    const Float64 halfChord = 0.5 * chord;
+    const Float64 h = std::sqrt(max(0.0, R * R - halfChord * halfChord));
+
+    // Unit normal to the chord.  There are two possible circle centers.
+    const Float64 nx = -dy / chord;
+    const Float64 ny = dx / chord;
+
+    const Float64 cxA = xm + h * nx;
+    const Float64 cyA = ym + h * ny;
+    const Float64 cxB = xm - h * nx;
+    const Float64 cyB = ym - h * ny;
+
+    auto GetArcData = [=](Float64 cx, Float64 cy,
+        Float64& a0, Float64& da, Float64& yMid)
         {
-            return;
-        }
+            a0 = std::atan2(y0 - cy, x0 - cx);
+            const Float64 a1 = std::atan2(y1 - cy, x1 - cx);
 
-        const Float64 xMid =
-            0.5 * (x0Full + x1Full);
+            // Signed minor-arc sweep from the first point to the second.
+            da = std::atan2(
+                std::sin(a1 - a0),
+                std::cos(a1 - a0));
 
-        /*
-         * The crown of the circular scallop is D below the
-         * top of the lower cross beam.
-         */
-        const Float64 crownY =
-            LowerTopY(xMid, Xs, Yl, Yr, lxbProfile) - D;
+            const Float64 aMid = a0 + 0.5 * da;
+            yMid = cy + R * std::sin(aMid);
+        };
 
-        const Float64 circleCenterY =
-            crownY - R;
+    Float64 a0A, daA, yMidA;
+    Float64 a0B, daB, yMidB;
 
-        IndexType nSegs = 24;
+    GetArcData(cxA, cyA, a0A, daA, yMidA);
+    GetArcData(cxB, cyB, a0B, daB, yMidB);
 
-        for (IndexType i = 0;
-            i <= nSegs;
-            ++i)
-        {
-            if (skipFirst && i == 0)
-                continue;
+    // The scallop is the arc that bows upward between its two end points.
+    Float64 cx = cxA;
+    Float64 cy = cyA;
+    Float64 a0 = a0A;
+    Float64 da = daA;
 
-            const Float64 u =
-                static_cast<Float64>(i) /
-                static_cast<Float64>(nSegs);
+    if (yMidB > yMidA)
+    {
+        cx = cxB;
+        cy = cyB;
+        a0 = a0B;
+        da = daB;
+    }
 
-            const Float64 x =
-                xClip0 +
-                u * (xClip1 - xClip0);
+    const IndexType nSegs = 24;
 
-            // Ordinary bottom profile at this location
-            const Float64 bottomY =
-                LowerTopY(x, Xs, Yl, Yr, lxbProfile) -
-                LowerDepth(x, Xs, dX, dyL, dyR);
+    for (IndexType i = 0; i <= nSegs; ++i)
+    {
+        if (skipFirst && i == 0)
+            continue;
 
-            Float64 y = bottomY;
+        const Float64 u =
+            static_cast<Float64>(i) /
+            static_cast<Float64>(nSegs);
 
-            const Float64 dx =
-                x - xMid;
+        const Float64 a = a0 + u * da;
 
-            if (std::fabs(dx) <= R)
-            {
-                const Float64 circleY =
-                    circleCenterY +
-                    std::sqrt(
-                        max(
-                            0.0,
-                            R * R - dx * dx));
+        CComPtr<IPoint2d> p;
+        p.CoCreateInstance(CLSID_Point2d);
 
-                /*
-                 * Use the circle only where it is above the
-                 * ordinary lower-beam bottom.
-                 */
-                y = max(bottomY, circleY);
-            }
+        p->Move(
+            cx + R * std::cos(a),
+            cy + R * std::sin(a));
 
-            CComPtr<IPoint2d> p;
-            p.CoCreateInstance(CLSID_Point2d);
-
-            p->Move(x, y);
-            BXBProfile->Add(p);
-        }
+        BXBProfile->Add(p);
+    }
 };
 
 void CBridgeAgentImp::GetBottomXBeamProfile(
@@ -13119,13 +13124,8 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
     Xrt = IsZero(Xrt) ? 0.0 : Xrt;
 
     /*
-     * Horizontal locations at which the lower profile closes back to
-     * the top profile.
-     *
-     * For the scalloped profile these are also used as the clipping
-     * limits. This pulls the first and last circular points inward and
-     * creates the tapered outside faces without adding extra points
-     * that produce slivers.
+     * Bottom corner locations after the common H1/X1 exterior side
+     * tapers.  These points are shared by all pier layout types.
      */
     Float64 XbottomLeft = Xl + X1L;
     Float64 XbottomRight = Xr - X1R;
@@ -13153,12 +13153,12 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
             colIdx < nCols;
             ++colIdx)
         {
-            Float64 xCol =
+            const Float64 xCol =
                 GetColumnLocation(
                     pierData,
                     colIdx);
 
-            Float64 xPierCol =
+            const Float64 xPierCol =
                 ConvertCrossBeamToPierCoordinate(
                     pierData,
                     xCol);
@@ -13182,115 +13182,79 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
                 }),
             colStations.end());
 
-        const Float64 XscallopLeft =
-            XbottomLeft;
+        /*
+         * The scalloped layout uses exactly the same exterior side
+         * geometry as the other lower-cross-beam layouts.
+         *
+         * Therefore the first and last arc end points are the same
+         * lower-left and lower-right corner points defined by H1/X1.
+         * OHL/OHR are already reflected in the cross-beam/column
+         * locations used to establish these coordinates.
+         */
+        const Float64 xLeftCorner = XbottomLeft;
+        const Float64 yLeftCorner = Yl - H1L;
+        const Float64 xRightCorner = XbottomRight;
+        const Float64 yRightCorner = Yr - H1R;
 
-        const Float64 XscallopRight =
-            XbottomRight;
-
-        if (colStations.size() >= 2)
+        if (!colStations.empty())
         {
-            const Float64 leftSpacing =
-                colStations[1] -
-                colStations[0];
-
-            const Float64 rightSpacing =
-                colStations[colStations.size() - 1] -
-                colStations[colStations.size() - 2];
-
-            std::vector<Float64> fullStations;
-
-            fullStations.push_back(
-                colStations.front() -
-                leftSpacing);
+            Float64 xArc0 = xLeftCorner;
+            Float64 yArc0 = yLeftCorner;
+            bool skipFirst = false;
 
             for (Float64 xCol : colStations)
-                fullStations.push_back(xCol);
-
-            fullStations.push_back(
-                colStations.back() +
-                rightSpacing);
-
-            bool firstPoint = true;
-
-            for (size_t i = 1;
-                i < fullStations.size();
-                ++i)
             {
-                const Float64 x0Full =
-                    fullStations[i - 1];
+                /*
+                 * D is the vertical distance from the local top of the
+                 * lower cross beam to the top center of the column.
+                 * The arc apex is not prescribed; it follows from the
+                 * two end points and R.
+                 */
+                const Float64 yCol =
+                    LowerTopY(
+                        xCol,
+                        Xs,
+                        Yl,
+                        Yr,
+                        lxbProfile) - D;
 
-                const Float64 x1Full =
-                    fullStations[i];
+                AddCircularArcByEndpoints(
+                    xArc0,
+                    yArc0,
+                    xCol,
+                    yCol,
+                    R,
+                    skipFirst,
+                    BXBProfile);
 
-                const Float64 xClip0 =
-                    max(
-                        x0Full,
-                        XscallopLeft);
-
-                const Float64 xClip1 =
-                    min(
-                        x1Full,
-                        XscallopRight);
-
-                if (xClip1 > xClip0)
-                {
-                    AddScallop(
-                        R, D,
-                        Xs, Yl, Yr,
-                        dX, dyL, dyR,
-                        x0Full,
-                        x1Full,
-                        xClip0,
-                        xClip1,
-                        !firstPoint,
-                        BXBProfile,
-                        lxbProfile);
-
-                    firstPoint = false;
-                }
+                xArc0 = xCol;
+                yArc0 = yCol;
+                skipFirst = true;
             }
+
+            AddCircularArcByEndpoints(
+                xArc0,
+                yArc0,
+                xRightCorner,
+                yRightCorner,
+                R,
+                true,
+                BXBProfile);
         }
-        else if (colStations.size() == 1)
+        else
         {
-            const Float64 xCol = colStations.front();
+            // A scalloped pier should have at least one column.  Keep a
+            // usable boundary if invalid data reaches this routine.
+            CComPtr<IPoint2d> pLeft;
+            pLeft.CoCreateInstance(CLSID_Point2d);
+            pLeft->Move(xLeftCorner, yLeftCorner);
+            BXBProfile->Add(pLeft);
 
-            // Left hammerhead scallop:
-            // exterior end -> column center
-            if (xCol > XscallopLeft)
-            {
-                AddScallop(
-                    R, D,
-                    Xs, Yl, Yr,
-                    dX, dyL, dyR,
-                    XscallopLeft,
-                    xCol,
-                    XscallopLeft,
-                    xCol,
-                    false,
-                    BXBProfile,
-                    lxbProfile);
-            }
-
-            // Right hammerhead scallop:
-            // column center -> exterior end
-            if (XscallopRight > xCol)
-            {
-                AddScallop(
-                    R, D,
-                    Xs, Yl, Yr,
-                    dX, dyL, dyR,
-                    xCol,
-                    XscallopRight,
-                    xCol,
-                    XscallopRight,
-                    true,
-                    BXBProfile,
-                    lxbProfile);
-            }
+            CComPtr<IPoint2d> pRight;
+            pRight.CoCreateInstance(CLSID_Point2d);
+            pRight->Move(xRightCorner, yRightCorner);
+            BXBProfile->Add(pRight);
         }
-
-
     }
     else
     {
