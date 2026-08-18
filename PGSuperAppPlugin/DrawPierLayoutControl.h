@@ -39,6 +39,7 @@ class CDrawPierLayoutControl : public CDisplayWnd
 	DECLARE_DYNAMIC(CDrawPierLayoutControl)
 
 	friend class CPierLayoutPage;
+	friend class CPierConnectionsPage;
 	friend class CCommonPierLayoutDlg;
 	friend class CScallopedPierLayoutDlg;
 	friend class CUserDefinedPierLayoutDlg;

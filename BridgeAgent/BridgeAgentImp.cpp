@@ -2583,6 +2583,53 @@ bool CBridgeAgentImp::BuildBridgeModel()
    return true;
 }
 
+pgsTypes::PierType CBridgeAgentImp::GetPierType(const CPierData2& pierData) const
+{
+    VALIDATE(PIERS);
+
+    if (pierData.IsBoundaryPier())
+    {
+        switch (pierData.GetBoundaryConditionType())
+        {
+        case pgsTypes::bctHinge:
+        case pgsTypes::bctRoller:
+            return pgsTypes::pctExpansion;
+
+        case pgsTypes::bctContinuousAfterDeck:
+        case pgsTypes::bctContinuousBeforeDeck:
+            return pgsTypes::pctContinuous;
+
+        case pgsTypes::bctIntegralAfterDeck:
+        case pgsTypes::bctIntegralBeforeDeck:
+            return pgsTypes::pctIntegral;
+
+        case pgsTypes::bctIntegralAfterDeckHingeBack:
+        case pgsTypes::bctIntegralBeforeDeckHingeBack:
+        case pgsTypes::bctIntegralAfterDeckHingeAhead:
+        case pgsTypes::bctIntegralBeforeDeckHingeAhead:
+            return pgsTypes::pctIntegral;
+        }
+
+        ATLASSERT(false); // should never get here
+        return pgsTypes::pctIntegral;
+    }
+    else
+    {
+        switch (pierData.GetSegmentConnectionType())
+        {
+        case pgsTypes::psctContinousClosureJoint:
+        case pgsTypes::psctContinuousSegment:
+            return pgsTypes::pctContinuous;
+
+        case pgsTypes::psctIntegralClosureJoint:
+        case pgsTypes::psctIntegralSegment:
+            return pgsTypes::pctIntegral;
+        }
+
+        ATLASSERT(false); // should never get here
+        return pgsTypes::pctIntegral;
+    }
+}
 
 pgsTypes::PierType CBridgeAgentImp::GetPierType(PierIndexType pierIdx) const
 {
