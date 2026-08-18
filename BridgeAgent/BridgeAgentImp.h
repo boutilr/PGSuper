@@ -412,6 +412,7 @@ public:
    void GetUpperXBeamDimensions(PierIndexType pierIdx, Float64* pd, Float64* pw) const override;
    Float64 GetPierDepth(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 xLoc) const override;
    Float64 GetPierDepth(const CPierData2& pierData, pgsTypes::Stage stage, Float64 xLoc) const override;
+   pgsTypes::PierType GetPierType(const CPierData2& pierData) const override;
    pgsTypes::PierType GetPierType(PierIndexType pierIdx) const override;
 
 

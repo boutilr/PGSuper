@@ -685,6 +685,7 @@ public:
    virtual Float64 GetPierDepth(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 xLoc) const = 0;
    virtual Float64 GetPierDepth(const CPierData2& pierData, pgsTypes::Stage stage, Float64 xLoc) const = 0;
    virtual pgsTypes::PierType GetPierType(PierIndexType pierIdx) const = 0;
+   virtual pgsTypes::PierType GetPierType(const CPierData2& pierData) const = 0;
 
    // returns the number of columns at a pier.
    virtual ColumnIndexType GetColumnCount(PierIndexType pierIdx) const = 0;
