@@ -41,6 +41,7 @@ class CUserDefinedPierLayoutDlg : public CDialog, public IPierLayoutDataSource
 {
 
 	friend class CPierLayoutPage;
+	friend class CPierConnectionsPage;
 
 // Construction
 public:
