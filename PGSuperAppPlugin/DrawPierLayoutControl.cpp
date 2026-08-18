@@ -348,7 +348,7 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
     // Model Upper Cross Beam (Elevation)
     WBFL::Geometry::Point2d point(0, 0);
 
-    if (pBridge->GetPierType(pierIdx) != ptExpansion)
+    if (pBridge->GetPierType(*pPier) != ptExpansion)
     {
         auto doUpperXBeam = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
         doUpperXBeam->SetPosition(point, false, false);

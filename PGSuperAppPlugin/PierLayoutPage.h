@@ -43,6 +43,8 @@ class CPierLayoutPage : public CPropertyPage
 	friend class CCommonPierLayoutDlg;
 	friend class CScallopedPierLayoutDlg;
 	friend class CUserDefinedPierLayoutDlg;
+	friend class CPierDetailsDlg;
+	friend class CPierConnectionsPage;
 
 	DECLARE_DYNCREATE(CPierLayoutPage)
 
