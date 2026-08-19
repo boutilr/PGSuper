@@ -474,6 +474,7 @@ public:
    ///////////////////////////////////////////////////
 
    virtual void GetPierDiaphragmSize(PierIndexType pierIdx,pgsTypes::PierFaceType pierFace,Float64* pW,Float64* pH) const = 0;
+   virtual void GetPierDiaphragmSize(const CPierData2& pierData,pgsTypes::PierFaceType pierFace,Float64* pW,Float64* pH) const = 0;
    // return true if weight of diaphragm is carried by girder
    virtual bool DoesPierDiaphragmLoadGirder(PierIndexType pierIdx,pgsTypes::PierFaceType pierFace) const = 0;
    // Get location of end diaphragm load (c.g.) measured from c.l. bearing along girder
@@ -682,6 +683,7 @@ public:
    virtual void GetUpperXBeamShape(const CPierData2& pierData, Float64 Xxb, IShape** ppShape) const = 0;
    virtual void GetLowerXBeamShape(const CPierData2& pierData, Float64 Xxb, IShape** ppShape) const = 0;
    virtual void GetUpperXBeamDimensions(PierIndexType pierIdx, Float64* pd, Float64* pw) const = 0;
+   virtual void GetUpperXBeamDimensions(const CPierData2& pierData, Float64* pd, Float64* pw) const = 0;
    virtual Float64 GetPierDepth(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 xLoc) const = 0;
    virtual Float64 GetPierDepth(const CPierData2& pierData, pgsTypes::Stage stage, Float64 xLoc) const = 0;
    virtual pgsTypes::PierType GetPierType(PierIndexType pierIdx) const = 0;

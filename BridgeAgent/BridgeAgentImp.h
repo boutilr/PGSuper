@@ -281,6 +281,7 @@ public:
    void GetClosureJointSize(const CClosureKey& closureKey,Float64* pLeft,Float64* pRight) const override;
    void GetAngleBetweenSegments(const CClosureKey& closureKey,IAngle** ppAngle) const override;
    void GetPierDiaphragmSize(PierIndexType pierIdx,pgsTypes::PierFaceType pierFace,Float64* pW,Float64* pH) const override;
+   void GetPierDiaphragmSize(const CPierData2& pierData,pgsTypes::PierFaceType pierFace,Float64* pW,Float64* pH) const override;
    bool DoesPierDiaphragmLoadGirder(PierIndexType pierIdx,pgsTypes::PierFaceType pierFace) const override;
    Float64 GetPierDiaphragmLoadLocation(const CSegmentKey& segmentKey,pgsTypes::MemberEndType endTYpe) const override;
    std::vector<IntermediateDiaphragm> GetPrecastDiaphragms(const CSegmentKey& segmentKey) const override;
@@ -409,6 +410,7 @@ public:
    void GetXBeamShape(const CPierData2& pierData, pgsTypes::Stage stage, Float64 Xxb, IShape** ppShape) const override;
    void GetUpperXBeamShape(const CPierData2& pierData, Float64 Xxb, IShape** ppShape) const override;
    void GetLowerXBeamShape(const CPierData2& pierData, Float64 Xxb, IShape** ppShape) const override;
+   void GetUpperXBeamDimensions(const CPierData2& pierData, Float64* pd, Float64* pw) const override;
    void GetUpperXBeamDimensions(PierIndexType pierIdx, Float64* pd, Float64* pw) const override;
    Float64 GetPierDepth(PierIndexType pierIdx, pgsTypes::Stage stage, Float64 xLoc) const override;
    Float64 GetPierDepth(const CPierData2& pierData, pgsTypes::Stage stage, Float64 xLoc) const override;

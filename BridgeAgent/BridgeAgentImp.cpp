@@ -9702,6 +9702,29 @@ bool CBridgeAgentImp::IsObtuseCorner(const CSpanKey& spanKey,pgsTypes::MemberEnd
    return false;
 }
 
+void CBridgeAgentImp::GetPierDiaphragmSize(const CPierData2& pierData,pgsTypes::PierFaceType pierFace,Float64* pW,Float64* pH) const
+{
+   VALIDATE( BRIDGE );
+
+   *pH = pierData.GetDiaphragmHeight(pierFace);
+   *pW = pierData.GetDiaphragmWidth(pierFace);
+   
+   if ( *pH < 0 )
+   {
+      *pH = ComputePierDiaphragmHeight(pierData.GetIndex(), pierFace);
+   }
+
+   if ( *pW < 0 )
+   {
+      *pW = ComputePierDiaphragmWidth(pierData,pierFace);
+      if ( pierData.IsInteriorPier() )
+      {
+         // see note above
+         *pW /= 2;
+      }
+   }
+}
+
 void CBridgeAgentImp::GetPierDiaphragmSize(PierIndexType pierIdx,pgsTypes::PierFaceType pierFace,Float64* pW,Float64* pH) const
 {
    VALIDATE( BRIDGE );
@@ -12799,7 +12822,7 @@ void CBridgeAgentImp::GetUpperXBeamProfile(const CPierData2& pierData, IPoint2dC
     Float64 XxbEnd = xbLength;
 
     Float64 H5, W2;
-    GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
+    GetUpperXBeamDimensions(pierData, &H5, &W2);
 
     Float64 deltaXl = -X1L * H5 / H1L;
     Float64 deltaXr = X1R * H5 / H1R;
@@ -13777,9 +13800,9 @@ void CBridgeAgentImp::GetUpperXBeamShape(const CPierData2& pierData, Float64 Xxb
     Y -= tDeck;
 
     Float64 H5, W2;
-    GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
+    GetUpperXBeamDimensions(pierData, &H5, &W2);
 
-    pgsTypes::PierType pierType = GetPierType(pierData.GetIndex());
+    pgsTypes::PierType pierType = GetPierType(pierData);
     if (pierType == ptExpansion)
     {
         // model expansion pier with two rectangles... one for the diaphragm on each side of the pier
@@ -13836,8 +13859,6 @@ void CBridgeAgentImp::GetUpperXBeamShape(const CPierData2& pierData, Float64 Xxb
             CComQIPtr<IShape> rightShape(rightUpperXBeamShape);
             compositeShape->AddShape(rightShape, VARIANT_FALSE);
         }
-
-
 
         compositeShape->get_Shape(ppShape);
     }
@@ -13909,7 +13930,7 @@ void CBridgeAgentImp::GetXBeamShape(const CPierData2& pierData, pgsTypes::Stage 
     // Determine pier type
     // ---------------------------------------------------------
 
-    pgsTypes::PierType pierType = GetPierType(pierData.GetIndex());
+    pgsTypes::PierType pierType = GetPierType(pierData);
 
     StageIndexType stageIdx =
         GetStageIndex(stage);
@@ -13951,6 +13972,40 @@ void CBridgeAgentImp::GetXBeamShape(const CPierData2& pierData, pgsTypes::Stage 
         VARIANT_FALSE);
 
     compositeShape->get_Shape(ppShape);
+
+}
+
+void CBridgeAgentImp::GetUpperXBeamDimensions(const CPierData2& pierData, Float64* ph, Float64* pw) const
+{
+    VALIDATE(GIRDER);
+
+    // Upper Cross Beam Diaphragm. Basically, this is vertical distance from top of lower cross beam to bottom of slab
+    // Take max of diaphragm depth and max girder bearing deducts
+    // (don't use the pPier object here... use the pBridge interface... it resolves
+    // diaphragm dimensions that are computed based on bridge component geometry)
+    Float64 Wback, Hback;
+    GetPierDiaphragmSize(pierData, pgsTypes::Back, &Wback, &Hback);
+    Float64 Wahead, Hahead;
+    GetPierDiaphragmSize(pierData, pgsTypes::Ahead, &Wahead, &Hahead);
+    *pw = Wback + Wahead;
+    Float64 Hdiap = Max(Hback, Hahead);
+
+    Float64 Hbd = 0;
+
+    // Compute elevation ignoring effects on non-recoverable deformations. We don't need to perform a full structural analysis to get the values we want
+    std::vector<BearingElevationDetails> vBackElevDetails = GetBearingElevationDetails(pierData.GetIndex(), pgsTypes::Back, ALL_GIRDERS, true);
+    for (const auto& elevdet : vBackElevDetails)
+    {
+        Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
+    }
+
+    std::vector<BearingElevationDetails> vAheadElevDetails = GetBearingElevationDetails(pierData.GetIndex(), pgsTypes::Ahead, ALL_GIRDERS, true);
+    for (const auto& elevdet : vAheadElevDetails)
+    {
+        Hbd = max(Hbd, elevdet.BrgHeight + elevdet.Hg + elevdet.SlabOffset - elevdet.GrossSlabDepth);
+    }
+
+    *ph = max(Hdiap, Hbd);
 
 }
 
