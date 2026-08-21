@@ -13838,7 +13838,7 @@ void CBridgeAgentImp::GetUpperXBeamShape(const CPierData2& pierData, Float64 Xxb
         CComQIPtr<IXYPosition> position(leftUpperXBeamShape);
         CComPtr<IPoint2d> pnt;
         position->get_LocatorPoint(lpTopCenter, &pnt);
-        pnt->Move(backBrgOffset, Y);
+        pnt->Move(-backBrgOffset, Y);
         position->put_LocatorPoint(lpTopCenter, pnt);
         CComQIPtr<IShape> leftShape(leftUpperXBeamShape);
         compositeShape->AddShape(leftShape, VARIANT_FALSE);
@@ -13925,27 +13925,6 @@ void CBridgeAgentImp::GetXBeamShape(const CPierData2& pierData, pgsTypes::Stage 
     GetLowerXBeamShape(
 		pierData, Xxb,
         &lowerXBeamShape);
-
-    // ---------------------------------------------------------
-    // Determine pier type
-    // ---------------------------------------------------------
-
-    pgsTypes::PierType pierType = GetPierType(pierData);
-
-    StageIndexType stageIdx =
-        GetStageIndex(stage);
-
-    // ---------------------------------------------------------
-    // Stage 0 or non-integral:
-    // only lower cross beam exists
-    // ---------------------------------------------------------
-
-    if (stageIdx == 0 ||
-        pierType != ptIntegral)
-    {
-        lowerXBeamShape.CopyTo(ppShape);
-        return;
-    }
 
     // ---------------------------------------------------------
     // Get upper cross beam shape
