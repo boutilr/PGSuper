@@ -2707,6 +2707,17 @@ bool CBridgeAgentImp::LayoutPiers()
       CComPtr<IPoint2dCollection> deckProfile;
       pRoadway->GetRoadwaySurface(pierStation, skewAngle, &deckProfile);
 
+      const CDeckDescription2* pDeck = pBridgeDesc->GetDeckDescription();
+      Float64 tDeck;
+      if (pDeck->GetDeckType() == pgsTypes::sdtCompositeSIP)
+      {
+          tDeck = pDeck->GrossDepth + pDeck->PanelDepth;
+      }
+      else
+      {
+          tDeck = pDeck->GrossDepth;
+      }
+
       CComPtr<IBridgePier> pier;
       GetGenericBridgePier(pierIdx, &pier);
 
@@ -2757,7 +2768,7 @@ bool CBridgeAgentImp::LayoutPiers()
           {
               CComPtr<IPoint2d> point;
               point.CoCreateInstance(CLSID_Point2d);
-              point->Move(pointData.Get_X(), -pointData.Get_Y());
+              point->Move(pointData.Get_X(), -pointData.Get_Y() - tDeck - HU);
               points->Add(point);
           }
           uxbeam->SetPoints(points);
@@ -13331,6 +13342,12 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
         if (pierData.GetPierLayoutType() ==
             pgsTypes::pltUserDefined)
         {
+
+            Float64 H5, W2;
+            GetUpperXBeamDimensions(pierData.GetIndex(), &H5, &W2);
+
+            Float64 tDeck = GetDeckThickness();
+
             IndexType nPierPoints =
                 pierData.GetPierPointCount();
 
@@ -13345,7 +13362,7 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
                     pierPoint.Get_X();
 
                 Float64 y =
-                    -pierPoint.Get_Y();
+                    -pierPoint.Get_Y() - tDeck - H5;
 
                 if (InRange(Xlt, x, Xrt))
                 {
