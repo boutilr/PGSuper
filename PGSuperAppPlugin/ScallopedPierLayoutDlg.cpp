@@ -456,6 +456,11 @@ const CPierData2* CScallopedPierLayoutDlg::GetPierData() const
 
 void CScallopedPierLayoutDlg::OnPierLayoutChanged()
 {
+    ChangePierLayout();
+}
+
+void CScallopedPierLayoutDlg::ChangePierLayout()
+{
     // Get the current values from the edit controls into member variables
     CDataExchange dx(this, TRUE);
 
