@@ -31,6 +31,7 @@ interface IPierLayoutDataSource
 public:
    virtual const CPierData2 * GetPierData() const = 0;
    virtual void SetPierData(const CPierData2& pierData) = 0;
+   virtual void OnPierLayoutChanged() = 0;
 };
 
 

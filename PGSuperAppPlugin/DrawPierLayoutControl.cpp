@@ -337,7 +337,6 @@ void CDrawPierLayoutControl::UpdateXBeamDisplayObjects()
 {
 
     const CPierData2* pPier = m_pSource->GetPierData();
-    PierIndexType pierIdx = pPier->GetIndex();
 
     auto displayList = m_pDispMgr->FindDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
 

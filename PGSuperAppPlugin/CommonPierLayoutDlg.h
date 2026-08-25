@@ -63,7 +63,7 @@ protected:
 	afx_msg void OnHeightMeasureChanged();
 	afx_msg void OnAddColumn();
 	afx_msg void OnRemoveColumns();
-	afx_msg void OnPierLayoutChanged();
+	afx_msg void OnPierLayoutChanged() override;
 	afx_msg void OnRefColumnChanged();
 
 	DECLARE_MESSAGE_MAP()

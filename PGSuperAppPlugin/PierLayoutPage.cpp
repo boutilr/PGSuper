@@ -704,6 +704,7 @@ void CPierLayoutPage::ShowPierLayoutPopout()
     }
 
     // Show and refresh
+    pSource->OnPierLayoutChanged();
     m_pPierLayoutPopout->ShowWindow(SW_SHOW);
     m_pPierLayoutPopout->UpdateDisplayObjects();
     m_pPierLayoutPopout->Invalidate();

@@ -306,7 +306,7 @@ LRESULT CCommonPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM lPar
     // Update pier data with current column data
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
 
-    RefreshDisplay();
+    OnPierLayoutChanged();
 
     return 0;
 }
@@ -319,7 +319,7 @@ void CCommonPierLayoutDlg::OnAddColumn()
     // Update pier data with current column data
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
 
-    RefreshDisplay();
+    OnPierLayoutChanged();
 
 }
 
@@ -345,7 +345,7 @@ void CCommonPierLayoutDlg::OnRemoveColumns()
         AfxMessageBox(_T("The pier must have at least one column"), MB_OK | MB_ICONEXCLAMATION);
     }
         
-    RefreshDisplay();
+    OnPierLayoutChanged();
 }
 
 void CCommonPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
@@ -507,5 +507,5 @@ void CCommonPierLayoutDlg::OnRefColumnChanged()
 
 	m_Pier.SetTransverseOffset(m_RefColumnIdx, m_TransverseOffset, m_TransverseOffsetMeasurement);
 
-    RefreshDisplay();
+    OnPierLayoutChanged();
 }
