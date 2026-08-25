@@ -437,6 +437,11 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
     GET_IFACE2(pBroker, IBridge, pBridge);
     const CPierData2* pPier = m_pSource->GetPierData();
 
+    Float64 H1L, H2L, H1R, H2R;
+    Float64 X2L, X1L, X2R, X1R;
+    pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
+    pPier->GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
+
     pBridge->GetPierBottomSurface(*pPier, &points); 
 
     CComPtr<IEnumPoint2d> enumPoints;
@@ -494,10 +499,6 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
         pPier->GetTransverseOffset(&refColIdx, &refColOffset, &refColMeasure);
         if (colIdx == refColIdx)
         {
-            Float64 H1L, H2L, H1R, H2R;
-            Float64 X2L, X1L, X2R, X1R;
-            pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
-            pPier->GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
             X2 -= refColOffset + X1L;
         }
         Float64 Y1 = fn.Evaluate(X1);
