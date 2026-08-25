@@ -67,8 +67,10 @@ protected:
 	afx_msg void OnRemoveColumns();
 	afx_msg void OnAddPierPoint();
 	afx_msg void OnRemovePierPoints();
-	afx_msg void OnPierLayoutChanged() override;
+	afx_msg void OnPierLayoutChanged();
 	afx_msg void OnRefColumnChanged();
+
+	void ChangePierLayout() override;
 
 	DECLARE_MESSAGE_MAP()
 
