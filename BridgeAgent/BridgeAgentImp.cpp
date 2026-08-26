@@ -13361,8 +13361,10 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
                 Float64 x =
                     pierPoint.Get_X();
 
-                Float64 y =
-                    -pierPoint.Get_Y() - tDeck - H5;
+                Float64 deckElev = GetElevation(pierData, x);
+
+                Float64 y = 
+                    deckElev - pierPoint.Get_Y() - tDeck - H5;
 
                 if (InRange(Xlt, x, Xrt))
                 {
