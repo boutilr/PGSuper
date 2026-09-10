@@ -487,28 +487,54 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
 
         // Create the shape of the column
         auto columnShape = std::make_shared<WBFL::Geometry::Polygon>();
-        Float64 X1, X2, X3;
+        Float64 X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11;
 
 
-		X2 = pntTop.X();
-        X1 = X2 - d1 / 2;
-        X3 = X2 + d1 / 2;
+        X6 = pntTop.X();
+        X1 = X6 - d1 * 0.5;
+        X2 = X6 - d1 * 0.4;
+        X3 = X6 - d1 * 0.3;
+        X4 = X6 - d1 * 0.2;
+        X5 = X6 - d1 * 0.1;
+        X7 = X6 + d1 * 0.1;
+        X8 = X6 + d1 * 0.2;
+        X9 = X6 + d1 * 0.3;
+        X10 = X6 + d1 * 0.4;
+        X11 = X6 + d1 * 0.5;
+
         pgsTypes::OffsetMeasurementType refColMeasure;
         ColumnIndexType refColIdx;
         Float64 refColOffset;
         pPier->GetTransverseOffset(&refColIdx, &refColOffset, &refColMeasure);
+
         if (colIdx == refColIdx)
         {
-            X2 -= refColOffset;// + X1L; // playing whack-a-mole fixing ref column top profile connection and dist. from alignment
+            X6 -= refColOffset;
         }
         Float64 Y1 = fn.Evaluate(X1);
         Float64 Y2 = fn.Evaluate(X2);
         Float64 Y3 = fn.Evaluate(X3);
+        Float64 Y4 = fn.Evaluate(X4);
+        Float64 Y5 = fn.Evaluate(X5);
+        Float64 Y6 = fn.Evaluate(X6);
+        Float64 Y7 = fn.Evaluate(X7);
+        Float64 Y8 = fn.Evaluate(X8);
+        Float64 Y9 = fn.Evaluate(X9);
+        Float64 Y10 = fn.Evaluate(X10);
+        Float64 Y11 = fn.Evaluate(X11);
 
         columnShape->AddPoint(X1, Y1);
         columnShape->AddPoint(X2, Y2);
         columnShape->AddPoint(X3, Y3);
-        columnShape->AddPoint(X3, Ybot);
+        columnShape->AddPoint(X4, Y4);
+        columnShape->AddPoint(X5, Y5);
+        columnShape->AddPoint(X6, Y6);
+        columnShape->AddPoint(X7, Y7);
+        columnShape->AddPoint(X8, Y8);
+        columnShape->AddPoint(X9, Y9);
+        columnShape->AddPoint(X10, Y10);
+        columnShape->AddPoint(X11, Y11);
+        columnShape->AddPoint(X11, Ybot);
         columnShape->AddPoint(X1, Ybot);
 
         auto doColumn = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
