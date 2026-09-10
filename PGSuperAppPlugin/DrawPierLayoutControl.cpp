@@ -470,8 +470,8 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
         CColumnData::ColumnHeightMeasurementType columnHeightType = columnData.GetColumnHeightMeasurementType();
         Float64 H = columnData.GetColumnHeight();
 
-        WBFL::Geometry::Point2d pntTop(XpCol, Ytop);
-        WBFL::Geometry::Point2d pntBot(XpCol, Ybot);
+        WBFL::Geometry::Point2d pntTop(XpCol - X1L, Ytop);
+        WBFL::Geometry::Point2d pntBot(XpCol - X1L, Ybot);
 
         auto doTop = WBFL::DManip::PointDisplayObject::Create();
         doTop->Visible(false);
@@ -499,7 +499,7 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
         pPier->GetTransverseOffset(&refColIdx, &refColOffset, &refColMeasure);
         if (colIdx == refColIdx)
         {
-            X2 -= refColOffset + X1L;
+            X2 -= refColOffset;// + X1L; // playing whack-a-mole fixing ref column top profile connection and dist. from alignment
         }
         Float64 Y1 = fn.Evaluate(X1);
         Float64 Y2 = fn.Evaluate(X2);
