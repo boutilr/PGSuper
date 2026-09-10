@@ -84,11 +84,11 @@ CPierData2::CPierData2()
    m_XBeamTaperLength[pgsTypes::stRight] = 0;
    m_XBeamEndSlopeOffset[pgsTypes::stLeft] = 0;
    m_XBeamEndSlopeOffset[pgsTypes::stRight] = 0;
-   m_XBeamOverhang[pgsTypes::stLeft]  = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
-   m_XBeamOverhang[pgsTypes::stRight] = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
+   m_XBeamOverhang[pgsTypes::stLeft]  = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
+   m_XBeamOverhang[pgsTypes::stRight] = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
    m_XBeamWidth = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
-   m_XBeamRadius = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
-   m_XBeamDepth = WBFL::Units::ConvertToSysUnits(2,WBFL::Units::Measure::Feet);
+   m_XBeamRadius = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
+   m_XBeamDepth = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
 
    m_ColumnFixity = pgsTypes::cftFixed;
    CColumnData defaultColumn(this);
