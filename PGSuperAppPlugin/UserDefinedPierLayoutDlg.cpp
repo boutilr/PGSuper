@@ -270,27 +270,40 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
             xRightColumn += spacing;
         }
 
+        // Calculate position of reference column and alignment offset
+        Float64 xRefColumn = 0;
+        for (IndexType idx = 0; idx < m_RefColumnIdx; idx++)
+        {
+            Float64 spacing = m_Pier.GetColumnSpacing(idx);
+            xRefColumn += spacing;
+        }
+        Float64 xShift = -(xRefColumn + m_TransverseOffset);
+
+        // Calculate limits outside the pier point loop (they don't depend on individual points)
+        const auto xLeftTop = xShift - m_XBeamOverhang[pgsTypes::stLeft];
+
+        const auto xRightTop = xShift + xRightColumn + m_XBeamOverhang[pgsTypes::stRight];
+
+
+        auto xLeftLimit =
+            xLeftTop + m_XBeamEndSlopeOffset[pgsTypes::stLeft];
+
+        auto xRightLimit =
+            xRightTop - m_XBeamEndSlopeOffset[pgsTypes::stRight];
+
         for (const auto& ppData : m_Pier.GetPierPointData())
         {
             const auto& x = ppData.Get_X();
             const auto& y = ppData.Get_Y();
 
-            const auto xLeftTop = -m_XBeamOverhang[pgsTypes::stLeft];
-
-            const auto xRightTop = xRightColumn + m_XBeamOverhang[pgsTypes::stRight];
-
-
-            auto xLeftLimit =
-                xLeftTop + m_XBeamEndSlopeOffset[pgsTypes::stLeft];
-
-            auto xRightLimit =
-                xRightTop - m_XBeamEndSlopeOffset[pgsTypes::stRight];
+            auto xLeftLimitAdjusted = xLeftLimit;
+            auto xRightLimitAdjusted = xRightLimit;
 
             // While the point is within H1L/H1R, the allowable
             // x-coordinate is governed by the sloping side.
             if (y < m_XBeamHeight[pgsTypes::stLeft])
             {
-                xLeftLimit =
+                xLeftLimitAdjusted =
                     xLeftTop +
                     m_XBeamEndSlopeOffset[pgsTypes::stLeft] *
                     y / m_XBeamHeight[pgsTypes::stLeft];
@@ -298,7 +311,7 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 
             if (y < m_XBeamHeight[pgsTypes::stRight])
             {
-                xRightLimit =
+                xRightLimitAdjusted =
                     xRightTop -
                     m_XBeamEndSlopeOffset[pgsTypes::stRight] *
                     y / m_XBeamHeight[pgsTypes::stRight];
@@ -315,8 +328,8 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
             }
 
             if (y < yTopLimit ||
-                x < xLeftLimit ||
-                x > xRightLimit)
+                x < xLeftLimitAdjusted ||
+                x > xRightLimitAdjusted)
             {
                 CString msg = _T("Pier point must be within the top and sides of the lower crossbeam.");
                 AfxMessageBox(msg);
@@ -325,6 +338,7 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 
         }
     }
+
 }
 
 void CUserDefinedPierLayoutDlg::RefreshDisplay()
@@ -332,7 +346,6 @@ void CUserDefinedPierLayoutDlg::RefreshDisplay()
     if (GetParent())
         GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
 }
-
 
 void CUserDefinedPierLayoutDlg::FillTransverseLocationComboBox()
 {
@@ -631,27 +644,40 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
             xRightColumn += spacing;
         }
 
+        // Calculate position of reference column and alignment offset
+        Float64 xRefColumn = 0;
+        for (IndexType idx = 0; idx < m_RefColumnIdx; idx++)
+        {
+            Float64 spacing = m_Pier.GetColumnSpacing(idx);
+            xRefColumn += spacing;
+        }
+        Float64 xShift = -(xRefColumn + m_TransverseOffset);
+
+        // Calculate limits outside the pier point loop (they don't depend on individual points)
+        const auto xLeftTop = xShift - m_XBeamOverhang[pgsTypes::stLeft];
+
+        const auto xRightTop = xShift + xRightColumn + m_XBeamOverhang[pgsTypes::stRight];
+
+
+        auto xLeftLimit =
+            xLeftTop + m_XBeamEndSlopeOffset[pgsTypes::stLeft];
+
+        auto xRightLimit =
+            xRightTop - m_XBeamEndSlopeOffset[pgsTypes::stRight];
+
         for (const auto& ppData : m_Pier.GetPierPointData())
         {
             const auto& x = ppData.Get_X();
             const auto& y = ppData.Get_Y();
 
-            const auto xLeftTop = -m_XBeamOverhang[pgsTypes::stLeft];
-
-            const auto xRightTop = xRightColumn + m_XBeamOverhang[pgsTypes::stRight];
-
-
-            auto xLeftLimit =
-                xLeftTop + m_XBeamEndSlopeOffset[pgsTypes::stLeft];
-
-            auto xRightLimit =
-                xRightTop - m_XBeamEndSlopeOffset[pgsTypes::stRight];
+            auto xLeftLimitAdjusted = xLeftLimit;
+            auto xRightLimitAdjusted = xRightLimit;
 
             // While the point is within H1L/H1R, the allowable
             // x-coordinate is governed by the sloping side.
             if (y < m_XBeamHeight[pgsTypes::stLeft])
             {
-                xLeftLimit =
+                xLeftLimitAdjusted =
                     xLeftTop +
                     m_XBeamEndSlopeOffset[pgsTypes::stLeft] *
                     y / m_XBeamHeight[pgsTypes::stLeft];
@@ -659,7 +685,7 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
 
             if (y < m_XBeamHeight[pgsTypes::stRight])
             {
-                xRightLimit =
+                xRightLimitAdjusted =
                     xRightTop -
                     m_XBeamEndSlopeOffset[pgsTypes::stRight] *
                     y / m_XBeamHeight[pgsTypes::stRight];
@@ -676,8 +702,8 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
             }
 
             if (y < yTopLimit ||
-                x < xLeftLimit ||
-                x > xRightLimit)
+                x < xLeftLimitAdjusted ||
+                x > xRightLimitAdjusted)
             {
                 CString msg = _T("Pier point must be within the top and sides of the lower crossbeam.");
                 AfxMessageBox(msg);
