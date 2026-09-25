@@ -13395,7 +13395,7 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
             const Float64 xPierCol =
                 ConvertCrossBeamToPierCoordinate(
                     pierData,
-                    xCol);
+                    xCol - X1L);
 
             colStations.push_back(xPierCol);
         }
