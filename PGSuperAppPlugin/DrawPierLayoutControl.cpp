@@ -442,7 +442,7 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
     pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
     pPier->GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
 
-    pBridge->GetPierBottomSurface(*pPier, &points); 
+    pBridge->GetBottomXBeamProfile(*pPier, &points);
 
     CComPtr<IEnumPoint2d> enumPoints;
     points->get__Enum(&enumPoints);
