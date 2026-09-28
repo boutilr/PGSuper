@@ -2118,7 +2118,37 @@ void pgsDesigner2::CheckStrandStresses(const CSegmentKey& segmentKey,pgsStrandSt
    }
 }
 
+std::vector<pgsFlexuralStressArtifact> pgsDesigner2::CheckFlexuralStresses(const PoiList& vPoi, const StressCheckTask& task) const
+{
+   // CheckSegmentStresses works one segment at a time. Check each run of POIs that are in the same segment
+   std::vector<pgsFlexuralStressArtifact> vArtifacts;
+   vArtifacts.reserve(vPoi.size());
+   auto begin = vPoi.cbegin();
+   auto end = vPoi.cend();
+   while (begin != end)
+   {
+      const CSegmentKey& segmentKey(begin->get().GetSegmentKey());
+      auto next = std::find_if(begin, end, [&segmentKey](const pgsPointOfInterest& poi) {return poi.GetSegmentKey() != segmentKey; });
+      PoiList vSegmentPoi(begin, next);
+      CheckSegmentStresses(segmentKey, vSegmentPoi, task, &vArtifacts);
+      begin = next;
+   }
+   ATLASSERT(vArtifacts.size() == vPoi.size());
+   return vArtifacts;
+}
+
 void pgsDesigner2::CheckSegmentStresses(const CSegmentKey& segmentKey,const PoiList& vPoi,const StressCheckTask& task,pgsSegmentArtifact* pSegmentArtifact) const
+{
+   std::vector<pgsFlexuralStressArtifact> vArtifacts;
+   vArtifacts.reserve(vPoi.size());
+   CheckSegmentStresses(segmentKey, vPoi, task, &vArtifacts);
+   for (const auto& artifact : vArtifacts)
+   {
+      pSegmentArtifact->AddFlexuralStressArtifact(artifact);
+   }
+}
+
+void pgsDesigner2::CheckSegmentStresses(const CSegmentKey& segmentKey,const PoiList& vPoi,const StressCheckTask& task,std::vector<pgsFlexuralStressArtifact>* pArtifacts) const
 {
    USES_CONVERSION;
 
@@ -2955,7 +2985,7 @@ void pgsDesigner2::CheckSegmentStresses(const CSegmentKey& segmentKey,const PoiL
       } // if segment exists
 
 
-      pSegmentArtifact->AddFlexuralStressArtifact(artifact);
+      pArtifacts->push_back(artifact);
    } // next poi
 }
 

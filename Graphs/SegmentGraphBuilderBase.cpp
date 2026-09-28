@@ -277,6 +277,39 @@ void CSegmentGraphBuilderBase::AddGraphPoints(IndexType series, const std::vecto
    }
 }
 
+void CSegmentGraphBuilderBase::AddStepGraphPoints(IndexType series, const std::vector<Float64>& xvals,const std::vector<Float64>& yvals)
+{
+   ATLASSERT(xvals.size() == yvals.size());
+   Float64 xPrev = 0, yPrev = 0;
+   bool bFirst = true;
+   std::vector<Float64>::const_iterator xIter(xvals.begin()), yIter(yvals.begin());
+   std::vector<Float64>::const_iterator xIterEnd(xvals.end()), yIterEnd(yvals.end());
+   for ( ; xIter != xIterEnd && yIter != yIterEnd; xIter++, yIter++ )
+   {
+      Float64 X = *xIter;
+      Float64 Y = *yIter;
+      if (!bFirst && !IsEqual(Y, yPrev))
+      {
+         if (yPrev < Y)
+         {
+            // going up hill... the jump is at this location
+            AddGraphPoint(series, X, yPrev);
+         }
+         else
+         {
+            // going down hill... the jump was at the previous location
+            AddGraphPoint(series, xPrev, Y);
+         }
+      }
+
+      AddGraphPoint(series, X, Y);
+
+      xPrev = X;
+      yPrev = Y;
+      bFirst = false;
+   }
+}
+
 void CSegmentGraphBuilderBase::AddGraphPoint(IndexType series, Float64 xval, Float64 yval)
 {
    // deal with unit conversion

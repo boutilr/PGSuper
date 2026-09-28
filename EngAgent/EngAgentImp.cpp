@@ -3955,6 +3955,11 @@ std::shared_ptr<const pgsISummaryRatingArtifact> CEngAgentImp::GetSummaryRatingA
    return std::make_shared<pgsSummaryRatingArtifactImpl>(girderKeys, ratingType, vehicleIdx, this);
 }
 
+std::vector<pgsFlexuralStressArtifact> CEngAgentImp::CheckFlexuralStresses(const PoiList& vPoi, const StressCheckTask& task) const
+{
+   return m_Designer->CheckFlexuralStresses(vPoi, task);
+}
+
 const pgsGirderDesignArtifact* CEngAgentImp::CreateDesignArtifact(const CGirderKey& girderKey, bool bDesignFlexure, arSlabOffsetDesignType haunchDesignType, arConcreteDesignType concreteDesignType, arShearDesignType shearDesignType) const
 {
    if (bDesignFlexure || shearDesignType != sdtNoDesign)

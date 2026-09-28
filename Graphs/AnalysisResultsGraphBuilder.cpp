@@ -2220,13 +2220,62 @@ void CAnalysisResultsGraphBuilder::LimitStateLoadGraph(IndexType graphIdx,const 
          {
             GET_IFACE(IConcreteStressLimits,pLimits);
 
+            // The specification check uses the higher "with bonded reinforcement" tension stress limit at POIs where
+            // there is sufficient bonded reinforcement (e.g., LRFD 5.9.2.3.1b, 5.12.3.4.2d, 5.12.3.4.3). Whether or not
+            // the higher limit applies depends on the demand, so it can only be determined by performing the stress check.
+            // Perform the stress check for this one task, and only if a "with rebar" limit is possible in this interval,
+            // so the graph matches the specification check report without the expense of the full specification check.
+            StressCheckTask tensionTask(intervalIdx, limitState, pgsTypes::Tension);
+            std::vector<pgsFlexuralStressArtifact> vTensionArtifacts;
+            if (pLimits->IsConcreteStressLimitApplicable(girderKey, tensionTask))
+            {
+               GET_IFACE_NOCHECK(IPointOfInterest, pPoi);
+               bool bHasWithRebarOption = std::any_of(vPoi.cbegin(), vPoi.cend(), [pPoi, pLimits, intervalIdx](const pgsPointOfInterest& poi)
+                  {
+                     CClosureKey closureKey;
+                     bool bIsInClosure = pPoi->IsInClosureJoint(poi, &closureKey);
+                     return pLimits->HasConcreteTensionStressLimitWithRebarOption(intervalIdx, false/*not in PTZ*/, !bIsInClosure, bIsInClosure ? closureKey : poi.GetSegmentKey()) ||
+                            pLimits->HasConcreteTensionStressLimitWithRebarOption(intervalIdx, true/*in PTZ*/,  !bIsInClosure, bIsInClosure ? closureKey : poi.GetSegmentKey());
+                  });
+
+               if (bHasWithRebarOption)
+               {
+                  GET_IFACE(IArtifact, pIArtifact);
+                  vTensionArtifacts = pIArtifact->CheckFlexuralStresses(vPoi, tensionTask);
+               }
+            }
+
+            // Replaces the "without rebar" tension stress limit with the "with rebar" limit at POIs where the specification check used it
+            auto UseWithRebarTensionStressLimit = [&vTensionArtifacts](pgsTypes::StressLocation topLocation, pgsTypes::StressLocation botLocation, std::vector<Float64>& vLimits)
+            {
+               if (vTensionArtifacts.empty())
+               {
+                  return;
+               }
+
+               ATLASSERT(vTensionArtifacts.size() == vLimits.size());
+               auto limitIter = vLimits.begin();
+               for (const auto& artifact : vTensionArtifacts)
+               {
+                  for (auto stressLocation : { topLocation, botLocation })
+                  {
+                     if (artifact.IsApplicable(stressLocation) && artifact.IsWithRebarAllowableStressApplicable(stressLocation) && artifact.WasWithRebarAllowableStressUsed(stressLocation))
+                     {
+                        *limitIter = Max(*limitIter, artifact.GetAlternativeAllowableTensileStress(stressLocation));
+                     }
+                  }
+                  limitIter++;
+               }
+            };
+
             if ( ((CAnalysisResultsGraphController*)m_pGraphController)->PlotStresses(pgsTypes::TopGirder) ||
                  ((CAnalysisResultsGraphController*)m_pGraphController)->PlotStresses(pgsTypes::BottomGirder) )
             {
                if ( pLimits->IsConcreteStressLimitApplicable(girderKey,StressCheckTask(intervalIdx,limitState,pgsTypes::Tension)) )
                {
                   std::vector<Float64> t(pLimits->GetGirderConcreteTensionStressLimit(vPoi,StressCheckTask(intervalIdx,limitState,pgsTypes::Tension),false/*without rebar*/,false/*not in PTZ*/));
-                  AddGraphPoints(min_girder_capacity_series, xVals, t);
+                  UseWithRebarTensionStressLimit(pgsTypes::TopGirder, pgsTypes::BottomGirder, t);
+                  AddStepGraphPoints(min_girder_capacity_series, xVals, t);
                   m_Graph.SetDataLabel(min_girder_capacity_series,strDataLabel + (strDataLabel.IsEmpty() ? _T("") : _T(" - Girder")));
                }
 
@@ -2243,7 +2292,8 @@ void CAnalysisResultsGraphBuilder::LimitStateLoadGraph(IndexType graphIdx,const 
                if ( pLimits->IsConcreteStressLimitApplicable(girderKey,StressCheckTask(intervalIdx,limitState,pgsTypes::Tension)) )
                {
                   std::vector<Float64> t(pLimits->GetDeckConcreteTensionStressLimit(vPoi,StressCheckTask(intervalIdx,limitState,pgsTypes::Tension),false/*without rebar*/));
-                  AddGraphPoints(min_deck_capacity_series, xVals, t);
+                  UseWithRebarTensionStressLimit(pgsTypes::TopDeck, pgsTypes::BottomDeck, t);
+                  AddStepGraphPoints(min_deck_capacity_series, xVals, t);
                   m_Graph.SetDataLabel(min_deck_capacity_series,strDataLabel + (strDataLabel.IsEmpty() ? _T("") : _T(" - Deck")));
                }
 
@@ -3458,9 +3508,10 @@ void CAnalysisResultsGraphBuilder::CyStressCapacityGraph(IndexType graphIdx,cons
    // First get pois using same request as spec check report
    GET_IFACE(IArtifact,pIArtifact);
 
-   Float64 cap_prev = 0;
-   Float64 x_prev = xVals.front(); // tension capacity can jump at a location. we must capture this
-   bool first(true);
+   // tension capacity can jump at a location. collect the values and plot them with AddStepGraphPoints so jumps are captured
+   std::vector<Float64> xTension, fTension;
+   xTension.reserve(vPoi.size());
+   fTension.reserve(vPoi.size());
    auto i(vPoi.begin());
    auto end(vPoi.end());
    auto xIter(xVals.begin());
@@ -3473,7 +3524,7 @@ void CAnalysisResultsGraphBuilder::CyStressCapacityGraph(IndexType graphIdx,cons
       const pgsFlexuralStressArtifact* pMaxArtifact = pSegmentArtifact->GetFlexuralStressArtifactAtPoi(StressCheckTask(intervalIdx,limitState,pgsTypes::Tension),poi.GetID());
       const pgsFlexuralStressArtifact* pMinArtifact = pSegmentArtifact->GetFlexuralStressArtifactAtPoi(StressCheckTask(intervalIdx, limitState, pgsTypes::Compression),poi.GetID());
 
-      Float64 maxcap, mincap;
+      Float64 mincap;
       if (pMaxArtifact != nullptr)
       {
          // compression is easy
@@ -3482,8 +3533,7 @@ void CAnalysisResultsGraphBuilder::CyStressCapacityGraph(IndexType graphIdx,cons
          mincap = Min(fTop,fBot);
          AddGraphPoint(min_data_series, x, mincap);
 
-         // Tension - we must catch jumps
-         // Use a simple rule: Jumps happen at starts/ends of high points
+         // Tension
          if (pMaxArtifact->WasWithRebarAllowableStressUsed(pgsTypes::TopGirder))
          {
             fTop = pMaxArtifact->GetAlternativeAllowableTensileStress(pgsTypes::TopGirder);
@@ -3501,29 +3551,12 @@ void CAnalysisResultsGraphBuilder::CyStressCapacityGraph(IndexType graphIdx,cons
          {
             fBot = pMaxArtifact->GetCapacity(pgsTypes::BottomGirder);
          }
-         maxcap = Max(fTop,fBot);
-         if (!first && !IsEqual(maxcap,cap_prev))
-         {
-            if (cap_prev < maxcap)
-            {
-               // We are going up hill. Jump is at this location
-               AddGraphPoint(max_data_series, x, cap_prev);
-            }
-            else
-            {
-               // We went down hill. Jump was at last location
-               AddGraphPoint(max_data_series, x_prev, maxcap);
-            }
-         }
-
-         AddGraphPoint(max_data_series, x, maxcap);
-
-         cap_prev = maxcap;
-         x_prev = x;
+         xTension.push_back(x);
+         fTension.push_back(Max(fTop,fBot));
       }
-
-      first = false;
    }
+
+   AddStepGraphPoints(max_data_series, xTension, fTension);
 }
 
 void CAnalysisResultsGraphBuilder::DeckShrinkageStressGraph(IndexType graphIdx,const CAnalysisResultsGraphDefinition& graphDef,IntervalIndexType intervalIdx,const PoiList& vPoi,const std::vector<Float64>& xVals)

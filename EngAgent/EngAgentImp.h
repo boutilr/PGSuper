@@ -388,6 +388,7 @@ public:
    std::shared_ptr<pgsHaulingAnalysisArtifact> CreateHaulingAnalysisArtifact(const CSegmentKey& segmentKey,Float64 leftSupportLoc,Float64 rightSupportLoc) const override;
    const pgsRatingArtifact* GetRatingArtifact(const CGirderKey& girderKey,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx) const override;
    std::shared_ptr<const pgsISummaryRatingArtifact> GetSummaryRatingArtifact(const std::vector<CGirderKey>& girderKeys,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx) const override;
+   std::vector<pgsFlexuralStressArtifact> CheckFlexuralStresses(const PoiList& vPoi, const StressCheckTask& task) const override;
 
 // ICrackedSection
 public:
