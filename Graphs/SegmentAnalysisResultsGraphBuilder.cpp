@@ -1203,8 +1203,34 @@ void CSegmentAnalysisResultsGraphBuilder::LimitStateLoadGraph(IndexType graphIdx
          {
             if (pLimits->IsConcreteStressLimitApplicable(segmentKey,StressCheckTask(intervalIdx,limitState,pgsTypes::Tension)))
             {
-               std::vector<Float64> t(pLimits->GetGirderConcreteTensionStressLimit(vPoi,StressCheckTask(intervalIdx,limitState,pgsTypes::Tension),false/*without rebar*/,false/*not in PTZ*/));
-               AddGraphPoints(min_girder_capacity_series,xVals,t);
+               StressCheckTask tensionTask(intervalIdx, limitState, pgsTypes::Tension);
+               std::vector<Float64> t(pLimits->GetGirderConcreteTensionStressLimit(vPoi,tensionTask,false/*without rebar*/,false/*not in PTZ*/));
+
+               // The specification check uses the higher "with bonded reinforcement" tension stress limit at POIs where
+               // there is sufficient bonded reinforcement (e.g., LRFD 5.9.2.3.1b). Whether or not the higher limit applies
+               // depends on the demand, so it can only be determined by performing the stress check. Perform the stress check
+               // for this one task so the graph matches the specification check report without the expense of the full specification check.
+               if (pLimits->HasConcreteTensionStressLimitWithRebarOption(intervalIdx, false/*not in PTZ*/, true/*segment*/, segmentKey) ||
+                   pLimits->HasConcreteTensionStressLimitWithRebarOption(intervalIdx, true/*in PTZ*/, true/*segment*/, segmentKey))
+               {
+                  GET_IFACE(IArtifact, pIArtifact);
+                  std::vector<pgsFlexuralStressArtifact> vArtifacts(pIArtifact->CheckFlexuralStresses(vPoi, tensionTask));
+                  ATLASSERT(vArtifacts.size() == t.size());
+                  auto limitIter = t.begin();
+                  for (const auto& artifact : vArtifacts)
+                  {
+                     for (auto stressLocation : { pgsTypes::TopGirder, pgsTypes::BottomGirder })
+                     {
+                        if (artifact.IsApplicable(stressLocation) && artifact.IsWithRebarAllowableStressApplicable(stressLocation) && artifact.WasWithRebarAllowableStressUsed(stressLocation))
+                        {
+                           *limitIter = Max(*limitIter, artifact.GetAlternativeAllowableTensileStress(stressLocation));
+                        }
+                     }
+                     limitIter++;
+                  }
+               }
+
+               AddStepGraphPoints(min_girder_capacity_series,xVals,t);
                m_Graph.SetDataLabel(min_girder_capacity_series,strDataLabel + (strDataLabel.IsEmpty() ? _T("") : _T(" - Girder")));
             }
 

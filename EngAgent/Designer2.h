@@ -349,6 +349,11 @@ public:
 
    void GetPrincipalWebStressPointsOfInterest(const CSegmentKey& segmentKey, IntervalIndexType interval, PoiList* pPoiList) const;
 
+   // Performs the flexural stress check for a single stress check task at the specified points of interest
+   // without performing the full specification check. The points of interest may span multiple segments.
+   // The returned artifacts are in the same order as vPoi. Results are not cached.
+   std::vector<pgsFlexuralStressArtifact> CheckFlexuralStresses(const PoiList& vPoi, const StressCheckTask& task) const;
+
    // Clears all cached artifacts
    void ClearArtifacts();
 
@@ -409,6 +414,7 @@ private:
    void CheckStrandStresses(const CSegmentKey& segmentKey,pgsStrandStressArtifact* pArtifact) const;
    void CheckSegmentStressesAtRelease(const CSegmentKey& segmentKey, const GDRCONFIG* pConfig,pgsTypes::StressType type, pgsSegmentArtifact* pSegmentArtifact) const;
    void CheckSegmentStresses(const CSegmentKey& segmentKey,const PoiList& vPoi,const StressCheckTask& task,pgsSegmentArtifact* pSegmentArtifact) const;
+   void CheckSegmentStresses(const CSegmentKey& segmentKey,const PoiList& vPoi,const StressCheckTask& task,std::vector<pgsFlexuralStressArtifact>* pArtifacts) const;
    void CheckMomentCapacity(IntervalIndexType intervalIdx,pgsTypes::LimitState limitState,pgsGirderArtifact* pGirderArtifact) const;
    void CheckShear(IntervalIndexType intervalIdx,pgsTypes::LimitState limitState,pgsGirderArtifact* pGirderArtifact) const;
    void CheckShear(bool bDesign,const CSegmentKey&,IntervalIndexType intervalIdx,pgsTypes::LimitState limitState,const GDRCONFIG* pConfig,pgsStirrupCheckArtifact* pStirrupArtifact) const;

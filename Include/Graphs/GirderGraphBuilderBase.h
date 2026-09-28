@@ -82,6 +82,11 @@ protected:
    void AddGraphPoints(IndexType series, const std::vector<Float64>& xvals,const std::vector<Float64>& yvals);
    void AddGraphPoints(IndexType series, const std::vector<Float64>& xvals,const std::vector<WBFL::System::SectionValue>& yvals);
    void AddGraphPoint(IndexType series, Float64 xval, Float64 yval);
+
+   // Adds points for a piecewise constant function, such as a stress limit that changes from one POI to the next.
+   // A change in value is drawn as a vertical step at a POI rather than a sloped line between POIs. The higher value
+   // is only drawn at the POIs where it applies and the lower value spans the gap between POIs (conservative).
+   void AddStepGraphPoints(IndexType series, const std::vector<Float64>& xvals,const std::vector<Float64>& yvals);
    void DrawGraphNow(CWnd* pGraphWnd,CDC* pDC);
 
    // returns the range of intervals over which the beam must be represented

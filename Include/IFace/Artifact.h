@@ -23,10 +23,13 @@
 #pragma once
 
 #include <WbflTypes.h>
+#include <PsgLib/PointOfInterest.h>
 
 class pgsGirderArtifact;
 class pgsSegmentArtifact;
 class pgsGirderDesignArtifact;
+class pgsFlexuralStressArtifact;
+struct StressCheckTask;
 
 class pgsRatingArtifact;
 class pgsISummaryRatingArtifact;
@@ -87,4 +90,10 @@ public:
    // Returns the RatingSummaryArtifact for the specified collection of girders
    virtual std::shared_ptr<const pgsISummaryRatingArtifact> GetSummaryRatingArtifact(const std::vector<CGirderKey>& girderKeys,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx) const = 0;
 
+   // Performs the flexural stress check for a single stress check task at the specified points of interest and returns
+   // the resulting artifacts in the same order as vPoi. This is significantly less expensive than GetGirderArtifact/GetSegmentArtifact
+   // because the full specification check is not performed. Use this when the details of the stress check (such as the
+   // controlling "with bonded reinforcement" tension stress limit) are needed but the full specification check is not.
+   // The results are not cached.
+   virtual std::vector<pgsFlexuralStressArtifact> CheckFlexuralStresses(const PoiList& vPoi, const StressCheckTask& task) const = 0;
 };
