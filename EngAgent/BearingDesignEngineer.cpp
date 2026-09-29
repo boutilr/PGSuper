@@ -1146,7 +1146,7 @@ void pgsBearingDesignEngineer::GetBearingReactionDetails(const ReactionLocation&
     if (pDetails->bHasOverlay)
     {
        pDetails->maxFutureOverlayReaction = pForces->GetReaction(overlayIntervalIdx, reactionLocation, pgsTypes::pftOverlay, maxBAT);
-       pDetails->maxFutureOverlayReaction = pForces->GetReaction(overlayIntervalIdx, reactionLocation, pgsTypes::pftOverlay, minBAT);
+       pDetails->minFutureOverlayReaction = pForces->GetReaction(overlayIntervalIdx, reactionLocation, pgsTypes::pftOverlay, minBAT);
     }
 
 
