@@ -665,6 +665,8 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
         auto xRightLimit =
             xRightTop - m_XBeamEndSlopeOffset[pgsTypes::stRight];
 
+		Float64 prevPoint = -DBL_MAX;
+
         for (const auto& ppData : m_Pier.GetPierPointData())
         {
             const auto& x = ppData.Get_X();
@@ -709,6 +711,15 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
                 AfxMessageBox(msg);
                 dx.Fail();
             }
+
+            if (x < prevPoint)
+            {
+                CString msg = _T("Pier point must increase left to right along the crossbeam.");
+                AfxMessageBox(msg);
+                dx.Fail();
+            }
+
+			prevPoint = x;
 
         }
     }
