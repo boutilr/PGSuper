@@ -596,7 +596,10 @@ void CPierLayoutPage::OnPierLayoutTypeChanged()
 
     SwapDialogs();
 
-    ShowPierLayoutPopout();
+    if (m_pPierLayoutPopout && ::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
+    {
+        ShowPierLayoutPopout();
+    }
 }
 
 void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
