@@ -595,6 +595,8 @@ void CPierLayoutPage::OnPierLayoutTypeChanged()
     m_PierLayoutType = (pgsTypes::PierLayoutType)pcbPierModel->GetItemData(curSel);
 
     SwapDialogs();
+
+    ShowPierLayoutPopout();
 }
 
 void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
