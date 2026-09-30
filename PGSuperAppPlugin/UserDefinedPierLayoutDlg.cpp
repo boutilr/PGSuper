@@ -707,6 +707,7 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
                 x < xLeftLimitAdjusted ||
                 x > xRightLimitAdjusted)
             {
+                OnRemovePierPoints();
                 CString msg = _T("Pier point must be within the top and sides of the lower crossbeam.");
                 AfxMessageBox(msg);
                 dx.Fail();
@@ -714,6 +715,7 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
 
             if (x < prevPoint)
             {
+                OnRemovePierPoints();
                 CString msg = _T("Pier point must increase left to right along the crossbeam.");
                 AfxMessageBox(msg);
                 dx.Fail();
