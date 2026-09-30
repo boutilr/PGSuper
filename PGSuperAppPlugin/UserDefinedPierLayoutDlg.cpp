@@ -651,7 +651,7 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
             Float64 spacing = m_Pier.GetColumnSpacing(idx);
             xRefColumn += spacing;
         }
-        Float64 xShift = -(xRefColumn + m_TransverseOffset);
+        Float64 xShift = m_TransverseOffset - xRefColumn;
 
         // Calculate limits outside the pier point loop (they don't depend on individual points)
         const auto xLeftTop = xShift - m_XBeamOverhang[pgsTypes::stLeft];
