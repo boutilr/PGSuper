@@ -376,7 +376,14 @@ void CUserDefinedPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
 
     if (pcbRefColumn->SetCurSel(curSel) == CB_ERR)
     {
-        pcbRefColumn->SetCurSel(m_RefColumnIdx);
+        if (m_RefColumnIdx < nColumns)
+        {
+            pcbRefColumn->SetCurSel(m_RefColumnIdx);
+        }
+        else
+        {
+            pcbRefColumn->SetCurSel(0);
+        }
     }
 }
 
@@ -646,10 +653,13 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
 
         // Calculate position of reference column and alignment offset
         Float64 xRefColumn = 0;
-        for (IndexType idx = 0; idx < m_RefColumnIdx; idx++)
+        if (m_RefColumnIdx < nCols)
         {
-            Float64 spacing = m_Pier.GetColumnSpacing(idx);
-            xRefColumn += spacing;
+            for (IndexType idx = 0; idx < m_RefColumnIdx; idx++)
+            {
+                Float64 spacing = m_Pier.GetColumnSpacing(idx);
+                xRefColumn += spacing;
+            }
         }
         Float64 xShift = m_TransverseOffset - xRefColumn;
 
@@ -707,7 +717,10 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
                 x < xLeftLimitAdjusted ||
                 x > xRightLimitAdjusted)
             {
-                OnRemovePierPoints();
+                m_PierPointGrid.RemoveSelectedPierPoints();
+
+                // Update pier data with current column data
+                m_PierPointGrid.GetPierPointData(m_Pier);
                 CString msg = _T("Pier point must be within the top and sides of the lower crossbeam.");
                 AfxMessageBox(msg);
                 dx.Fail();
@@ -715,7 +728,10 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
 
             if (x < prevPoint)
             {
-                OnRemovePierPoints();
+                m_PierPointGrid.RemoveSelectedPierPoints();
+
+                // Update pier data with current column data
+                m_PierPointGrid.GetPierPointData(m_Pier);
                 CString msg = _T("Pier point must increase left to right along the crossbeam.");
                 AfxMessageBox(msg);
                 dx.Fail();
