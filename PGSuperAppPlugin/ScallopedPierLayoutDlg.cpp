@@ -215,102 +215,116 @@ void CScallopedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
             }
         }
 
-        // Left overhang arc 
+        // Validate left and right overhang arcs
+        for (int side = pgsTypes::stLeft;
+            side <= pgsTypes::stRight; ++side)
         {
-            const Float64 run = m_XBeamOverhang[pgsTypes::stLeft];
+            const Float64 run = m_XBeamOverhang[side];
             const Float64 dy =
-                m_XBeamDepth - m_XBeamHeight[pgsTypes::stLeft];
+                m_XBeamDepth - m_XBeamHeight[side];
 
-            const Float64 chord =
-                sqrt(run * run + dy * dy);
+            const Float64 R = m_XBeamRadius;
+            const Float64 chord = sqrt(run * run + dy * dy);
 
-            // First make sure the radius can actually span the tilted chord.
-            if (chord >= 2.0 * m_XBeamRadius)
+            const CString sideName =
+                side == pgsTypes::stLeft ? _T("left") : _T("right");
+
+            // The chord cannot exceed the circle diameter.
+            if (chord >= 2.0 * R)
             {
-
                 pDX->PrepareCtrl(IDC_R);
 
                 CString msg;
                 msg.Format(
-                    _T("R is too small for the left overhang arc. ")
-                    _T("R must be more than one-half of the distance ")
-                    _T("between the arc endpoints."));
+                    _T("R is too small for the %s overhang arc. ")
+                    _T("R must be more than one-half of the ")
+                    _T("distance between the arc endpoints."),
+                    sideName.GetString());
 
                 AfxMessageBox(msg);
                 pDX->Fail();
             }
 
+            if (IsZero(chord))
+                continue;
+
+            const Float64 halfChord = chord / 2.0;
+
             const Float64 centerOffset =
-                sqrt(m_XBeamRadius * m_XBeamRadius -
-                    0.25 * chord * chord);
+                sqrt(R * R - halfChord * halfChord);
 
-            // Vertical rise of the arc above the column-top endpoint.
-            const Float64 arcHeight =
-                0.5 * dy +
-                m_XBeamRadius -
-                centerOffset * run / chord;
+            // Circle center relative to the column endpoint.
+            // The column endpoint is (0, 0).
+            // The overhang endpoint is (run, dy).
+            const Float64 centerX =
+                0.5 * run + centerOffset * dy / chord;
 
-            if (arcHeight > m_XBeamDepth)
+            const Float64 centerY =
+                0.5 * dy - centerOffset * run / chord;
+
+            // Highest point of the complete circle.
+            const Float64 peakX = centerX;
+            const Float64 peakY = centerY + R;
+
+            // Start with the higher endpoint.
+            Float64 maxY = Max(0.0, dy);
+
+            // Check whether the circle's highest point
+            // lies on the actual upper minor arc.
+            const Float64 startAngle =
+                atan2(-centerY, -centerX);
+
+            const Float64 endAngle =
+                atan2(dy - centerY, run - centerX);
+
+            // Normalize angles to [0, 2*pi).
+            const Float64 twoPi = 2.0 * acos(-1.0);
+
+            Float64 a0 = startAngle;
+            Float64 a1 = endAngle;
+
+            if (a0 < 0.0)
+                a0 += twoPi;
+
+            if (a1 < 0.0)
+                a1 += twoPi;
+
+            // Counterclockwise sweep from start to end.
+            Float64 sweep = a1 - a0;
+
+            if (sweep < 0.0)
+                sweep += twoPi;
+
+            // Select the minor arc.
+            if (sweep > acos(-1.0))
             {
+                std::swap(a0, a1);
+                sweep = twoPi - sweep;
+            }
 
+            // The highest point is at pi/2.
+            Float64 peakAngle = acos(-1.0) / 2.0;
+
+            Float64 relativeAngle = peakAngle - a0;
+
+            if (relativeAngle < 0.0)
+                relativeAngle += twoPi;
+
+            if (relativeAngle <= sweep)
+                maxY = Max(maxY, peakY);
+
+            // The top of the arc cannot exceed
+            // the top of the lower crossbeam.
+            if (maxY > m_XBeamDepth)
+            {
                 pDX->PrepareCtrl(IDC_D);
 
                 CString msg;
                 msg.Format(
-                    _T("D is too small for the left overhang arc. ")
-                    _T("The top of the arc cannot extend above the top ")
-                    _T("of the cross beam."));
-
-                AfxMessageBox(msg);
-                pDX->Fail();
-            }
-        }
-
-
-        // Right overhang arc
-        {
-            const Float64 run = m_XBeamOverhang[pgsTypes::stRight];
-            const Float64 dy =
-                m_XBeamDepth - m_XBeamHeight[pgsTypes::stRight];
-
-            const Float64 chord =
-                sqrt(run * run + dy * dy);
-
-            // First make sure the radius can actually span the tilted chord.
-            if (chord >= 2.0 * m_XBeamRadius)
-            {
-
-                pDX->PrepareCtrl(IDC_R);
-
-                CString msg;
-                msg.Format(
-                    _T("R is too small for the right overhang arc. ")
-                    _T("R must be more than one-half of the distance ")
-                    _T("between the arc endpoints."));
-
-                AfxMessageBox(msg);
-                pDX->Fail();
-            }
-
-            const Float64 centerOffset =
-                sqrt(m_XBeamRadius * m_XBeamRadius -
-                    0.25 * chord * chord);
-
-            const Float64 arcHeight =
-                0.5 * dy +
-                m_XBeamRadius -
-                centerOffset * run / chord;
-
-            if (arcHeight > m_XBeamDepth)
-            {
-
-                pDX->PrepareCtrl(IDC_D);
-
-                CString msg;
-                msg.Format(
-                    _T("D is too small for the right overhang arc. ")
-                    _T("The top of the arc cannot extend above the top ")
-                    _T("of the cross beam."));
+                    _T("D is too small for the %s overhang arc. ")
+                    _T("The top of the arc cannot extend above ")
+                    _T("the top of the cross beam."),
+                    sideName.GetString());
 
                 AfxMessageBox(msg);
                 pDX->Fail();
@@ -566,102 +580,116 @@ void CScallopedPierLayoutDlg::ChangePierLayout()
             }
         }
 
-        // Left overhang arc 
+        // Validate left and right overhang arcs
+        for (int side = pgsTypes::stLeft;
+            side <= pgsTypes::stRight; ++side)
         {
-            const Float64 run = m_XBeamOverhang[pgsTypes::stLeft];
+            const Float64 run = m_XBeamOverhang[side];
             const Float64 dy =
-                m_XBeamDepth - m_XBeamHeight[pgsTypes::stLeft];
+                m_XBeamDepth - m_XBeamHeight[side];
 
-            const Float64 chord =
-                sqrt(run * run + dy * dy);
+            const Float64 R = m_XBeamRadius;
+            const Float64 chord = sqrt(run * run + dy * dy);
 
-            // First make sure the radius can actually span the tilted chord.
-            if (chord >= 2.0 * m_XBeamRadius)
+            const CString sideName =
+                side == pgsTypes::stLeft ? _T("left") : _T("right");
+
+            // The chord cannot exceed the circle diameter.
+            if (chord >= 2.0 * R)
             {
-
                 dx.PrepareCtrl(IDC_R);
 
                 CString msg;
                 msg.Format(
-                    _T("R is too small for the left overhang arc. ")
-                    _T("R must be more than one-half of the distance ")
-                    _T("between the arc endpoints."));
+                    _T("R is too small for the %s overhang arc. ")
+                    _T("R must be more than one-half of the ")
+                    _T("distance between the arc endpoints."),
+                    sideName.GetString());
 
                 AfxMessageBox(msg);
                 dx.Fail();
             }
 
+            if (IsZero(chord))
+                continue;
+
+            const Float64 halfChord = chord / 2.0;
+
             const Float64 centerOffset =
-                sqrt(m_XBeamRadius * m_XBeamRadius -
-                    0.25 * chord * chord);
+                sqrt(R * R - halfChord * halfChord);
 
-            // Vertical rise of the arc above the column-top endpoint.
-            const Float64 arcHeight =
-                0.5 * dy +
-                m_XBeamRadius -
-                centerOffset * run / chord;
+            // Circle center relative to the column endpoint.
+            // The column endpoint is (0, 0).
+            // The overhang endpoint is (run, dy).
+            const Float64 centerX =
+                0.5 * run + centerOffset * dy / chord;
 
-            if (arcHeight > m_XBeamDepth)
+            const Float64 centerY =
+                0.5 * dy - centerOffset * run / chord;
+
+            // Highest point of the complete circle.
+            const Float64 peakX = centerX;
+            const Float64 peakY = centerY + R;
+
+            // Start with the higher endpoint.
+            Float64 maxY = Max(0.0, dy);
+
+            // Check whether the circle's highest point
+            // lies on the actual upper minor arc.
+            const Float64 startAngle =
+                atan2(-centerY, -centerX);
+
+            const Float64 endAngle =
+                atan2(dy - centerY, run - centerX);
+
+            // Normalize angles to [0, 2*pi).
+            const Float64 twoPi = 2.0 * acos(-1.0);
+
+            Float64 a0 = startAngle;
+            Float64 a1 = endAngle;
+
+            if (a0 < 0.0)
+                a0 += twoPi;
+
+            if (a1 < 0.0)
+                a1 += twoPi;
+
+            // Counterclockwise sweep from start to end.
+            Float64 sweep = a1 - a0;
+
+            if (sweep < 0.0)
+                sweep += twoPi;
+
+            // Select the minor arc.
+            if (sweep > acos(-1.0))
             {
+                std::swap(a0, a1);
+                sweep = twoPi - sweep;
+            }
 
+            // The highest point is at pi/2.
+            Float64 peakAngle = acos(-1.0) / 2.0;
+
+            Float64 relativeAngle = peakAngle - a0;
+
+            if (relativeAngle < 0.0)
+                relativeAngle += twoPi;
+
+            if (relativeAngle <= sweep)
+                maxY = Max(maxY, peakY);
+
+            // The top of the arc cannot exceed
+            // the top of the lower crossbeam.
+            if (maxY > m_XBeamDepth)
+            {
                 dx.PrepareCtrl(IDC_D);
 
                 CString msg;
                 msg.Format(
-                    _T("D is too small for the left overhang arc. ")
-                    _T("The top of the arc cannot extend above the top ")
-                    _T("of the cross beam."));
-
-                AfxMessageBox(msg);
-                dx.Fail();
-            }
-        }
-
-
-        // Right overhang arc
-        {
-            const Float64 run = m_XBeamOverhang[pgsTypes::stRight];
-            const Float64 dy =
-                m_XBeamDepth - m_XBeamHeight[pgsTypes::stRight];
-
-            const Float64 chord =
-                sqrt(run * run + dy * dy);
-
-            // First make sure the radius can actually span the tilted chord.
-            if (chord >= 2.0 * m_XBeamRadius)
-            {
-
-                dx.PrepareCtrl(IDC_R);
-
-                CString msg;
-                msg.Format(
-                    _T("R is too small for the right overhang arc. ")
-                    _T("R must be more than one-half of the distance ")
-                    _T("between the arc endpoints."));
-
-                AfxMessageBox(msg);
-                dx.Fail();
-            }
-
-            const Float64 centerOffset =
-                sqrt(m_XBeamRadius * m_XBeamRadius -
-                    0.25 * chord * chord);
-
-            const Float64 arcHeight =
-                0.5 * dy +
-                m_XBeamRadius -
-                centerOffset * run / chord;
-
-            if (arcHeight > m_XBeamDepth)
-            {
-
-                dx.PrepareCtrl(IDC_D);
-
-                CString msg;
-                msg.Format(
-                    _T("D is too small for the right overhang arc. ")
-                    _T("The top of the arc cannot extend above the top ")
-                    _T("of the cross beam."));
+                    _T("D is too small for the %s overhang arc. ")
+                    _T("The top of the arc cannot extend above ")
+                    _T("the top of the cross beam."),
+                    sideName.GetString());
 
                 AfxMessageBox(msg);
                 dx.Fail();
