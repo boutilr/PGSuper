@@ -507,10 +507,6 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
         Float64 refColOffset;
         pPier->GetTransverseOffset(&refColIdx, &refColOffset, &refColMeasure);
 
-        if (colIdx == refColIdx)
-        {
-            X6 -= refColOffset;
-        }
         Float64 Y1 = fn.Evaluate(X1);
         Float64 Y2 = fn.Evaluate(X2);
         Float64 Y3 = fn.Evaluate(X3);
