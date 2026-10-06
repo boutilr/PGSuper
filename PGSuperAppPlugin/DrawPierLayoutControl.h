@@ -63,9 +63,12 @@ protected:
 	void UpdateRoadwayDisplayObjects();
 	void UpdateXBeamDisplayObjects();
 	void UpdateColumnDisplayObjects();
+	void UpdateDimensionsDisplayObjects();
 	void UpdateSectionCutDisplayObjects();
 
 	std::shared_ptr<WBFL::DManip::iLineDisplayObject> CreateLineDisplayObject(const WBFL::Geometry::Point2d& pntStart, const WBFL::Geometry::Point2d& pntEnd);
+	void BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL, const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint, bool bOmitForZeroDistance = true);
+	void BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL, const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint, Float64 dimension);
 
 
 	afx_msg void OnPaint();

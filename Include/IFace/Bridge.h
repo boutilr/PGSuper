@@ -725,6 +725,7 @@ public:
    virtual Float64 GetColumnLocation(const CPierData2& pierData, IndexType colIdx) const = 0;
    virtual Float64 GetTopColumnElevation(PierIndexType pierIdx, IndexType colIdx) const = 0;
    virtual Float64 GetTopColumnElevation(const CPierData2& pierData, IndexType colIdx) const = 0;
+   virtual Float64 GetBottomColumnElevation(const CPierData2& pierData, IndexType colIdx) const = 0;
    virtual Float64 GetDelta(const CPierData2& pierData) const = 0;
    virtual Float64 ConvertCrossBeamToPierCoordinate(PierIndexType pierIdx, Float64 Xxb) const = 0;
    virtual Float64 ConvertCrossBeamToPierCoordinate(const CPierData2& pierData, Float64 Xxb) const = 0;

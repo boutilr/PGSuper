@@ -40,6 +40,7 @@
 #include <IFace/Tools.h>
 #include <IFace\Bridge.h>
 #include <IFace\Project.h>
+#include <IFace\Alignment.h>
 #include <PsgLib\PierData2.h>
 #include <PsgLib\BridgeDescription2.h>
 
@@ -49,7 +50,8 @@
 #define ROADWAY_DISPLAY_LIST_ID        0
 #define CROSSBEAM_DISPLAY_LIST_ID      1
 #define COLUMN_DISPLAY_LIST_ID         2
-#define SECTION_CUT_DISPLAY_LIST_ID    3
+#define DIMENSIONS_DISPLAY_LIST_ID     3
+#define SECTION_CUT_DISPLAY_LIST_ID    4
 
 #define SECTION_CUT_ID                500
 
@@ -91,18 +93,15 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
     m_pDispMgr->AddDisplayObjectFactory(doFactory);
 
     m_pDispMgr->CreateDisplayList(ROADWAY_DISPLAY_LIST_ID);
+    m_pDispMgr->CreateDisplayList(DIMENSIONS_DISPLAY_LIST_ID);
     m_pDispMgr->CreateDisplayList(CROSSBEAM_DISPLAY_LIST_ID);
     m_pDispMgr->CreateDisplayList(COLUMN_DISPLAY_LIST_ID);
-    m_pDispMgr->CreateDisplayList(SECTION_CUT_DISPLAY_LIST_ID);
+    //m_pDispMgr->CreateDisplayList(SECTION_CUT_DISPLAY_LIST_ID);
 
     Float64 xMin = -pPier->GetXBeamLength() / 2.0;
     Float64 xLoc = 1.0;
     Float64 xMax = pPier->GetXBeamLength() / 2.0;
     m_pCutLoc = new CXBeamCutLocation(0,xLoc, xMax);
-
-    SetMappingMode(WBFL::DManip::MapMode::Isotropic, false);
-    CDManipClientDC dc2(this);
-
 
 	UpdateDisplayObjects();
     ScaleToFit();
@@ -112,8 +111,10 @@ void CDrawPierLayoutControl::CustomInit(IPierLayoutDataSource* pSource)
 
 void CDrawPierLayoutControl::UpdateDisplayObjects()
 {
-    CWaitCursor wait;
+    CDManipClientDC dc2(this);
+    SetMappingMode(WBFL::DManip::MapMode::Isotropic, false);
 
+    CWaitCursor wait;
 
     // Capture the current selection before blasting all the 
     // display objects
@@ -135,6 +136,7 @@ void CDrawPierLayoutControl::UpdateDisplayObjects()
     UpdateRoadwayDisplayObjects();
     UpdateXBeamDisplayObjects();
     UpdateColumnDisplayObjects();
+    UpdateDimensionsDisplayObjects();
     //UpdateSectionCutDisplayObjects();
 
     // Re-instate the current selection
@@ -547,6 +549,390 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
 
         displayList->AddDisplayObject(doColumn);
     }
+}
+
+void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
+{
+    auto displayList = m_pDispMgr->FindDisplayList(DIMENSIONS_DISPLAY_LIST_ID);
+
+    auto pBroker = EAFGetBroker();
+
+    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+    GET_IFACE2(pBroker, IBridge, pBridge);
+    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+    const CDeckDescription2* pDeck = pBridgeDesc->GetDeckDescription();
+
+    Float64 tDeck = pDeck->GrossDepth;
+
+    const CPierData2* pPier = m_pSource->GetPierData();
+    pgsTypes::PierType pierType = pBridge->GetPierType(*pPier);
+
+    Float64 H1L, H2L, H1R, H2R;
+    Float64 X2L, X1L, X2R, X1R;
+    pPier->GetXBeamDimensions(pgsTypes::stLeft, &H1L, &H2L, &X2L, &X1L);
+    pPier->GetXBeamDimensions(pgsTypes::stRight, &H1R, &H2R, &X2R, &X1R);
+
+    Float64 Dd, Hu;
+    pBridge->GetUpperXBeamDimensions(*pPier, &Hu, &Dd);
+
+    CComPtr<IPoint2dCollection> topUpperXBeamProfile, topLowerXBeamProfile, bottomXBeamProfile;
+    pBridge->GetUpperXBeamProfile(*pPier, &topUpperXBeamProfile);
+    pBridge->GetLowerXBeamProfile(*pPier, &topLowerXBeamProfile);
+    pBridge->GetBottomXBeamProfile(*pPier, &bottomXBeamProfile);
+
+    // Upper Cross Beam - Top Left
+    CComPtr<IPoint2d> pnt;
+    topUpperXBeamProfile->get_Item(0, &pnt);
+    WBFL::Geometry::Point2d uxbTL(geomUtil::GetPoint(pnt));
+
+    // we want all vertical dimensions on the left side to be at this x-location
+    Float64 Xl;
+    pnt->get_X(&Xl);
+
+    // Upper Cross Beam - Bottom Left (Lower Cross Beam - Top Left)
+    pnt.Release();
+    topLowerXBeamProfile->get_Item(0, &pnt);
+    WBFL::Geometry::Point2d uxbBL(geomUtil::GetPoint(pnt));
+    uxbBL.X() = Xl;
+
+    // Lower Cross Beam - Bottom Left
+    pnt.Release();
+    bottomXBeamProfile->get_Item(0, &pnt);
+    WBFL::Geometry::Point2d lxbBL(geomUtil::GetPoint(pnt));
+    lxbBL.X() = Xl;
+
+    // Upper Cross Beam - Top Right
+    pnt.Release();
+    IndexType nPoints;
+    topUpperXBeamProfile->get_Count(&nPoints);
+    topUpperXBeamProfile->get_Item(nPoints - 1, &pnt);
+    WBFL::Geometry::Point2d uxbTR(geomUtil::GetPoint(pnt));
+
+    // we want all vertical dimensions on the right side to be at this x-location
+    Float64 Xr;
+    pnt->get_X(&Xr);
+
+    // Upper Cross Beam - Bottom Right (Lower Cross Beam - Top Right)
+    pnt.Release();
+    topLowerXBeamProfile->get_Count(&nPoints);
+    topLowerXBeamProfile->get_Item(nPoints - 1, &pnt);
+    WBFL::Geometry::Point2d uxbBR(geomUtil::GetPoint(pnt));
+    uxbBR.X() = Xr;
+
+    // Lower Cross Beam - Bottom Right
+    pnt.Release();
+    bottomXBeamProfile->get_Count(&nPoints);
+    bottomXBeamProfile->get_Item(nPoints - 1, &pnt);
+    WBFL::Geometry::Point2d lxbBR(geomUtil::GetPoint(pnt));
+    lxbBR.X() = Xr;
+
+    // Height of upper cross beam
+    if (pierType != pgsTypes::pctExpansion)
+    {
+        BuildDimensionLine(displayList, uxbBL, uxbTL);
+        BuildDimensionLine(displayList, uxbTR, uxbBR);
+    }
+
+    // Height of lower cross beam
+    BuildDimensionLine(displayList, lxbBL, uxbBL); // H1 Dimension
+    BuildDimensionLine(displayList, uxbBR, lxbBR); // H3 Dimension
+
+    // Lower cross beam bottom taper, vertical dimensions
+    WBFL::Geometry::Point2d lxbBLC, lxbBRC;
+    lxbBLC.Move(lxbBL);
+    lxbBLC.Offset(0, -H2L);
+    lxbBRC.Move(lxbBR);
+    lxbBRC.Offset(0, -H2R);
+
+    BuildDimensionLine(displayList, lxbBLC, lxbBL); // H2 Dimension
+    BuildDimensionLine(displayList, lxbBR, lxbBRC); // H4 Dimension
+
+    // Lower cross beam bottom taper, horizontal dimensions
+    pnt.Release();
+    topLowerXBeamProfile->get_Item(0, &pnt);
+    WBFL::Geometry::Point2d lxbBL1, lxbBR1;
+    lxbBL1.Move(geomUtil::GetPoint(pnt));
+    lxbBL1.Offset(0, -H1L - H2L);
+
+    pnt.Release();
+    topLowerXBeamProfile->get_Count(&nPoints);
+    topLowerXBeamProfile->get_Item(nPoints - 1, &pnt);
+    lxbBR1.Move(geomUtil::GetPoint(pnt));
+    lxbBR1.Offset(0, -H1R - H2R);
+
+    WBFL::Geometry::Point2d lxbBL2, lxbBR2;
+    Float64 y;
+    std::tie(Xl, y) = lxbBL1.GetLocation(); // TRICKY: changing Xl to now be the x-location of left dimensions for the columns
+    lxbBL2.Move(Xl + X2L, y);
+
+    std::tie(Xr, y) = lxbBR1.GetLocation();
+    lxbBR2.Move(Xr - X2R, y); // TRICKY: changing Xr to now be the x-location of right dimensions for the columns
+
+    // Horizontal Cross Beam Dimensions
+    BuildDimensionLine(displayList, lxbBL2, lxbBL1); // X1 Dimension
+    BuildDimensionLine(displayList, lxbBR1, lxbBR2); // X3 Dimension
+
+    //Radius and depth of bottom scallop
+
+     // Get the center points for the arcs at column centers
+	ColumnIndexType nColumns = pPier->GetColumnCount();
+
+	const auto& pierLayoutType = pPier->GetPierLayoutType();
+
+    if (pierLayoutType == pgsTypes::pltScalloped)
+    {
+        //Radius and depth of bottom scallop
+        // R = radius of bottom scallop arcs (same for both left and right)
+        // D = depth of lower cross beam at column center
+
+        for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+        {
+            // Left column arc center
+			Float64 XxbCol = pBridge->GetColumnLocation(*pPier, colIdx);
+            Float64 XpCol = pBridge->ConvertCrossBeamToPierCoordinate(*pPier, XxbCol);
+
+            // Get the top surface endpoints to interpolate Y at column center
+            pnt.Release();
+            topLowerXBeamProfile->get_Item(0, &pnt);
+            Float64 X0, Y0;
+            pnt->get_X(&X0);
+            pnt->get_Y(&Y0);
+
+            pnt.Release();
+            IndexType nPoints;
+            topLowerXBeamProfile->get_Count(&nPoints);
+            topLowerXBeamProfile->get_Item(nPoints - 1, &pnt);
+            Float64 Xn, Yn;
+            pnt->get_X(&Xn);
+            pnt->get_Y(&Yn);
+
+            // Interpolate Y value at column center accounting for slope
+            Float64 YtopCol = pBridge->GetTopColumnElevation(*pPier, colIdx);
+
+            // Create points for depth dimension (depth at column center)
+            // Depth is measured from the top of lower cross beam to the bottom of the scallop
+            WBFL::Geometry::Point2d depthBottomPoint(XpCol, YtopCol);
+            Float64 D = pPier->GetXBeamDepth();
+            WBFL::Geometry::Point2d depthTopPoint(XpCol, YtopCol + D);
+            BuildDimensionLine(displayList, depthTopPoint, depthBottomPoint); // D Dimension
+
+        }
+
+        for (ColumnIndexType colIdx = 0;
+            colIdx + 1 < nColumns; colIdx++)
+        {
+            Float64 X1 = pBridge->GetColumnLocation(*pPier, colIdx);
+            Float64 X2 = pBridge->GetColumnLocation(*pPier, colIdx + 1);
+
+            Float64 Xmid = (X1 + X2) / 2.0;
+
+            Float64 XpMid =
+                pBridge->ConvertCrossBeamToPierCoordinate(*pPier, Xmid);
+
+            CComPtr<IShape> shape;
+            pBridge->GetLowerXBeamShape(*pPier, Xmid, &shape);
+
+            CComQIPtr<IXYPosition> position(shape);
+
+            CComPtr<IPoint2d> pntTop;
+            CComPtr<IPoint2d> pntBot;
+
+            position->get_LocatorPoint(lpTopCenter, &pntTop);
+            position->get_LocatorPoint(lpBottomCenter, &pntBot);
+
+            Float64 Ytop, Ybot;
+            pntTop->get_Y(&Ytop);
+            pntBot->get_Y(&Ybot);
+
+            WBFL::Geometry::Point2d top(XpMid, Ytop);
+            WBFL::Geometry::Point2d bottom(XpMid, Ybot);
+
+            BuildDimensionLine(displayList, top, bottom);
+        }
+
+    }
+
+    // Column Dimensions
+
+    // Column Height
+    Float64 YbotColMin = DBL_MAX;
+    for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        Float64 XxbCol = pBridge->GetColumnLocation(*pPier, colIdx);
+        Float64 XpCol = pBridge->ConvertCrossBeamToPierCoordinate(*pPier, XxbCol);
+        Float64 YtopCol = pBridge->GetTopColumnElevation(*pPier, colIdx);
+        Float64 YbotCol = pBridge->GetBottomColumnElevation(*pPier, colIdx);
+
+        WBFL::Geometry::Point2d pntTop(XpCol, YtopCol);
+        WBFL::Geometry::Point2d pntBot(XpCol, YbotCol);
+        BuildDimensionLine(displayList, pntTop, pntBot); // Column Height
+
+        YbotColMin = Min(YbotColMin, YbotCol);
+    }
+
+    // Column Spacing (starts with left cross beam cantilever and
+    // than proceeds with the spacing between columns at their base)
+    // create the dimension line with rightpt,leftpt so the text comes
+    // out on the correct side
+    WBFL::Geometry::Point2d pntLeft(Xl, YbotColMin);
+    for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        Float64 XxbCol = pBridge->GetColumnLocation(*pPier, colIdx);
+        Float64 XpCol = pBridge->ConvertCrossBeamToPierCoordinate(*pPier, XxbCol);
+
+        WBFL::Geometry::Point2d pntRight(XpCol, YbotColMin);
+
+        BuildDimensionLine(displayList, pntRight, pntLeft); // first time this is X5, then S
+
+        pntLeft = pntRight;
+    }
+
+    // Right cross beam cantilever
+    WBFL::Geometry::Point2d pntRight(Xr, YbotColMin);
+    BuildDimensionLine(displayList, pntRight, pntLeft); // X6 Dimension
+
+    //
+    // Cross section dimensions
+    //
+
+	Float64 Lxb = pPier->GetXBeamLength();
+    Lxb = pBridge->ConvertCrossBeamToPierCoordinate(*pPier, Lxb);
+
+    Float64 Z = pBridge->ConvertPierToCrossBeamCoordinate(*pPier, Lxb/2.0);
+
+    if (pBridge->GetPierType(*pPier) != pgsTypes::pctExpansion)
+    {
+        // Upper Cross Beam (End View)
+        CComPtr<IShape> upperXBeamShape;
+		pBridge->GetUpperXBeamShape(*pPier, Lxb / 2.0, &upperXBeamShape);
+
+        CComQIPtr<ICompositeShape> composite(upperXBeamShape);
+        CComPtr<IShape> shape;
+        if (composite)
+        {
+            CComPtr<ICompositeShapeItem> upperShapeItem;
+            composite->get_Item(1, &upperShapeItem);
+
+            upperShapeItem->get_Shape(&shape);
+        }
+        else
+        {
+            shape = upperXBeamShape;
+        }
+
+        CComQIPtr<IXYPosition> position(shape);
+        CComPtr<IPoint2d> pnt_left, pnt_right;
+        position->get_LocatorPoint(lpTopLeft, &pnt_left);
+        position->get_LocatorPoint(lpTopRight, &pnt_right);
+        pnt_left->Offset(EndOffset + Lxb, 0);
+        pnt_right->Offset(EndOffset + Lxb, 0);
+        BuildDimensionLine(displayList, geomUtil::GetPoint(pnt_left), geomUtil::GetPoint(pnt_right));
+    }
+
+    // Lower Cross Beam (End View)
+    CComPtr<IShape> lowerXBeamShape;
+    pBridge->GetLowerXBeamShape(*pPier, Lxb / 2.0, &lowerXBeamShape);
+
+    CComQIPtr<IXYPosition> position(lowerXBeamShape);
+    CComPtr<IPoint2d> pnt_left, pnt_right;
+    position->get_LocatorPoint(lpBottomLeft, &pnt_left);
+    position->get_LocatorPoint(lpBottomRight, &pnt_right);
+    pnt_left->Offset(EndOffset + Lxb, 0);
+    pnt_right->Offset(EndOffset + Lxb, 0);
+    BuildDimensionLine(displayList, geomUtil::GetPoint(pnt_right), geomUtil::GetPoint(pnt_left));
+
+    // End View Height
+
+    position.Release();
+    CComPtr<IShape> xbeamShape;
+    pBridge->GetUpperXBeamShape(*pPier, Lxb / 2.0, &xbeamShape);
+    xbeamShape->QueryInterface(&position);
+    CComPtr<IPoint2d> pntTop;
+    CComPtr<IPoint2d> pntBot;
+    position->get_LocatorPoint(lpTopRight, &pntTop);
+    position->get_LocatorPoint(lpBottomRight, &pntBot);
+    pntTop->Offset(EndOffset + Lxb, 0);
+    pntBot->Offset(EndOffset + Lxb, 0);
+    BuildDimensionLine(displayList, geomUtil::GetPoint(pntTop), geomUtil::GetPoint(pntBot));
+
+    // Curb-to-curb width
+
+    // This is a basic dimension generated from the curb line offset. It does not take
+    // into account geometric effects of the roadway curvature
+	Float64 skew;
+    pBridge->GetSkewAngle(pPier->GetStation(), pPier->GetOrientation(), &skew);
+
+    Float64 LCO = pBridge->GetLeftInteriorCurbOffset(pPier->GetIndex());
+    Float64 RCO = pBridge->GetRightInteriorCurbOffset(pPier->GetIndex());
+
+    Float64 Ylc = pBridge->GetElevation(pPier->GetIndex(), 0);
+    Float64 Yrc = pBridge->GetElevation(pPier->GetIndex(), RCO - LCO);
+    Float64 Y = Max(Ylc, Yrc);
+
+    LCO /= cos(skew); // skew adjust
+    WBFL::Geometry::Point2d pntLC(LCO, Y);
+
+    RCO /= cos(skew); // skew adjust
+    WBFL::Geometry::Point2d pntRC(RCO, Y);
+
+    BuildDimensionLine(displayList, pntLC, pntRC, false /*don't omit if zero distance*/);
+}
+
+void CDrawPierLayoutControl::BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL, const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint, bool bOmitForZeroDistance)
+{
+    Float64 distance = toPoint.Distance(fromPoint);
+    if (!IsZero(distance) || !bOmitForZeroDistance)
+    {
+        BuildDimensionLine(pDL, fromPoint, toPoint, distance);
+    }
+}
+
+void CDrawPierLayoutControl::BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL, const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint, Float64 dimension)
+{
+    // put points at locations and make them sockets
+    auto from_rep = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
+    from_rep->SetPosition(fromPoint, false, false);
+    auto from_connectable = std::shared_ptr<WBFL::DManip::iConnectable>(from_rep);
+    auto from_socket = from_connectable->AddSocket(0, fromPoint);
+    from_rep->Visible(false);
+    pDL->AddDisplayObject(from_rep);
+
+    auto to_rep = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
+    to_rep->SetPosition(toPoint, false, false);
+    auto to_connectable = std::dynamic_pointer_cast<WBFL::DManip::iConnectable>(to_rep);
+    auto to_socket = to_connectable->AddSocket(0, toPoint);
+    to_rep->Visible(false);
+    pDL->AddDisplayObject(to_rep);
+
+    // Create the dimension line object
+    auto dimLine = WBFL::DManip::DimensionLine::Create(m_DisplayObjectID++);
+
+    dimLine->SetArrowHeadStyle(WBFL::DManip::ArrowHeadStyleType::Filled);
+
+    // Attach connector (the dimension line) to the sockets 
+    auto connector = std::dynamic_pointer_cast<WBFL::DManip::iConnector>(dimLine);
+    auto startPlug = connector->GetStartPlug();
+    auto endPlug = connector->GetEndPlug();
+
+    from_socket->Connect(startPlug);
+    to_socket->Connect(endPlug);
+
+    // Create the text block and attach it to the dimension line
+    auto textBlock = WBFL::DManip::TextBlock::Create();
+
+    // Format the dimension text
+    auto pBroker = EAFGetBroker();
+
+    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+    CString strDimension = FormatDimension(dimension, pDisplayUnits->GetSpanLengthUnit());
+
+    textBlock->SetText(strDimension);
+    textBlock->SetBkMode(TRANSPARENT);
+
+    dimLine->SetTextBlock(textBlock);
+
+
+    pDL->AddDisplayObject(dimLine);
 }
 
 void CDrawPierLayoutControl::UpdateSectionCutDisplayObjects()

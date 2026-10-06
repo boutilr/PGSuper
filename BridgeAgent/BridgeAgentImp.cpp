@@ -12458,6 +12458,16 @@ Float64 CBridgeAgentImp::GetTopColumnElevation(const CPierData2& pierData, Index
     return elev;
 }
 
+Float64 CBridgeAgentImp::GetBottomColumnElevation(const CPierData2& pierData, IndexType colIdx) const
+{
+    VALIDATE(PIERS);
+
+	const auto& columnData = pierData.GetColumnData(colIdx);;
+	Float64 elev = GetTopColumnElevation(pierData, colIdx) - columnData.GetColumnHeight();
+
+    return elev;
+}
+
 Float64 CBridgeAgentImp::ConvertCrossBeamToPierCoordinate(PierIndexType pierIdx, Float64 Xxb) const
 {
 
