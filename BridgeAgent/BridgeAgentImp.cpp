@@ -2768,7 +2768,9 @@ bool CBridgeAgentImp::LayoutPiers()
           {
               CComPtr<IPoint2d> point;
               point.CoCreateInstance(CLSID_Point2d);
-              point->Move(pointData.Get_X(), -pointData.Get_Y() - tDeck - HU);
+              Float64 xcl = ConvertPierToCurbLineCoordinate(*pPierData, pointData.Get_X());
+              Float64 Ydeck = GetElevation(*pPierData, xcl);
+              point->Move(pointData.Get_X(), Ydeck - pointData.Get_Y() - tDeck - HU);
               points->Add(point);
           }
           uxbeam->SetPoints(points);

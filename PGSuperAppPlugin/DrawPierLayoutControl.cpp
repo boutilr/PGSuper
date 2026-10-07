@@ -672,6 +672,14 @@ void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
     BuildDimensionLine(displayList, lxbBL2, lxbBL1); // X1 Dimension
     BuildDimensionLine(displayList, lxbBR1, lxbBR2); // X3 Dimension
 
+    Float64 Ybot = lxbBL.Y();
+    WBFL::Geometry::Point2d blc(Xl, Ybot);
+    WBFL::Geometry::Point2d x1l(Xl + X1L, Ybot);
+    BuildDimensionLine(displayList, x1l, blc);
+    WBFL::Geometry::Point2d brc(Xr, Ybot);
+    WBFL::Geometry::Point2d x1r(Xr - X1R, Ybot);
+    BuildDimensionLine(displayList, brc, x1r);
+
     //Radius and depth of bottom scallop
 
      // Get the center points for the arcs at column centers
@@ -750,6 +758,48 @@ void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
             BuildDimensionLine(displayList, top, bottom);
         }
 
+    }
+    else if (pierLayoutType == pgsTypes::pltUserDefined)
+    {
+        // Function representing the top of the lower cross beam
+        WBFL::Math::PiecewiseFunction fnTop;
+
+        CComPtr<IEnumPoint2d> enumPoints;
+        topLowerXBeamProfile->get__Enum(&enumPoints);
+
+        CComPtr<IPoint2d> pntTop;
+        while (enumPoints->Next(1, &pntTop, nullptr) != S_FALSE)
+        {
+            Float64 x, y;
+            pntTop->Location(&x, &y);
+            fnTop.AddPoint(x, y);
+            pntTop.Release();
+        }
+
+        for (const auto& pnt : pPier->GetPierPointData())
+        {
+            const Float64 X = pnt.Get_X();
+
+            // Actual Y coordinate of the top of the lower cross beam
+            // at this X location.
+            const Float64 Ytop = fnTop.Evaluate(X);
+
+            // User-defined Y is measured downward from the
+            // top of the lower cross beam.
+            const Float64 Ypoint = Ytop - pnt.Get_Y();
+
+            WBFL::Geometry::Point2d pp(X, Ypoint);
+
+            // X is measured from the alignment (X = 0)
+            WBFL::Geometry::Point2d fromX(0.0, Ypoint);
+
+            // Y is measured from the actual top surface of the
+            // lower cross beam at this X.
+            WBFL::Geometry::Point2d fromY(X, Ytop);
+
+            BuildDimensionLine(displayList, fromX, pp);
+            BuildDimensionLine(displayList, fromY, pp);
+        }
     }
 
     // Column Dimensions
