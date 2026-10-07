@@ -832,14 +832,14 @@ void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
 
         WBFL::Geometry::Point2d pntRight(XpCol, YbotColMin);
 
-        BuildDimensionLine(displayList, pntRight, pntLeft); // first time this is X5, then S
+        BuildDimensionLine(displayList, pntRight, pntLeft); // first time this is OHL, then S
 
         pntLeft = pntRight;
     }
 
     // Right cross beam cantilever
     WBFL::Geometry::Point2d pntRight(Xr, YbotColMin);
-    BuildDimensionLine(displayList, pntRight, pntLeft); // X6 Dimension
+    BuildDimensionLine(displayList, pntRight, pntLeft); // OHR Dimension
 
     //
     // Cross section dimensions
@@ -890,20 +890,6 @@ void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
     pnt_left->Offset(EndOffset + Lxb, 0);
     pnt_right->Offset(EndOffset + Lxb, 0);
     BuildDimensionLine(displayList, geomUtil::GetPoint(pnt_right), geomUtil::GetPoint(pnt_left));
-
-    // End View Height
-
-    position.Release();
-    CComPtr<IShape> xbeamShape;
-    pBridge->GetUpperXBeamShape(*pPier, Lxb / 2.0, &xbeamShape);
-    xbeamShape->QueryInterface(&position);
-    CComPtr<IPoint2d> pntTop;
-    CComPtr<IPoint2d> pntBot;
-    position->get_LocatorPoint(lpTopRight, &pntTop);
-    position->get_LocatorPoint(lpBottomRight, &pntBot);
-    pntTop->Offset(EndOffset + Lxb, 0);
-    pntBot->Offset(EndOffset + Lxb, 0);
-    BuildDimensionLine(displayList, geomUtil::GetPoint(pntTop), geomUtil::GetPoint(pntBot));
 
     // Curb-to-curb width
 
