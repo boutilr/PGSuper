@@ -472,8 +472,8 @@ void CDrawPierLayoutControl::UpdateColumnDisplayObjects()
         CColumnData::ColumnHeightMeasurementType columnHeightType = columnData.GetColumnHeightMeasurementType();
         Float64 H = columnData.GetColumnHeight();
 
-        WBFL::Geometry::Point2d pntTop(XpCol - X1L, Ytop);
-        WBFL::Geometry::Point2d pntBot(XpCol - X1L, Ybot);
+        WBFL::Geometry::Point2d pntTop(XpCol, Ytop);
+        WBFL::Geometry::Point2d pntBot(XpCol, Ybot);
 
         auto doTop = WBFL::DManip::PointDisplayObject::Create();
         doTop->Visible(false);
@@ -592,6 +592,8 @@ void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
     // Upper Cross Beam - Bottom Left (Lower Cross Beam - Top Left)
     pnt.Release();
     topLowerXBeamProfile->get_Item(0, &pnt);
+    Float64 ublc;
+    pnt->get_X(&ublc);
     WBFL::Geometry::Point2d uxbBL(geomUtil::GetPoint(pnt));
     uxbBL.X() = Xl;
 
@@ -618,6 +620,8 @@ void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
     pnt.Release();
     topLowerXBeamProfile->get_Count(&nPoints);
     topLowerXBeamProfile->get_Item(nPoints - 1, &pnt);
+    Float64 ubrc;
+    pnt->get_X(&ubrc);
     WBFL::Geometry::Point2d uxbBR(geomUtil::GetPoint(pnt));
     uxbBR.X() = Xr;
 
@@ -828,7 +832,7 @@ void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
     // than proceeds with the spacing between columns at their base)
     // create the dimension line with rightpt,leftpt so the text comes
     // out on the correct side
-    WBFL::Geometry::Point2d pntLeft(Xl, YbotColMin);
+    WBFL::Geometry::Point2d pntLeft(ublc, YbotColMin);
     for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
     {
         Float64 XxbCol = pBridge->GetColumnLocation(*pPier, colIdx);
@@ -842,7 +846,7 @@ void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
     }
 
     // Right cross beam cantilever
-    WBFL::Geometry::Point2d pntRight(Xr, YbotColMin);
+    WBFL::Geometry::Point2d pntRight(ubrc, YbotColMin);
     BuildDimensionLine(displayList, pntRight, pntLeft); // OHR Dimension
 
     //

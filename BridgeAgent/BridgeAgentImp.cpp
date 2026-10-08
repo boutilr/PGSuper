@@ -12417,6 +12417,14 @@ Float64 CBridgeAgentImp::GetColumnLocation(const CPierData2& pierData, IndexType
         Xxb += spacing;
     }
 
+    Float64 H1L, H2L;
+    Float64 X1L, X2L;
+
+    pierData.GetXBeamDimensions(
+        pgsTypes::stLeft,
+        &H1L, &H2L, &X2L, &X1L);
+    Xxb -= X1L;
+
     return Xxb;
 }
 
