@@ -2768,9 +2768,17 @@ bool CBridgeAgentImp::LayoutPiers()
           {
               CComPtr<IPoint2d> point;
               point.CoCreateInstance(CLSID_Point2d);
-              Float64 xcl = ConvertPierToCurbLineCoordinate(*pPierData, pointData.Get_X());
-              Float64 Ydeck = GetElevation(*pPierData, xcl);
-              point->Move(pointData.Get_X(), Ydeck - pointData.Get_Y() - tDeck - HU);
+
+              Float64 Xcl = pointData.Get_X();
+
+              Float64 Xp = ConvertCurbLineToPierCoordinate(*pPierData, Xcl);
+
+              Float64 Ydeck = GetElevation(*pPierData, Xcl);
+
+              point->Move(Xp,
+                  Ydeck - pointData.Get_Y()
+                  - tDeck
+                  - HU);
               points->Add(point);
           }
           uxbeam->SetPoints(points);
@@ -13531,21 +13539,22 @@ void CBridgeAgentImp::GetBottomXBeamProfile(
                 const CPierPointData& pierPoint =
                     pierData.GetPierPointData(ppIdx);
 
-                Float64 x =
-                    pierPoint.Get_X();
+                Float64 Xcl = pierPoint.Get_X();
 
-                Float64 deckElev = GetElevation(pierData, x);
+                Float64 Xp = ConvertCurbLineToPierCoordinate(pierData, Xcl);
+
+                Float64 deckElev = GetElevation(pierData, Xcl);
 
                 Float64 y = 
                     deckElev - pierPoint.Get_Y() - tDeck - H5;
 
-                if (InRange(Xlt, x, Xrt))
+                if (InRange(Xlt, Xp, Xrt))
                 {
                     CComPtr<IPoint2d> pntBXB;
                     pntBXB.CoCreateInstance(
                         CLSID_Point2d);
 
-                    pntBXB->Move(x, y);
+                    pntBXB->Move(Xp, y);
                     BXBProfile->Add(pntBXB);
                 }
             }

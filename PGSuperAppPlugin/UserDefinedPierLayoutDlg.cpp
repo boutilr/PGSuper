@@ -679,7 +679,9 @@ void CUserDefinedPierLayoutDlg::ChangePierLayout()
 
         for (const auto& ppData : m_Pier.GetPierPointData())
         {
-            const auto& x = ppData.Get_X();
+            const auto& xcl = ppData.Get_X();
+            const auto& x = pBridge->ConvertCurbLineToPierCoordinate(m_Pier, xcl);
+
             const auto& y = ppData.Get_Y();
 
             auto xLeftLimitAdjusted = xLeftLimit;

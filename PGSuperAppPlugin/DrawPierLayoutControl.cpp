@@ -595,6 +595,7 @@ void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
     Float64 ublc;
     pnt->get_X(&ublc);
     WBFL::Geometry::Point2d uxbBL(geomUtil::GetPoint(pnt));
+    WBFL::Geometry::Point2d origin(geomUtil::GetPoint(pnt));
     uxbBL.X() = Xl;
 
     // Lower Cross Beam - Bottom Left
@@ -784,29 +785,40 @@ void CDrawPierLayoutControl::UpdateDimensionsDisplayObjects()
             pntTop.Release();
         }
 
+        CString strBlcLabel = _T("(0, 0)");
+
+        auto doBlcLabel = WBFL::DManip::TextBlock::Create();
+        doBlcLabel->SetText(strBlcLabel);
+        doBlcLabel->SetBkMode(TRANSPARENT);
+        doBlcLabel->SetTextAlign(TA_TOP | TA_CENTER);
+        doBlcLabel->SetPosition(origin);
+        displayList->AddDisplayObject(doBlcLabel);
+
         for (const auto& pnt : pPier->GetPierPointData())
         {
-            const Float64 X = pnt.Get_X();
+            Float64 Xcl = pnt.Get_X();
+            Float64 Xp = pBridge->ConvertCurbLineToPierCoordinate(*pPier, Xcl);
 
             // Actual Y coordinate of the top of the lower cross beam
             // at this X location.
-            const Float64 Ytop = fnTop.Evaluate(X);
+            const Float64 Ytop = fnTop.Evaluate(Xp);
 
-            // User-defined Y is measured downward from the
-            // top of the lower cross beam.
             const Float64 Ypoint = Ytop - pnt.Get_Y();
 
-            WBFL::Geometry::Point2d pp(X, Ypoint);
+            WBFL::Geometry::Point2d pp(Xp, Ypoint);
 
-            // X is measured from the alignment (X = 0)
-            WBFL::Geometry::Point2d fromX(0.0, Ypoint);
+            GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
-            // Y is measured from the actual top surface of the
-            // lower cross beam at this X.
-            WBFL::Geometry::Point2d fromY(X, Ytop);
+            CString strPntLabel;
+            strPntLabel.Format(_T("(%s,%s)"), ::FormatDimension(Xp - Xl, pDisplayUnits->GetSpanLengthUnit()), ::FormatDimension(Ytop - Ypoint, pDisplayUnits->GetSpanLengthUnit()));
 
-            BuildDimensionLine(displayList, fromX, pp);
-            BuildDimensionLine(displayList, fromY, pp);
+            auto doPntLabel = WBFL::DManip::TextBlock::Create();
+            doPntLabel->SetText(strPntLabel);
+            doPntLabel->SetBkMode(TRANSPARENT);
+            doPntLabel->SetTextAlign(TA_TOP | TA_CENTER);
+            doPntLabel->SetPosition(pp);
+            displayList->AddDisplayObject(doPntLabel);
+
         }
     }
 
