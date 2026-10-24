@@ -553,6 +553,7 @@ void CPierLayoutPage::OnPierModelTypeChanged()
             (pWnd->GetSafeHwnd() == m_UserDefinedPierLayoutDlg.GetSafeHwnd());
 
         if (!bIsEmbeddedPierDlg &&
+            nID != IDC_STATIC_BOUNDS &&
             nID != IDC_PIER_MODEL_LABEL &&
             nID != IDC_PIER_MODEL_TYPE)
         {
@@ -588,16 +589,77 @@ void CPierLayoutPage::OnPierModelTypeChanged()
 
 void CPierLayoutPage::OnPierLayoutTypeChanged()
 {
-    CComboBox* pcbPierModel = (CComboBox*)GetDlgItem(IDC_PIER_LAYOUT_TYPE);
-    int curSel = pcbPierModel->GetCurSel();
-    m_PierLayoutType = (pgsTypes::PierLayoutType)pcbPierModel->GetItemData(curSel);
+    auto* combo = static_cast<CComboBox*>(GetDlgItem(IDC_PIER_LAYOUT_TYPE));
+    const int selection = combo->GetCurSel();
+    if (selection == CB_ERR)
+        return;
+    const auto layout = static_cast<pgsTypes::PierLayoutType>(combo->GetItemData(selection));
+    if (layout == m_PierLayoutType)
+        return;
 
+    // Each cap layout keeps its own geometry, but shares the current columns.
+    // Validate the outgoing controls before replacing any inactive grid.
+    auto transfer = [&](auto& source)
+    {
+        if (!source.UpdateData(TRUE))
+            return false;
+
+        auto copyColumns = [&](auto& destination)
+        {
+            if (source.GetSafeHwnd() == destination.GetSafeHwnd())
+                return;
+            source.m_ColumnLayoutGrid.GetColumnData(destination.m_Pier);
+            destination.m_RefColumnIdx = source.m_RefColumnIdx;
+            destination.m_TransverseOffset = source.m_TransverseOffset;
+            destination.m_TransverseOffsetMeasurement = source.m_TransverseOffsetMeasurement;
+            destination.m_ColumnFixity = source.m_ColumnFixity;
+            destination.m_Pier.SetColumnFixity(source.m_ColumnFixity);
+            destination.m_Pier.SetTransverseOffset(source.m_RefColumnIdx,
+                source.m_TransverseOffset, source.m_TransverseOffsetMeasurement);
+            for (ColumnIndexType i = 0; i < destination.m_Pier.GetColumnCount(); ++i)
+            {
+                auto column = destination.m_Pier.GetColumnData(i);
+                column.SetColumnHeightMeasurementType(source.m_ColumnHeightMeasurementType);
+                destination.m_Pier.SetColumnData(i, column);
+            }
+            destination.FillRefColumnComboBox(destination.m_Pier.GetColumnCount());
+            destination.UpdateData(FALSE);
+            destination.m_ColumnLayoutGrid.SetHeightMeasurementType(source.m_ColumnHeightMeasurementType);
+        };
+
+        copyColumns(m_CommonPierLayoutDlg);
+        copyColumns(m_ScallopedPierLayoutDlg);
+        copyColumns(m_UserDefinedPierLayoutDlg);
+        return true;
+    };
+
+    bool valid = true;
+    switch (m_PierLayoutType)
+    {
+    case pgsTypes::pltCommon:
+        valid = transfer(m_CommonPierLayoutDlg);
+        break;
+    case pgsTypes::pltScalloped:
+        valid = transfer(m_ScallopedPierLayoutDlg);
+        break;
+    case pgsTypes::pltUserDefined:
+        valid = transfer(m_UserDefinedPierLayoutDlg);
+        break;
+    }
+    if (!valid)
+    {
+        for (int i = 0; i < combo->GetCount(); ++i)
+            if (combo->GetItemData(i) == static_cast<DWORD_PTR>(m_PierLayoutType))
+                combo->SetCurSel(i);
+        return;
+    }
+
+    m_PierLayoutType = layout;
     SwapDialogs();
+    SetModified(TRUE);
 
     if (m_pPierLayoutPopout && ::IsWindow(m_pPierLayoutPopout->GetSafeHwnd()))
-    {
         ShowPierLayoutPopout();
-    }
 }
 
 void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
