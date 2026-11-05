@@ -345,6 +345,20 @@ DESCRIPTION
 // {3BACF776-6A93-11d2-883E-006097C68A9C}
 DEFINE_GUID(IID_IProductForces, 
 0x3bacf776, 0x6a93, 0x11d2, 0x88, 0x3e, 0x0, 0x60, 0x97, 0xc6, 0x8a, 0x9c);
+struct RatingForceState
+{
+   Float64 Moment = 0.0;
+   Float64 Axial = 0.0;
+   Float64 Shear = 0.0;
+};
+
+struct RatingLiveLoadCase
+{
+   RatingForceState Forces;
+   AxleConfiguration Axles;
+   bool RightFace = false;
+};
+
 class IProductForces
 {
 public:
@@ -417,6 +431,9 @@ public:
    virtual void DumpAnalysisModels(GirderIndexType gdrIdx) const = 0;
 
    virtual std::pair<Float64,Float64> GetDeckShrinkageStresses(const pgsPointOfInterest& poi, pgsTypes::StressLocation topStressLocation,pgsTypes::StressLocation botStressLocation, const GDRCONFIG* pConfig = nullptr) const = 0;
+
+   // Concurrent forces for MBE Fourth Edition rating.
+   virtual std::vector<RatingLiveLoadCase> GetRatingLiveLoadCases(IntervalIndexType intervalIdx, pgsTypes::LiveLoadType llType, VehicleIndexType vehicleIdx, const pgsPointOfInterest& poi, pgsTypes::BridgeAnalysisType bat) const = 0;
 };
 
 

@@ -1884,6 +1884,11 @@ void CAnalysisAgentImp::GetVehicularLiveLoadShear(IntervalIndexType intervalIdx,
    m_pGirderModelManager->GetVehicularLiveLoadShear(intervalIdx,llType,vehicleIdx,poi,bat,bIncludeImpact,bIncludeLLDF,pVmin,pVmax,pMinLeftAxleConfig,pMinRightAxleConfig,pMaxLeftAxleConfig,pMaxRightAxleConfig);
 }
 
+std::vector<RatingLiveLoadCase> CAnalysisAgentImp::GetRatingLiveLoadCases(IntervalIndexType intervalIdx, pgsTypes::LiveLoadType llType, VehicleIndexType vehicleIdx, const pgsPointOfInterest& poi, pgsTypes::BridgeAnalysisType bat) const
+{
+   return m_pGirderModelManager->GetRatingLiveLoadCases(intervalIdx, llType, vehicleIdx, poi, bat);
+}
+
 void CAnalysisAgentImp::GetVehicularLiveLoadMoment(IntervalIndexType intervalIdx,pgsTypes::LiveLoadType llType,VehicleIndexType vehicleIdx,const pgsPointOfInterest& poi,pgsTypes::BridgeAnalysisType bat,bool bIncludeImpact,bool bIncludeLLDF,Float64* pMmin,Float64* pMmax,AxleConfiguration* pMinAxleConfig,AxleConfiguration* pMaxAxleConfig) const
 {
    m_pGirderModelManager->GetVehicularLiveLoadMoment(intervalIdx,llType,vehicleIdx,poi,bat,bIncludeImpact,bIncludeLLDF,pMmin,pMmax,pMinAxleConfig,pMaxAxleConfig);
