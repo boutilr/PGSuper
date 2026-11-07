@@ -22,10 +22,14 @@
 
 // ProjectAgentImp.cpp : Implementation of CProjectAgentImp
 #include "stdafx.h"
+#include <LRFD/MBERating.h>
 #include "ProjectAgent.h"
 #include "ProjectAgentImp.h"
 #include "StatusItems.h"
 #include <algorithm>
+#include <iterator>
+#include <LRFD/MBEManager.h>
+#include <psgLib/PrestressLossCriteria.h>
 #include <typeinfo>
 #include <map>
 #include <MathEx.h>
@@ -9626,6 +9630,26 @@ Float64 CProjectAgentImp::GetLiveLoadFactor(pgsTypes::LimitState ls,pgsTypes::Sp
    Float64 gLL = m_gLL[ls];
    if ( gLL < 0 && bResolveIfDefault )
    {
+      // MBE Table 6A.4.2.2-2: refined losses with elastic gain use 1.0;
+      // other prestressed components use 0.8. Earlier editions retain library factors.
+      if (ls == pgsTypes::ServiceIII_Inventory &&
+          WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= pRatingEntry->GetSpecificationVersion())
+      {
+         const SpecLibraryEntry* pSpecEntry = GetSpecEntry(m_Spec.c_str());
+         const auto& losses = pSpecEntry->GetPrestressLossCriteria();
+         auto method = GetLossMethod();
+         bool refined = (method == PrestressLossCriteria::LossMethodType::AASHTO_REFINED ||
+                         method == PrestressLossCriteria::LossMethodType::WSDOT_REFINED);
+         const Float64 gains[] = { losses.SlabElasticGain, losses.SlabPadElasticGain,
+            losses.DiaphragmElasticGain, losses.UserDCElasticGain_BeforeDeckPlacement,
+            losses.UserDWElasticGain_BeforeDeckPlacement, losses.UserDCElasticGain_AfterDeckPlacement,
+            losses.UserDWElasticGain_AfterDeckPlacement, losses.RailingSystemElasticGain,
+            losses.OverlayElasticGain, losses.SlabShrinkageElasticGain, losses.LiveLoadElasticGain };
+         bool elasticGain = losses.AreElasticGainsApplicable(pSpecEntry->GetSpecificationCriteria().GetEdition()) &&
+            std::any_of(std::begin(gains), std::end(gains), [](Float64 gain) { return 0.0 < gain; });
+         return WBFL::LRFD::MBERating::GetServiceIIIInventoryLiveLoadFactor(refined, elasticGain);
+      }
+
       pgsTypes::LoadRatingType ratingType = ::RatingTypeFromLimitState(ls);
       if ( pRatingEntry->GetSpecificationVersion() < WBFL::LRFD::MBEManager::Edition::SecondEditionWith2013Interims )
       {
