@@ -12,3 +12,5 @@ Truck Configuration | Describe the truck configuration. Trucks are defined as a 
 Neglect axles that do not contributed to the maximum load effect under consideration | When this box is checked, axles not contributing to the maximum load effect under consideration are neglected. This is typically done with notional loads such as HL-93 and NRL.
 
 
+
+For permit ratings, mark a vehicle as notional by checking the axle-omission box. MBE 6A.4.5.4.1 requires omission of beneficial axle contributions for notional permit vehicles. Actual permit vehicles may include all axles. This setting is stored per vehicle library entry; it does not establish that the chosen vehicle envelopes every truck in a permit class.
