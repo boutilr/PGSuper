@@ -34,6 +34,9 @@ public:
    Float64 SystemFactorFlexure;
    Float64 SystemFactorShear;
    bool bIncludePedestrianLiveLoad;
+   bool bUseUncrackedMCFTAllowance = true;
+   bool bNeglectPrestressSizeEffect = true;
+   bool bUseReducedDemandK = true;
    bool bDesignRating;
    bool bLegalRating;
    bool bPermitRating;

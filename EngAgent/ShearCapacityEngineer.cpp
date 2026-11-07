@@ -23,6 +23,8 @@
 #include "StdAfx.h"
 #include "EngAgent.h"
 #include "ShearCapacityEngineer.h"
+#include <IFace/RatingSpecification.h>
+#include <stdexcept>
 #include <Units\Convert.h>
 #include <PGSuperException.h>
 #include <IFace\Bridge.h>
@@ -65,6 +67,14 @@ void pgsShearCapacityEngineer::ComputeShearCapacity(IntervalIndexType intervalId
    // get known information
    VERIFY(GetInformation(intervalIdx, limitState, poi, pConfig, pscd));
    ComputeShearCapacityDetails(intervalIdx,limitState,poi,pscd);
+}
+
+void pgsShearCapacityEngineer::ComputeRatingShearCapacity(IntervalIndexType intervalIdx, pgsTypes::LimitState limitState,
+   const pgsPointOfInterest& poi, const RatingForceState& forces, SHEARCAPACITYDETAILS* details) const
+{
+   if (!GetInformation(intervalIdx, limitState, poi, nullptr, details, &forces))
+      throw std::runtime_error("Unable to prepare shear rating section");
+   ComputeShearCapacityDetails(intervalIdx, limitState, poi, details);
 }
 
 void pgsShearCapacityEngineer::ComputeShearCapacityDetails(IntervalIndexType intervalIdx,pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const
@@ -161,7 +171,7 @@ void pgsShearCapacityEngineer::ComputeShearCapacityDetails(IntervalIndexType int
    }
 
    // concrete shear capacity
-   if (!ComputeVc(poi,pscd))
+   if (!ComputeVc(limitState,poi,pscd))
    {
       GET_IFACE2(GetBroker(),IEAFStatusCenter,pStatusCenter);
 
@@ -358,7 +368,7 @@ void pgsShearCapacityEngineer::ComputeFpc(const pgsPointOfInterest& poi, const G
    pd->fpc = fpc;
 }
 
-bool pgsShearCapacityEngineer::GetGeneralInformation(IntervalIndexType intervalIdx, pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, const GDRCONFIG* pConfig, SHEARCAPACITYDETAILS* pscd) const
+bool pgsShearCapacityEngineer::GetGeneralInformation(IntervalIndexType intervalIdx, pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, const GDRCONFIG* pConfig, SHEARCAPACITYDETAILS* pscd, const RatingForceState* ratingForces) const
 {
    // The first thing we are going to do is fill in the SHEARCAPACITYDETAILS struct
    // with everything we know
@@ -382,7 +392,15 @@ bool pgsShearCapacityEngineer::GetGeneralInformation(IntervalIndexType intervalI
    WBFL::System::SectionValue Vd_min, Vd_max;
 
 
-   if ( analysisType == pgsTypes::Envelope )
+   if (ratingForces)
+   {
+      Mu_min = Min(0.0, ratingForces->Moment);
+      Mu_max = Max(0.0, ratingForces->Moment);
+      Vu_min = Vu_max = WBFL::System::SectionValue(ratingForces->Shear, ratingForces->Shear);
+      Vi_min = Vi_max = Vu_min;
+      Vd_min = Vd_max = WBFL::System::SectionValue(0.0, 0.0);
+   }
+   else if ( analysisType == pgsTypes::Envelope )
    {
       Float64 Mmin,Mmax;
       WBFL::System::SectionValue Vmin, Vmax;
@@ -435,7 +453,7 @@ bool pgsShearCapacityEngineer::GetGeneralInformation(IntervalIndexType intervalI
    pscd->bTensionBottom = bTensionOnBottom;
 
    // axial force
-   pscd->Nu = 0.0; // KLUDGE: Assume Axial Force is zero.
+   pscd->Nu = ratingForces ? ratingForces->Axial : 0.0;
 
    // design shear
    Float64 vmax, vmin;
@@ -628,9 +646,9 @@ bool pgsShearCapacityEngineer::GetGeneralInformation(IntervalIndexType intervalI
    return true;
 }
 
-bool pgsShearCapacityEngineer::GetInformation(IntervalIndexType intervalIdx,pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, const GDRCONFIG* pConfig, SHEARCAPACITYDETAILS* pscd) const
+bool pgsShearCapacityEngineer::GetInformation(IntervalIndexType intervalIdx,pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, const GDRCONFIG* pConfig, SHEARCAPACITYDETAILS* pscd, const RatingForceState* ratingForces) const
 {
-   GetGeneralInformation(intervalIdx,limitState,poi,pConfig,pscd);
+   GetGeneralInformation(intervalIdx,limitState,poi,pConfig,pscd,ratingForces);
 
    const CSegmentKey& segmentKey = poi.GetSegmentKey();
 
@@ -985,16 +1003,16 @@ bool pgsShearCapacityEngineer::GetInformation(IntervalIndexType intervalIdx,pgsT
    return true;
 }
 
-bool pgsShearCapacityEngineer::ComputeVc(const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const
+bool pgsShearCapacityEngineer::ComputeVc(pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const
 {
    GET_IFACE2(GetBroker(),IMaterials, pMaterials);
    if (pMaterials->GetSegmentConcreteType(poi.GetSegmentKey()) == pgsTypes::UHPC)
       return ComputeVuhpc(poi, pscd);
    else
-      return ComputeVcc(poi, pscd);
+      return ComputeVcc(limitState,poi, pscd);
 }
 
-bool pgsShearCapacityEngineer::ComputeVcc(const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const
+bool pgsShearCapacityEngineer::ComputeVcc(pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const
 {
    const CSegmentKey& segmentKey = poi.GetSegmentKey();
 
@@ -1071,7 +1089,18 @@ bool pgsShearCapacityEngineer::ComputeVcc(const pgsPointOfInterest& poi, SHEARCA
             WBFL::LRFD::BDSManager::SetEdition(WBFL::LRFD::BDSManager::Edition::FourthEditionWith2008Interims);
          }
 
-         WBFL::LRFD::Shear::ComputeThetaAndBeta( &data, shear_capacity_criteria.CapacityMethod == pgsTypes::scmBTTables ? WBFL::LRFD::Shear::Method::Tables : WBFL::LRFD::Shear::Method::Equations );
+         if (IsRatingLimitState(limitState) && pscd->ConcreteType != pgsTypes::PCI_UHPC &&
+             shear_capacity_criteria.CapacityMethod == pgsTypes::scmBTEquations)
+         {
+            bool uncracked = 0.0 < fabs(data.Mcre) && fabs(pscd->RealMu) < fabs(data.Mcre);
+            GET_IFACE2(GetBroker(), IRatingSpecification, ratingSpec);
+            WBFL::LRFD::Shear::ComputeRatingThetaAndBeta(&data, uncracked,
+               ratingSpec->UseUncrackedMCFTAllowance(), ratingSpec->NeglectPrestressSizeEffect());
+         }
+         else
+         {
+            WBFL::LRFD::Shear::ComputeThetaAndBeta( &data, shear_capacity_criteria.CapacityMethod == pgsTypes::scmBTTables ? WBFL::LRFD::Shear::Method::Tables : WBFL::LRFD::Shear::Method::Equations );
+         }
       }
       else if (shear_capacity_criteria.CapacityMethod == pgsTypes::scmVciVcw )
       {

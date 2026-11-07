@@ -2891,6 +2891,9 @@ void CPGSDocBase::OnRatingSpec()
    std::_tstring cur_spec = pSpec->GetRatingSpecification();
    oldData.m_General.CriteriaName  = cur_spec;
    oldData.m_General.bIncludePedestrianLiveLoad = pSpec->IncludePedestrianLiveLoad();
+   oldData.m_General.bUseUncrackedMCFTAllowance = pSpec->UseUncrackedMCFTAllowance();
+   oldData.m_General.bNeglectPrestressSizeEffect = pSpec->NeglectPrestressSizeEffect();
+   oldData.m_General.bUseReducedDemandK = pSpec->UseReducedDemandK();
    oldData.m_General.TimelineMgr = *pTimelineMgr;
 
    oldData.m_General.SystemFactorFlexure = pSpec->GetSystemFactorFlexure();

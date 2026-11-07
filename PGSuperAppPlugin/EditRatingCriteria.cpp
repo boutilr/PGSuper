@@ -43,6 +43,10 @@ txnGeneralRatingData::txnGeneralRatingData()
 
 bool txnGeneralRatingData::operator==(const txnGeneralRatingData& other) const
 {
+   if (bUseUncrackedMCFTAllowance != other.bUseUncrackedMCFTAllowance) return false;
+   if (bNeglectPrestressSizeEffect != other.bNeglectPrestressSizeEffect) return false;
+   if (bUseReducedDemandK != other.bUseReducedDemandK) return false;
+
    if ( bDesignRating != other.bDesignRating )
    {
       return false;
@@ -507,6 +511,9 @@ void txnEditRatingCriteria::Execute(int i)
    pRatingSpec->SetSystemFactorFlexure(m_Data[i].m_General.SystemFactorFlexure);
    pRatingSpec->SetSystemFactorShear(m_Data[i].m_General.SystemFactorShear);
    pRatingSpec->IncludePedestrianLiveLoad(m_Data[i].m_General.bIncludePedestrianLiveLoad);
+   pRatingSpec->UseUncrackedMCFTAllowance(m_Data[i].m_General.bUseUncrackedMCFTAllowance);
+   pRatingSpec->NeglectPrestressSizeEffect(m_Data[i].m_General.bNeglectPrestressSizeEffect);
+   pRatingSpec->UseReducedDemandK(m_Data[i].m_General.bUseReducedDemandK);
    pRatingSpec->EnableRating(pgsTypes::lrDesign_Inventory,m_Data[i].m_General.bDesignRating);
    pRatingSpec->EnableRating(pgsTypes::lrDesign_Operating,m_Data[i].m_General.bDesignRating);
 

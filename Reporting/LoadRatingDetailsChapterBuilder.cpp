@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include <LRFD/MBEManager.h>
 #include <Reporting\LoadRatingDetailsChapterBuilder.h>
 #include <Reporting\LoadRatingReportSpecificationBuilder.h>
 
@@ -69,6 +70,18 @@ rptChapter* CLoadRatingDetailsChapterBuilder::Build(const std::shared_ptr<const 
    m_bIsSingleGirderLine = girderKeys.size() == 1 && girderKeys.front().groupIndex == ALL_GROUPS;
 
    rptChapter* pChapter = CPGSuperChapterBuilder::Build(pRptSpec,level);
+
+   GET_IFACE2(pBroker, IRatingSpecification, ratingSpec);
+   if (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition())
+   {
+      rptParagraph* options = new rptParagraph;
+      *pChapter << options;
+      *options << _T("MBE Fourth Edition project allowances: ")
+         << _T("zero strain in uncracked sections = ") << (ratingSpec->UseUncrackedMCFTAllowance() ? _T("enabled") : _T("disabled"))
+         << _T("; neglect prestress size effect = ") << (ratingSpec->NeglectPrestressSizeEffect() ? _T("enabled") : _T("disabled"))
+         << _T("; reduced-demand K iteration = ") << (ratingSpec->UseReducedDemandK() ? _T("enabled") : _T("disabled")) << rptNewLine
+         << _T("MCFT allowances apply only to eligible equation-method sections at the evaluated load. K iteration applies only to eligible ratings below 1.0.");
+   }
 
    GET_IFACE2(pBroker,IDocumentType,pDocType);
    bool bSplicedGirder = pDocType->IsPGSpliceDocument();
@@ -494,6 +507,41 @@ void CLoadRatingDetailsChapterBuilder::ShearRatingDetails(rptChapter* pChapter,s
       }
 
       bFirst = false;
+   }
+   bool hasIteratedRatings = false;
+   for (const auto* rating : RatingArtifacts)
+      for (const auto& entry : rating->GetShearRatings())
+         hasIteratedRatings = hasIteratedRatings || entry.second.HasIteratedRatingFactors();
+   if (hasIteratedRatings)
+   {
+      rptParagraph* explanation = new rptParagraph;
+      *pChapter << explanation;
+      *explanation << _T("MBE 4 shear ratings use concurrent forces. Resistance is evaluated at scaled truck loads. ")
+         << _T("The RF in the shear table is the smaller of the vertical and longitudinal reinforcement ratings below.") << rptNewLine;
+      rptRcTable* detail = rptStyleManager::CreateDefaultTable(7, _T("MBE 4 shear rating components"));
+      *explanation << detail;
+      (*detail)(0,0) << _T("Location");
+      (*detail)(0,1) << _T("Limit state");
+      (*detail)(0,2) << _T("Vertical vehicle");
+      (*detail)(0,3) << _T("Longitudinal vehicle");
+      (*detail)(0,4) << _T("Vertical RF");
+      (*detail)(0,5) << _T("Longitudinal RF");
+      (*detail)(0,6) << _T("Controlling RF");
+      RowIndexType r = detail->GetNumberOfHeaderRows();
+      for (auto rating : RatingArtifacts)
+         for (const auto& entry : rating->GetShearRatings())
+         {
+            const auto& artifact = entry.second;
+            if (!artifact.HasIteratedRatingFactors()) continue;
+            (*detail)(r,0) << location.SetValue(POI_SPAN, entry.first);
+            (*detail)(r,1) << GetLimitStateString(GetLimitState(artifact.GetLoadRatingType()));
+            (*detail)(r,2) << artifact.GetVerticalVehicleName();
+            (*detail)(r,3) << artifact.GetLongitudinalVehicleName();
+            (*detail)(r,4) << rating_factor.SetValue(artifact.GetVerticalRatingFactor());
+            (*detail)(r,5) << rating_factor.SetValue(artifact.GetLongitudinalRatingFactor());
+            (*detail)(r,6) << rating_factor.SetValue(artifact.GetRatingFactor());
+            ++r;
+         }
    }
 }
 

@@ -49,6 +49,7 @@ protected:
    afx_msg void OnLoadRatingEventChanging();
    BOOL OnToolTipNotify(UINT id,NMHDR* pNMHDR, LRESULT* pResult);
 
+   afx_msg void OnRatingCriteriaChanged();
    void FillLoadRatingEventComboBox();
    EventIndexType CreateEvent();
    int m_PrevLoadRatingEventIdx;

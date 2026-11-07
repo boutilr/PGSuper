@@ -154,6 +154,9 @@ protected:
 
    void FlexureRating(const CGirderKey& girderKey, const PoiList& vPoi, pgsTypes::LoadRatingType ratingType, VehicleIndexType vehicleIdx, IntervalIndexType loadRatingIntervalIdx, bool bTimeStep,const Moments* pMaxMoments, const Moments* pMinMoments, pgsRatingArtifact& ratingArtifact) const;
    void ShearRating(const CGirderKey& girderKey,const PoiList& vPoi,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx, IntervalIndexType loadRatingIntervalIdx, bool bTimeStep,pgsRatingArtifact& ratingArtifact) const;
+   void ComputeMBE4ShearRating(const pgsPointOfInterest& poi, pgsTypes::LoadRatingType ratingType,
+      VehicleIndexType vehicleIdx, IntervalIndexType intervalIdx, bool timeStep,
+      pgsShearRatingArtifact* shear, pgsLongReinfShearArtifact* longitudinal) const;
    void LongitudinalReinforcementForShearRating(const CGirderKey& girderKey, const PoiList& vPoi, pgsTypes::LoadRatingType ratingType, VehicleIndexType vehicleIdx, IntervalIndexType loadRatingIntervalIdx, bool bTimeStep, pgsRatingArtifact& ratingArtifact) const;
 
    void MomentRating(const pgsPointOfInterest& poi, bool bPositiveMoment, const MomentsAtPoi& moments,const MomentRatingParams& ratingParams, pgsRatingArtifact& ratingArtifact) const;

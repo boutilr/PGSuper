@@ -294,7 +294,19 @@ void CLongReinfShearCheck::Build(rptChapter* pChapter,
       *pBody <<rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalReinforcementForShear.png"))<<rptNewLine;
    }
 
-   rptRcTable* table = rptStyleManager::CreateDefaultTable(5,_T(""));
+   GET_IFACE2(pBroker,IBridge,pBridge);
+   GET_IFACE2(pBroker,IArtifact,pIArtifact);
+
+   const pgsRatingArtifact* pRatingArtifact = pIArtifact->GetRatingArtifact(girderKey,ratingType,INVALID_INDEX);
+   const pgsRatingArtifact::LongitudinalReinforcementForShear& longReinfShear = pRatingArtifact->GetLongitudinalReinforcementForShear();
+
+   bool showRatingFactors = false;
+   for (const auto& item : longReinfShear)
+      showRatingFactors = showRatingFactors || item.second.HasRatingFactor();
+   if (showRatingFactors)
+      *pBody << _T("For iterated ratings, capacity and demand are shown at RF = 1; RF is solved separately.") << rptNewLine;
+
+   rptRcTable* table = rptStyleManager::CreateDefaultTable(showRatingFactors ? 7 : 5,_T(""));
    *pBody << table;
 
    table->SetColumnStyle(0,rptStyleManager::GetTableCellStyle(CB_NONE | CJ_LEFT));
@@ -307,12 +319,13 @@ void CLongReinfShearCheck::Build(rptChapter* pChapter,
    (*table)(0,3)  << _T("Equation");
    (*table)(0,4)  << _T("Status") << rptNewLine << _T("(C/D)");
 
-   // Fill up the table
-   GET_IFACE2(pBroker,IBridge,pBridge);
-   GET_IFACE2(pBroker,IArtifact,pIArtifact);
+   if (showRatingFactors)
+   {
+      (*table)(0,5) << _T("Rating vehicle");
+      (*table)(0,6) << _T("RF");
+   }
 
-   const pgsRatingArtifact* pRatingArtifact = pIArtifact->GetRatingArtifact(girderKey,ratingType,INVALID_INDEX);
-   const pgsRatingArtifact::LongitudinalReinforcementForShear& longReinfShear = pRatingArtifact->GetLongitudinalReinforcementForShear();
+   // Fill up the table
 
    bool bAddFootnote = false;
 
@@ -330,6 +343,13 @@ void CLongReinfShearCheck::Build(rptChapter* pChapter,
       if ( artifact.IsApplicable() )
       {
          (*table)(row,0) << location.SetValue( POI_SPAN, poi );
+         if (showRatingFactors)
+         {
+            (*table)(row,5) << artifact.GetVehicleName();
+            if (!artifact.HasRatingFactor() || artifact.GetRatingFactor() == DBL_MAX)
+               (*table)(row,6) << _T("N/A");
+            else (*table)(row,6) << artifact.GetRatingFactor();
+         }
 
          Float64 C = artifact.GetCapacityForce();
          Float64 D = artifact.GetDemandForce();
@@ -349,7 +369,7 @@ void CLongReinfShearCheck::Build(rptChapter* pChapter,
          }
 
          Float64 ratio = IsZero(D) ? DBL_MAX : C/D;
-         if ( artifact.Passed() && fabs(artifact.GetMu()) <= fabs(artifact.GetMr()) && ratio < 1.0 )
+         if (!artifact.HasRatingFactor() && artifact.Passed() && fabs(artifact.GetMu()) <= fabs(artifact.GetMr()) && ratio < 1.0)
          {
             bAddFootnote = true;
             (*table)(row,4) << _T("*");
