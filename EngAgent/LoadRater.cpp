@@ -1101,7 +1101,8 @@ void pgsLoadRater::LongitudinalReinforcementForShearRating(const CGirderKey& gir
       // ShearRating already supplies an iterated check at its analysis sections.
       // Keep the existing support/anchorage checks at the other POIs; those
       // POIs are intentionally excluded from the vertical shear rating table.
-      if (ratingArtifact.GetLongitudinalReinforcementForShearArtifact(poi) != nullptr) continue;
+      if (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() &&
+          ratingArtifact.GetLongitudinalReinforcementForShearArtifact(poi) != nullptr) continue;
       SHEARCAPACITYDETAILS scd;
       pShearCapacity->GetShearCapacityDetails(limitState, loadRatingIntervalIdx, poi, nullptr, &scd);
       pgsLongReinfShearArtifact l_artifact;
