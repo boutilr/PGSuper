@@ -23,6 +23,7 @@
 #include "stdafx.h"
 #include "AnalysisAgent.h"
 #include "GirderModelManager.h"
+#include <LRFD/MBEManager.h>
 
 #include <PsgLib\LoadFactors.h>
 #include <PsgLib\GirderLabel.h>
@@ -131,6 +132,7 @@ inline LiveLoadApplicabilityType ConvertLiveLoadApplicabilityType(pgsTypes::Live
 
 inline pgsTypes::LiveLoadApplicabilityType ConvertLiveLoadApplicabilityType(LiveLoadApplicabilityType type)
 {
+   if (type == llaMBE4PermitLane) return pgsTypes::llaEntireStructure;
    // LBAM enums have a value of 1 more than the pgsTypes enum
    return (pgsTypes::LiveLoadApplicabilityType)(((int)type) - 1);
 }
@@ -10045,7 +10047,7 @@ void CGirderModelManager::AddUserLiveLoads(ILBAMModel* pModel,GirderIndexType gd
       }
       else
       {
-         AddUserTruck(strLLName,pLibrary,truck_impact,lane_impact,pVehicles);
+         AddUserTruck(strLLName,pLibrary,truck_impact,lane_impact,pVehicles,llType);
       }
    }
 }
@@ -10168,7 +10170,7 @@ void CGirderModelManager::AddSHVLoad(ILBAMModel* pModel,std::shared_ptr<ILibrary
    m_LBAMUtility->ConfigureSpecializedHaulingUnits(pModel,llmt,IMtruck,IMlane,m_UnitServer);
 }
 
-void CGirderModelManager::AddUserTruck(const std::_tstring& strLLName,std::shared_ptr<ILibrary> pLibrary,Float64 IMtruck,Float64 IMlane,IVehicularLoads* pVehicles) const
+void CGirderModelManager::AddUserTruck(const std::_tstring& strLLName,std::shared_ptr<ILibrary> pLibrary,Float64 IMtruck,Float64 IMlane,IVehicularLoads* pVehicles,pgsTypes::LiveLoadType llType) const
 {
    // this is a user defined vehicular live load defined in the library
    const LiveLoadLibraryEntry* ll_entry = pLibrary->GetLiveLoadEntry( strLLName.c_str());
@@ -10241,6 +10243,24 @@ void CGirderModelManager::AddUserTruck(const std::_tstring& strLLName,std::share
    if ( bIsOver )
    {
       vehicular_load->put_LaneLoad(lane_load);
+   }
+
+   bool permitRating = llType == pgsTypes::lltPermitRating_Routine || llType == pgsTypes::lltPermitRating_Special;
+   if (permitRating && ll_config != LiveLoadLibraryEntry::lcLaneOnly &&
+       WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition())
+   {
+      GET_IFACE2(GetBroker(),IRatingSpecification,pRatingSpec);
+      // MBE 6A.4.5.4.1; unknown ADTT retains accompanying traffic.
+      Int16 adtt = pRatingSpec->GetADTT();
+      bool excludesOtherTraffic = llType == pgsTypes::lltPermitRating_Special &&
+         pRatingSpec->GetSpecialPermitType() == pgsTypes::ptSingleTripWithEscort;
+      bool accompanyingTraffic = !excludesOtherTraffic && (adtt < 0 || 500 < adtt);
+      vehicular_load->put_Applicability(accompanyingTraffic ? llaMBE4PermitLane : llaEntireStructure);
+      vehicular_load->put_Configuration(accompanyingTraffic ? vlcTruckPlusLane : vlcTruckOnly);
+      Float64 weight = WBFL::Units::ConvertToSysUnits(0.2, WBFL::Units::Measure::Kip);
+      Float64 length = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Feet);
+      vehicular_load->put_LaneLoad(accompanyingTraffic ? weight / length : 0.0);
+      vehicular_load->put_IMLane(1.0); // dynamic load allowance applies to the truck only
    }
 
    if ( ll_config != LiveLoadLibraryEntry::lcLaneOnly )
