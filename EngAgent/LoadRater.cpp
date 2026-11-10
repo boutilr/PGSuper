@@ -956,40 +956,54 @@ void pgsLoadRater::ComputeMBE4ShearRating(const pgsPointOfInterest& poi, pgsType
    pgsShearCapacityEngineer::RatingSectionCache sectionCache;
    std::array<std::optional<pgsLongReinfShearArtifact>, 2> tieCache;
    bool firstVertical = true, firstLongitudinal = true;
+   const LoadingCombinationType combos[] = { lcDC, lcDWRating, lcCR, lcSH, lcRE, lcPS };
+   const Float64 factors[] = { spec->GetDeadLoadFactor(ls), spec->GetWearingSurfaceFactor(ls),
+      spec->GetCreepFactor(ls), spec->GetShrinkageFactor(ls), spec->GetRelaxationFactor(ls), spec->GetSecondaryEffectsFactor(ls) };
+   const Float64 defaultLiveFactor = spec->GetLiveLoadFactor(ls, true);
+   const bool includePedestrian = spec->IncludePedestrianLiveLoad();
    for (auto bat : analyses)
    {
+      // The truck placement only selects the face of the permanent shear effects.
+      Float64 moment = 0.0, axial = 0.0;
+      std::array<std::array<Float64, 6>, 2> shearByCombination{};
+      std::array<Float64, 2> totalShear{};
+      for (int c = 0; c < (timeStep ? 6 : 2); ++c)
+      {
+         moment += factors[c] * combined->GetMoment(intervalIdx, combos[c], poi, bat, rtCumulative);
+         axial += factors[c] * combined->GetAxial(intervalIdx, combos[c], poi, bat, rtCumulative);
+         const auto permanentShear = combined->GetShear(intervalIdx, combos[c], poi, bat, rtCumulative);
+         shearByCombination[0][c] = permanentShear.Left();
+         shearByCombination[1][c] = permanentShear.Right();
+         totalShear[0] += factors[c] * permanentShear.Left();
+         totalShear[1] += factors[c] * permanentShear.Right();
+      }
+
+      Float64 mmin = 0.0, mmax = 0.0, nmin = 0.0, nmax = 0.0;
+      WBFL::System::SectionValue vmin, vmax;
+      if (includePedestrian)
+      {
+         combined->GetCombinedLiveLoadMoment(intervalIdx, pgsTypes::lltPedestrian, poi, bat, &mmin, &mmax);
+         combined->GetCombinedLiveLoadAxial(intervalIdx, pgsTypes::lltPedestrian, poi, bat, &nmin, &nmax);
+         combined->GetCombinedLiveLoadShear(intervalIdx, pgsTypes::lltPedestrian, poi, bat, false, &vmin, &vmax);
+      }
+
       for (VehicleIndexType truck = first; truck < last; ++truck)
       {
          for (auto& load : forces->GetRatingLiveLoadCases(intervalIdx, llType, truck, poi, bat))
          {
-            auto face = [&](const WBFL::System::SectionValue& v) { return load.RightFace ? v.Right() : v.Left(); };
-            RatingForceState dead;
-            const LoadingCombinationType combos[] = { lcDC, lcDWRating, lcCR, lcSH, lcRE, lcPS };
-            Float64 factors[] = { spec->GetDeadLoadFactor(ls), spec->GetWearingSurfaceFactor(ls),
-               spec->GetCreepFactor(ls), spec->GetShrinkageFactor(ls), spec->GetRelaxationFactor(ls), spec->GetSecondaryEffectsFactor(ls) };
-            Float64 shears[6] = {};
-            for (int c = 0; c < (timeStep ? 6 : 2); ++c)
-            {
-               dead.Moment += factors[c] * combined->GetMoment(intervalIdx, combos[c], poi, bat, rtCumulative);
-               dead.Axial += factors[c] * combined->GetAxial(intervalIdx, combos[c], poi, bat, rtCumulative);
-               shears[c] = face(combined->GetShear(intervalIdx, combos[c], poi, bat, rtCumulative));
-               dead.Shear += factors[c] * shears[c];
-            }
-            Float64 gLL = spec->GetLiveLoadFactor(ls, true);
-            if (gLL < 0) gLL = spec->GetStrengthLiveLoadFactor(ratingType, load.Axles);
+            const auto faceIndex = load.RightFace ? 1 : 0;
+            const auto& shears = shearByCombination[faceIndex];
+            const RatingForceState dead{ moment, axial, totalShear[faceIndex] };
+            const Float64 gLL = defaultLiveFactor < 0 ? spec->GetStrengthLiveLoadFactor(ratingType, load.Axles) : defaultLiveFactor;
             RatingForceState live = load.Forces;
             // Pedestrian loading follows the existing independent loading policy.
             // The truck's M/N/V placement remains concurrent.
-            if (spec->IncludePedestrianLiveLoad())
+            if (includePedestrian)
             {
-               Float64 mmin, mmax, nmin, nmax;
-               WBFL::System::SectionValue vmin, vmax;
-               combined->GetCombinedLiveLoadMoment(intervalIdx, pgsTypes::lltPedestrian, poi, bat, &mmin, &mmax);
-               combined->GetCombinedLiveLoadAxial(intervalIdx, pgsTypes::lltPedestrian, poi, bat, &nmin, &nmax);
-               combined->GetCombinedLiveLoadShear(intervalIdx, pgsTypes::lltPedestrian, poi, bat, false, &vmin, &vmax);
                live.Moment += live.Moment < 0 ? mmin : mmax;
                live.Axial += MaxMagnitude(nmin, nmax);
-               live.Shear += live.Shear < 0 ? face(vmin) : face(vmax);
+               const auto& pedestrianShear = live.Shear < 0 ? vmin : vmax;
+               live.Shear += load.RightFace ? pedestrianShear.Right() : pedestrianShear.Left();
             }
             auto evaluate = [&](Float64 rf, bool checkLongitudinal, SHEARCAPACITYDETAILS* saved,
                                 pgsLongReinfShearArtifact* savedLong) {
