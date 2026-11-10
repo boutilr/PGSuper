@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include <LRFD/MBEManager.h>
 #include "EngAgent.h"
 #include "ShearCapacityEngineer.h"
 #include <IFace/RatingSpecification.h>
@@ -1104,7 +1105,8 @@ bool pgsShearCapacityEngineer::ComputeVcc(pgsTypes::LimitState limitState, const
             WBFL::LRFD::BDSManager::SetEdition(WBFL::LRFD::BDSManager::Edition::FourthEditionWith2008Interims);
          }
 
-         if (IsRatingLimitState(limitState) && pscd->ConcreteType != pgsTypes::PCI_UHPC &&
+         if (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() &&
+             IsRatingLimitState(limitState) && pscd->ConcreteType != pgsTypes::PCI_UHPC &&
              shear_capacity_criteria.CapacityMethod == pgsTypes::scmBTEquations)
          {
             bool uncracked = 0.0 < fabs(data.Mcre) && fabs(pscd->RealMu) < fabs(data.Mcre);

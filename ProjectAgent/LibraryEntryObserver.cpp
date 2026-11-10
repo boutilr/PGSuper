@@ -23,6 +23,7 @@
 #include "StdAfx.h"
 #include "LibraryEntryObserver.h"
 #include <EAF/EAFStatusCenter.h>
+#include <LRFD/MBEManager.h>
 #include "ProjectAgent.h"
 #include "CLSID.h"
 #include "ProjectAgentImp.h"
@@ -155,6 +156,7 @@ void pgsLibraryEntryObserver::Update(RatingLibraryEntry& subject, Int32 hint)
    if (hint & WBFL::Library::Hint_EntryEdited)
    {
       ClearStatusItems();
+      WBFL::LRFD::MBEManager::SetEdition(subject.GetSpecificationVersion());
       m_pAgent->RatingSpecificationChanged(true);
    }
    m_pAgent->FirePendingEvents();
