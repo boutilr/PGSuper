@@ -158,7 +158,15 @@ public:
    Float64 GetGirderTendonStressLimitStress() const;
 
    Float64 GetStressRatio() const;
-   Float64 GetRatingFactor() const { return GetStressRatio(); }
+   // Fourth Edition Service I RF scales live load only, using the A9 cracked-section model.
+   // The stress-ratio accessors continue to describe stresses at the specified truck weight.
+   void SetComputeRatingFactor(bool computeRatingFactor);
+   bool IsComputingRatingFactor() const;
+   Float64 GetRebarRatingFactor() const;
+   Float64 GetStrandRatingFactor() const;
+   Float64 GetSegmentTendonRatingFactor() const;
+   Float64 GetGirderTendonRatingFactor() const;
+   Float64 GetRatingFactor() const;
 
 protected:
    void MakeCopy(const pgsYieldStressRatioArtifact& rOther);
@@ -166,6 +174,9 @@ protected:
    void ComputeStressRatios() const;
    void ComputeStressRatio(Float64 d,Float64 E,Float64 fbcr,Float64 fy,Float64* pfcr,Float64* pfs,Float64* pRF) const;
 
+   Float64 ComputeRatingFactor(Float64 d, Float64 E, Float64 fbcr, Float64 fy) const;
+
+   bool m_ComputeRatingFactor;
    mutable bool m_bRFComputed;
 
    mutable Float64 m_RebarRF;

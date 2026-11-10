@@ -1565,6 +1565,8 @@ void pgsLoadRater::CheckReinforcementYielding(const pgsPointOfInterest& poi, boo
    }
 
 
+   bool computeRatingFactor = WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition();
+
    Float64 Mcr = ratingParams.pMcrDetails->Mcr;
 
    Float64 Icr = ratingParams.pCrackedSectionDetails->Icr;
@@ -1602,7 +1604,7 @@ void pgsLoadRater::CheckReinforcementYielding(const pgsPointOfInterest& poi, boo
       // because we have to play games with the live load distribution factors (as described above)
       // we can't get the effective prestress force with live load directly.
 
-      if (!IsZero(ratingParams.K_liveload))
+      if (computeRatingFactor || !IsZero(ratingParams.K_liveload))
       {
          GET_IFACE2(GetBroker(),IPretensionForce, pPrestressForce);
          fps = pPrestressForce->GetEffectivePrestress(poi, pgsTypes::Permanent, ratingParams.loadRatingIntervalIdx, pgsTypes::End);
@@ -1611,7 +1613,12 @@ void pgsLoadRater::CheckReinforcementYielding(const pgsPointOfInterest& poi, boo
          const LOSSDETAILS* pDetails = pLosses->GetLossDetails(poi, ratingParams.loadRatingIntervalIdx);
 
          Float64 llGain = 0;
-         if (pDetails->pLosses)
+         if (computeRatingFactor)
+         {
+            // Example A9 uses effective prestress at cracking; live load is scaled by the RF.
+            llGain = 0.0;
+         }
+         else if (pDetails->pLosses)
          {
             llGain = pDetails->pLosses->ElasticGainDueToLiveLoad(LLIM);
          }
@@ -1631,8 +1638,8 @@ void pgsLoadRater::CheckReinforcementYielding(const pgsPointOfInterest& poi, boo
    if (bSegmentTendons)
    {
       GET_IFACE2(GetBroker(),IPosttensionForce, pPTForce);
-      bool bIncludeMinLiveLoad = !bPositiveMoment;
-      bool bIncludeMaxLiveLoad = bPositiveMoment;
+      bool bIncludeMinLiveLoad = !computeRatingFactor && !bPositiveMoment;
+      bool bIncludeMaxLiveLoad = !computeRatingFactor && bPositiveMoment;
       fptSegment = pPTForce->GetSegmentTendonStress(poi, ratingParams.loadRatingIntervalIdx, pgsTypes::End, segmentTendonIdx, bIncludeMinLiveLoad, bIncludeMaxLiveLoad);
    }
 
@@ -1640,12 +1647,13 @@ void pgsLoadRater::CheckReinforcementYielding(const pgsPointOfInterest& poi, boo
    if (bGirderTendons)
    {
       GET_IFACE2(GetBroker(),IPosttensionForce, pPTForce);
-      bool bIncludeMinLiveLoad = !bPositiveMoment;
-      bool bIncludeMaxLiveLoad = bPositiveMoment;
+      bool bIncludeMinLiveLoad = !computeRatingFactor && !bPositiveMoment;
+      bool bIncludeMaxLiveLoad = !computeRatingFactor && bPositiveMoment;
       fptGirder = pPTForce->GetGirderTendonStress(poi, ratingParams.loadRatingIntervalIdx, pgsTypes::End, girderTendonIdx, bIncludeMinLiveLoad, bIncludeMaxLiveLoad);
    }
 
    pgsYieldStressRatioArtifact stressRatioArtifact;
+   stressRatioArtifact.SetComputeRatingFactor(computeRatingFactor);
    stressRatioArtifact.SetRatingType(ratingParams.ratingType);
    stressRatioArtifact.SetPointOfInterest(poi);
    stressRatioArtifact.SetVehicleIndex(moments.truck_index);
