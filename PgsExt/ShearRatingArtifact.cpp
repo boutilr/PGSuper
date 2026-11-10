@@ -32,6 +32,7 @@ pgsShearRatingArtifact::pgsShearRatingArtifact() :
 m_strVehicleName(_T("Unknown"))
 {
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
    m_RF = 0;
 
    m_RatingType = pgsTypes::lrDesign_Inventory;
@@ -105,6 +106,7 @@ void pgsShearRatingArtifact::SetVehicleIndex(VehicleIndexType vehicleIdx)
 
 VehicleIndexType pgsShearRatingArtifact::GetVehicleIndex() const
 {
+   if (m_HasIteratedRating && m_LongitudinalRF < m_VerticalRF) return m_LongVehicleIndex;
    return m_VehicleIndex;
 }
 
@@ -115,6 +117,7 @@ void pgsShearRatingArtifact::SetVehicleWeight(Float64 W)
 
 Float64 pgsShearRatingArtifact::GetVehicleWeight() const
 {
+   if (m_HasIteratedRating && m_LongitudinalRF < m_VerticalRF) return m_LongVehicleWeight;
    return m_VehicleWeight;
 }
 
@@ -125,6 +128,7 @@ void pgsShearRatingArtifact::SetVehicleName(LPCTSTR str)
 
 const std::_tstring& pgsShearRatingArtifact::GetVehicleName() const
 {
+   if (m_HasIteratedRating && m_LongitudinalRF < m_VerticalRF) return m_LongVehicleName;
    return m_strVehicleName;
 }
 
@@ -132,6 +136,7 @@ void pgsShearRatingArtifact::SetSystemFactor(Float64 systemFactor)
 {
    m_SystemFactor = systemFactor;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetSystemFactor() const
@@ -143,6 +148,7 @@ void pgsShearRatingArtifact::SetConditionFactor(Float64 conditionFactor)
 {
    m_ConditionFactor = conditionFactor;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetConditionFactor() const
@@ -154,6 +160,7 @@ void pgsShearRatingArtifact::SetCapacityReductionFactor(Float64 phi)
 {
    m_CapacityRedutionFactor = phi;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetCapacityReductionFactor() const
@@ -165,6 +172,7 @@ void pgsShearRatingArtifact::SetNominalShearCapacity(Float64 Vn)
 {
    m_Vn = Vn;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetNominalShearCapacity() const
@@ -176,6 +184,7 @@ void pgsShearRatingArtifact::SetDeadLoadFactor(Float64 gDC)
 {
    m_gDC = gDC;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetDeadLoadFactor() const
@@ -187,6 +196,7 @@ void pgsShearRatingArtifact::SetDeadLoadShear(Float64 Vdc)
 {
    m_Vdc = Vdc;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetDeadLoadShear() const
@@ -198,6 +208,7 @@ void pgsShearRatingArtifact::SetWearingSurfaceFactor(Float64 gDW)
 {
    m_gDW = gDW;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetWearingSurfaceFactor() const
@@ -209,6 +220,7 @@ void pgsShearRatingArtifact::SetWearingSurfaceShear(Float64 Vdw)
 {
    m_Vdw = Vdw;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetWearingSurfaceShear() const
@@ -220,6 +232,7 @@ void pgsShearRatingArtifact::SetCreepFactor(Float64 gCR)
 {
    m_gCR = gCR;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetCreepFactor() const
@@ -231,6 +244,7 @@ void pgsShearRatingArtifact::SetCreepShear(Float64 Vcr)
 {
    m_Vcr = Vcr;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetCreepShear() const
@@ -242,6 +256,7 @@ void pgsShearRatingArtifact::SetShrinkageFactor(Float64 gSH)
 {
    m_gSH = gSH;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetShrinkageFactor() const
@@ -253,6 +268,7 @@ void pgsShearRatingArtifact::SetShrinkageShear(Float64 Vsh)
 {
    m_Vsh = Vsh;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetShrinkageShear() const
@@ -264,6 +280,7 @@ void pgsShearRatingArtifact::SetRelaxationFactor(Float64 gRE)
 {
    m_gRE = gRE;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetRelaxationFactor() const
@@ -275,6 +292,7 @@ void pgsShearRatingArtifact::SetRelaxationShear(Float64 Vre)
 {
    m_Vre = Vre;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetRelaxationShear() const
@@ -286,6 +304,7 @@ void pgsShearRatingArtifact::SetSecondaryEffectsFactor(Float64 gPS)
 {
    m_gPS = gPS;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetSecondaryEffectsFactor() const
@@ -297,6 +316,7 @@ void pgsShearRatingArtifact::SetSecondaryEffectsShear(Float64 Vps)
 {
    m_Vps = Vps;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetSecondaryEffectsShear() const
@@ -308,6 +328,7 @@ void pgsShearRatingArtifact::SetLiveLoadFactor(Float64 gLL)
 {
    m_gLL = gLL;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetLiveLoadFactor() const
@@ -319,6 +340,7 @@ void pgsShearRatingArtifact::SetLiveLoadShear(Float64 Vllim)
 {
    m_Vllim = Vllim;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 pgsShearRatingArtifact::GetLiveLoadShear() const
@@ -336,8 +358,17 @@ const pgsHorizontalShearArtifact& pgsShearRatingArtifact::GetHorizontalInterface
    return m_HorizShearArtifact;
 }
 
+void pgsShearRatingArtifact::SetIteratedRatingFactors(Float64 vertical, Float64 longitudinal)
+{
+   m_VerticalRF = vertical;
+   m_LongitudinalRF = longitudinal;
+   m_bRFComputed = false;
+   m_HasIteratedRating = true;
+}
+
 Float64 pgsShearRatingArtifact::GetRatingFactor() const
 {
+   if (m_HasIteratedRating) return Min(m_VerticalRF, m_LongitudinalRF);
    if ( m_bRFComputed )
    {
       return m_RF;
@@ -381,6 +412,12 @@ Float64 pgsShearRatingArtifact::GetRatingFactor() const
 
 void pgsShearRatingArtifact::MakeCopy(const pgsShearRatingArtifact& rOther)
 {
+   m_LongVehicleIndex = rOther.m_LongVehicleIndex;
+   m_LongVehicleName = rOther.m_LongVehicleName;
+   m_LongVehicleWeight = rOther.m_LongVehicleWeight;
+   m_HasIteratedRating = rOther.m_HasIteratedRating;
+   m_VerticalRF = rOther.m_VerticalRF;
+   m_LongitudinalRF = rOther.m_LongitudinalRF;
    m_POI                        = rOther.m_POI;
    m_RatingType                 = rOther.m_RatingType;
    m_VehicleIndex               = rOther.m_VehicleIndex;

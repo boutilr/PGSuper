@@ -21,6 +21,8 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include <LRFD/Shear.h>
+#include <LRFD/RatingSolver.h>
 #include "EngAgent.h"
 #include "LoadRater.h"
 #include "Designer2.h"
@@ -34,6 +36,9 @@
 #include <EAF\AutoProgress.h>
 
 #include <psgLib/MomentCapacityCriteria.h>
+#include "ShearCapacityEngineer.h"
+#include <stdexcept>
+#include <LRFD/MBEManager.h>
 
 #if defined _USE_MULTITHREADING
 #include <future>
@@ -888,9 +893,166 @@ void pgsLoadRater::ShearRating(const CGirderKey& girderKey,const PoiList& vPoi,p
          designer.CheckHorizontalShear(limitState, poi, Vu, fcSlab, fcGirder, fy, nullptr, &h_artifact);
       }
       shearArtifact.SetHorizontalInterfaceShearArtifact(h_artifact);
+      if (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() &&
+          vVn[i].ConcreteType != pgsTypes::UHPC && vVn[i].ConcreteType != pgsTypes::PCI_UHPC &&
+          vVn[i].Method != pgsTypes::scmVciVcw)
+      {
+         pgsLongReinfShearArtifact longitudinal;
+         ComputeMBE4ShearRating(poi, ratingType, vehicleIdx, loadRatingIntervalIdx, bTimeStep, &shearArtifact, &longitudinal);
+         ratingArtifact.AddArtifact(poi, longitudinal);
+      }
 
       ratingArtifact.AddArtifact(poi,shearArtifact);
    }
+}
+
+void pgsLoadRater::ComputeMBE4ShearRating(const pgsPointOfInterest& poi, pgsTypes::LoadRatingType ratingType,
+   VehicleIndexType vehicleIdx, IntervalIndexType intervalIdx, bool timeStep,
+   pgsShearRatingArtifact* shear, pgsLongReinfShearArtifact* longitudinal) const
+{
+   GET_IFACE2(GetBroker(),IProductForces,forces);
+   GET_IFACE2(GetBroker(),ICombinedForces,combined);
+   GET_IFACE2(GetBroker(),IProductLoads,loads);
+   GET_IFACE2(GetBroker(),IRatingSpecification,spec);
+   pgsTypes::LimitState ls = GetStrengthLimitStateType(ratingType);
+   auto llType = GetLiveLoadType(ratingType);
+   auto batMin = forces->GetBridgeAnalysisType(pgsTypes::Minimize);
+   auto batMax = forces->GetBridgeAnalysisType(pgsTypes::Maximize);
+   std::vector<pgsTypes::BridgeAnalysisType> analyses;
+   if (batMin != batMax || (batMin != pgsTypes::SimpleSpan && batMin != pgsTypes::ContinuousSpan))
+      analyses = { pgsTypes::SimpleSpan, pgsTypes::ContinuousSpan };
+   else analyses = { batMin };
+   auto names = loads->GetVehicleNames(llType, CGirderKey(poi.GetSegmentKey()));
+   VehicleIndexType first = vehicleIdx == INVALID_INDEX ? 0 : vehicleIdx;
+   VehicleIndexType last = vehicleIdx == INVALID_INDEX ? (VehicleIndexType)names.size() : vehicleIdx + 1;
+   Float64 verticalRF = DBL_MAX, longitudinalRF = DBL_MAX;
+   Float64 modifier = Max(0.85, spec->GetSystemFactorShear() * spec->GetGirderConditionFactor(poi.GetSegmentKey()));
+   GET_IFACE2(GetBroker(),IMaterials,materials);
+   GET_IFACE2(GetBroker(),IPointOfInterest,poiService);
+   Float64 longEs, longFy, longFu;
+   CClosureKey closure;
+   if (poiService->IsInClosureJoint(poi, &closure))
+      materials->GetClosureJointLongitudinalRebarProperties(closure, &longEs, &longFy, &longFu);
+   else materials->GetSegmentLongitudinalRebarProperties(poi.GetSegmentKey(), &longEs, &longFy, &longFu);
+   pgsShearCapacityEngineer capacity(GetBroker(), m_StatusGroupID);
+   pgsDesigner2 designer(GetBroker(), m_StatusGroupID);
+   designer.InitShearCheck(poi.GetSegmentKey(), intervalIdx, ls, nullptr);
+   pgsShearCapacityEngineer::RatingSectionCache sectionCache;
+   std::array<std::optional<pgsLongReinfShearArtifact>, 2> tieCache;
+   bool firstVertical = true, firstLongitudinal = true;
+   for (auto bat : analyses)
+   {
+      for (VehicleIndexType truck = first; truck < last; ++truck)
+      {
+         for (auto& load : forces->GetRatingLiveLoadCases(intervalIdx, llType, truck, poi, bat))
+         {
+            auto face = [&](const WBFL::System::SectionValue& v) { return load.RightFace ? v.Right() : v.Left(); };
+            RatingForceState dead;
+            const LoadingCombinationType combos[] = { lcDC, lcDWRating, lcCR, lcSH, lcRE, lcPS };
+            Float64 factors[] = { spec->GetDeadLoadFactor(ls), spec->GetWearingSurfaceFactor(ls),
+               spec->GetCreepFactor(ls), spec->GetShrinkageFactor(ls), spec->GetRelaxationFactor(ls), spec->GetSecondaryEffectsFactor(ls) };
+            Float64 shears[6] = {};
+            for (int c = 0; c < (timeStep ? 6 : 2); ++c)
+            {
+               dead.Moment += factors[c] * combined->GetMoment(intervalIdx, combos[c], poi, bat, rtCumulative);
+               dead.Axial += factors[c] * combined->GetAxial(intervalIdx, combos[c], poi, bat, rtCumulative);
+               shears[c] = face(combined->GetShear(intervalIdx, combos[c], poi, bat, rtCumulative));
+               dead.Shear += factors[c] * shears[c];
+            }
+            Float64 gLL = spec->GetLiveLoadFactor(ls, true);
+            if (gLL < 0) gLL = spec->GetStrengthLiveLoadFactor(ratingType, load.Axles);
+            RatingForceState live = load.Forces;
+            // Pedestrian loading follows the existing independent loading policy.
+            // The truck's M/N/V placement remains concurrent.
+            if (spec->IncludePedestrianLiveLoad())
+            {
+               Float64 mmin, mmax, nmin, nmax;
+               WBFL::System::SectionValue vmin, vmax;
+               combined->GetCombinedLiveLoadMoment(intervalIdx, pgsTypes::lltPedestrian, poi, bat, &mmin, &mmax);
+               combined->GetCombinedLiveLoadAxial(intervalIdx, pgsTypes::lltPedestrian, poi, bat, &nmin, &nmax);
+               combined->GetCombinedLiveLoadShear(intervalIdx, pgsTypes::lltPedestrian, poi, bat, false, &vmin, &vmax);
+               live.Moment += live.Moment < 0 ? mmin : mmax;
+               live.Axial += MaxMagnitude(nmin, nmax);
+               live.Shear += live.Shear < 0 ? face(vmin) : face(vmax);
+            }
+            auto evaluate = [&](Float64 rf, bool checkLongitudinal, SHEARCAPACITYDETAILS* saved,
+                                pgsLongReinfShearArtifact* savedLong) {
+               RatingForceState total;
+               total.Moment = dead.Moment + rf * gLL * live.Moment;
+               total.Axial = dead.Axial + rf * gLL * live.Axial;
+               total.Shear = dead.Shear + rf * gLL * live.Shear;
+               SHEARCAPACITYDETAILS details;
+               capacity.ComputeRatingShearCapacity(intervalIdx, ls, poi, total, sectionCache, &details);
+               if (saved) *saved = details;
+               if (!details.ShearInRange) return -1.0;
+               if (!checkLongitudinal) return modifier * details.Phi * details.Vn - fabs(total.Shear);
+               auto& tie = tieCache[details.bTensionBottom];
+               if (!tie || savedLong)
+               {
+                  pgsLongReinfShearArtifact artifact;
+                  designer.CheckLongReinfShear(poi, intervalIdx, ls, details, nullptr, &artifact);
+                  artifact.SetFy(longFy * details.Kdb);
+                  if (artifact.IsApplicable()) artifact.SetEquation(1);
+                  if (!tie) tie = artifact;
+                  if (savedLong)
+                  {
+                     *savedLong = artifact;
+                     savedLong->SetRatingModifier(modifier);
+                  }
+               }
+               if (!tie->IsApplicable()) return 1.0;
+
+               // LRFD Eq. 5.7.3.5-1 uses the forces and theta at the trial load.
+               const Float64 demand = WBFL::LRFD::Shear::LongitudinalShearDemand(
+                  details.RealMu, details.Nu, details.Vu, details.dv, details.PhiMu,
+                  details.Nu < 0 ? 0.75 : 1.0, details.Phi, details.Vp, details.Vs, details.Theta);
+               if (savedLong)
+               {
+                  savedLong->SetVu(details.Vu);
+                  savedLong->SetVs(Min(details.Vs, details.Vu / details.Phi));
+                  savedLong->SetVp(details.Vp);
+                  savedLong->SetTheta(details.Theta);
+                  savedLong->SetDemandForce(demand);
+               }
+               return modifier * tie->GetCapacityForce() - demand;
+            };
+            std::vector<Float64> transitions;
+            if (gLL * live.Moment != 0) transitions.push_back(-dead.Moment / (gLL * live.Moment));
+            if (gLL * live.Axial != 0) transitions.push_back(-dead.Axial / (gLL * live.Axial));
+            if (gLL * live.Shear != 0) transitions.push_back(-dead.Shear / (gLL * live.Shear));
+            Float64 vrf = WBFL::LRFD::RatingSolver::Solve([&](Float64 rf) { return evaluate(rf, false, nullptr, nullptr); }, transitions, verticalRF);
+            Float64 lrf = WBFL::LRFD::RatingSolver::Solve([&](Float64 rf) { return evaluate(rf, true, nullptr, nullptr); }, transitions, longitudinalRF);
+            if (firstVertical || vrf < verticalRF)
+            {
+               firstVertical = false;
+               verticalRF = vrf;
+               SHEARCAPACITYDETAILS details;
+               evaluate(vrf == DBL_MAX ? 1.0 : vrf, false, &details, nullptr);
+               shear->SetNominalShearCapacity(details.Vn);
+               shear->SetCapacityReductionFactor(details.Phi);
+               shear->SetVehicleIndex(truck);
+               shear->SetVehicleName(names[truck].c_str());
+               shear->SetVehicleWeight(loads->GetVehicleWeight(llType, truck));
+               shear->SetDeadLoadShear(shears[0]); shear->SetWearingSurfaceShear(shears[1]);
+               shear->SetCreepShear(shears[2]); shear->SetShrinkageShear(shears[3]);
+               shear->SetRelaxationShear(shears[4]); shear->SetSecondaryEffectsShear(shears[5]);
+               shear->SetLiveLoadFactor(gLL); shear->SetLiveLoadShear(live.Shear);
+            }
+            if (firstLongitudinal || lrf < longitudinalRF)
+            {
+               firstLongitudinal = false;
+               longitudinalRF = lrf;
+               evaluate(1.0, true, nullptr, longitudinal);
+               longitudinal->SetRatingFactor(lrf);
+               longitudinal->SetVehicleName(names[truck]);
+               shear->SetLongitudinalVehicle(truck, names[truck], loads->GetVehicleWeight(llType, truck));
+            }
+         }
+      }
+   }
+   if (firstVertical)
+      throw std::runtime_error("No concurrent live-load cases available for MBE shear rating");
+   shear->SetIteratedRatingFactors(verticalRF, longitudinalRF);
 }
 
 void pgsLoadRater::LongitudinalReinforcementForShearRating(const CGirderKey& girderKey, const PoiList& vPoi, pgsTypes::LoadRatingType ratingType, VehicleIndexType vehicleIdx, IntervalIndexType loadRatingIntervalIdx, bool bTimeStep, pgsRatingArtifact& ratingArtifact) const
@@ -906,10 +1068,14 @@ void pgsLoadRater::LongitudinalReinforcementForShearRating(const CGirderKey& gir
 
    for(const pgsPointOfInterest& poi : vPoi)
    {
-      pgsLongReinfShearArtifact l_artifact;
+      // ShearRating already supplies an iterated check at its analysis sections.
+      // Keep the existing support/anchorage checks at the other POIs; those
+      // POIs are intentionally excluded from the vertical shear rating table.
+      if (ratingArtifact.GetLongitudinalReinforcementForShearArtifact(poi) != nullptr) continue;
       SHEARCAPACITYDETAILS scd;
-      pgsDesigner2 designer(m_pBroker,m_StatusGroupID);
       pShearCapacity->GetShearCapacityDetails(limitState, loadRatingIntervalIdx, poi, nullptr, &scd);
+      pgsLongReinfShearArtifact l_artifact;
+      pgsDesigner2 designer(m_pBroker,m_StatusGroupID);
       designer.InitShearCheck(poi.GetSegmentKey(), loadRatingIntervalIdx, limitState, nullptr);
       designer.CheckLongReinfShear(poi, loadRatingIntervalIdx, limitState, scd, nullptr, &l_artifact);
       ratingArtifact.AddArtifact(poi, l_artifact);

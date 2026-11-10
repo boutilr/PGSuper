@@ -1701,3 +1701,7 @@
 #define _APS_NEXT_SYMED_VALUE           115
 #endif
 #endif
+
+#define IDC_MBE_ZERO_STRAIN 19901
+#define IDC_MBE_SIZE_EFFECT 19902
+#define IDC_MBE_REDUCED_K 19903

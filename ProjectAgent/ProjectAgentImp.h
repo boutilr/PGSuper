@@ -423,6 +423,13 @@ public:
    bool IsRatingEnabled(pgsTypes::LoadRatingType ratingType) const override;
    void EnableRating(pgsTypes::LoadRatingType ratingType,bool bEnable) override;
    std::_tstring GetRatingSpecification() const override;
+   bool UseUncrackedMCFTAllowance() const override;
+   void UseUncrackedMCFTAllowance(bool enabled) override;
+   bool NeglectPrestressSizeEffect() const override;
+   void NeglectPrestressSizeEffect(bool enabled) override;
+   bool UseReducedDemandK() const override;
+   void UseReducedDemandK(bool enabled) override;
+
    void SetADTT(Int16 adtt) override;
    Int16 GetADTT() const override;
    void SetRatingSpecification(const std::_tstring& spec) override;
@@ -718,6 +725,9 @@ private:
    const RatingLibraryEntry* m_pRatingEntry;
    bool m_bExcludeLegalLoadLaneLoading;
    bool m_bIncludePedestrianLiveLoad;
+   bool m_bUseUncrackedMCFTAllowance;
+   bool m_bNeglectPrestressSizeEffect;
+   bool m_bUseReducedDemandK;
    pgsTypes::SpecialPermitType m_SpecialPermitType;
    Float64 m_SystemFactorFlexure;
    Float64 m_SystemFactorShear;
