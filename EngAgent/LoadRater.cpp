@@ -23,6 +23,7 @@
 #include "stdafx.h"
 #include <LRFD/Shear.h>
 #include <LRFD/RatingSolver.h>
+#include <LRFD/MBERating.h>
 #include "EngAgent.h"
 #include "LoadRater.h"
 #include "Designer2.h"
@@ -511,6 +512,21 @@ void pgsLoadRater::MomentRating(const pgsPointOfInterest& poi, bool bPositiveMom
    momentArtifact.SetSecondaryEffectsMoment(moments.PS);
    momentArtifact.SetLiveLoadFactor(gLL);
    momentArtifact.SetLiveLoadMoment(moments.LLIM + moments.PL);
+
+   if (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() &&
+       ratingParams.pRatingSpec.lock()->UseReducedDemandK() &&
+       0.0 < K && K < 1.0 && momentArtifact.GetRatingFactor() < 1.0)
+   {
+      Float64 liveMoment = gLL * (moments.LLIM + moments.PL);
+      if (!IsZero(liveMoment) && BinarySign(liveMoment) == BinarySign(ratingParams.pMminDetails->Mr))
+      {
+         // MBE C6A.5.6: adopt an improved K at the reduced capacity/demand balance.
+         Float64 modifier = Max(0.85, ratingParams.system_factor * condition_factor);
+         Float64 reducedK = WBFL::LRFD::MBERating::GetReducedDemandMinimumReinforcementFactor(
+            ratingParams.pMminDetails->Mr, ratingParams.pMminDetails->MrMin1, modifier);
+         momentArtifact.SetMinimumReinforcementFactor(Max(K, reducedK));
+      }
+   }
 
    ratingArtifact.AddArtifact(poi, momentArtifact, bPositiveMoment);
 }
