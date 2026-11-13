@@ -71,9 +71,9 @@ rptChapter* CLoadRatingDetailsChapterBuilder::Build(const std::shared_ptr<const 
 
    rptChapter* pChapter = CPGSuperChapterBuilder::Build(pRptSpec,level);
 
-   GET_IFACE2(pBroker, IRatingSpecification, ratingSpec);
    if (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition())
    {
+      GET_IFACE2(pBroker, IRatingSpecification, ratingSpec);
       rptParagraph* options = new rptParagraph;
       *pChapter << options;
       *options << _T("MBE Fourth Edition project allowances: ")
