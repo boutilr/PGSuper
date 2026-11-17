@@ -133,6 +133,7 @@ public:
                                   AxleConfiguration* pMinRightAxleConfig = nullptr,
                                   AxleConfiguration* pMaxLeftAxleConfig = nullptr,
                                   AxleConfiguration* pMaxRightAxleConfig = nullptr) const;
+   std::vector<RatingLiveLoadCase> GetRatingLiveLoadCases(IntervalIndexType intervalIdx, pgsTypes::LiveLoadType llType, VehicleIndexType vehicleIdx, const pgsPointOfInterest& poi, pgsTypes::BridgeAnalysisType bat) const;
    void GetVehicularLiveLoadMoment(IntervalIndexType intervalIdx,pgsTypes::LiveLoadType llType,VehicleIndexType vehicleIdx,const pgsPointOfInterest& poi,pgsTypes::BridgeAnalysisType bat,bool bIncludeImpact,bool bIncludeLLDF,Float64* pMmin,Float64* pMmax,AxleConfiguration* pMinAxleConfig=nullptr,AxleConfiguration* pMaxAxleConfig=nullptr) const;
    void GetVehicularLiveLoadDeflection(IntervalIndexType intervalIdx,pgsTypes::LiveLoadType llType,VehicleIndexType vehicleIdx,const pgsPointOfInterest& poi,pgsTypes::BridgeAnalysisType bat,bool bIncludeImpact,bool bIncludeLLDF,Float64* pDmin,Float64* pDmax,AxleConfiguration* pMinAxleConfig=nullptr,AxleConfiguration* pMaxAxleConfig=nullptr) const;
    void GetVehicularLiveLoadRotation(IntervalIndexType intervalIdx,pgsTypes::LiveLoadType llType,VehicleIndexType vehicleIdx,const pgsPointOfInterest& poi,pgsTypes::BridgeAnalysisType bat,bool bIncludeImpact,bool bIncludeLLDF,Float64* pRmin,Float64* pRmax,AxleConfiguration* pMinAxleConfig=nullptr,AxleConfiguration* pMaxAxleConfig=nullptr) const;

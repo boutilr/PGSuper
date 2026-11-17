@@ -1115,6 +1115,68 @@ void CGirderModelManager::GetVehicularLiveLoadShear(IntervalIndexType intervalId
    }
 }
 
+std::vector<RatingLiveLoadCase> CGirderModelManager::GetRatingLiveLoadCases(IntervalIndexType intervalIdx, pgsTypes::LiveLoadType llType, VehicleIndexType vehicleIdx, const pgsPointOfInterest& poi, pgsTypes::BridgeAnalysisType bat) const
+{
+   ATLASSERT(bat == pgsTypes::SimpleSpan || bat == pgsTypes::ContinuousSpan);
+   PoiList pois{ poi };
+   CGirderModelData* model = UpdateLBAMPois(pois);
+   CComBSTR stage(GetLBAMStageName(intervalIdx));
+   CComPtr<ILBAMAnalysisEngine> engine;
+   GetEngine(model, bat == pgsTypes::ContinuousSpan, &engine);
+   CComPtr<IBasicVehicularResponse> concurrent;
+   engine->get_BasicVehicularResponse(&concurrent);
+   CComPtr<ILBAMModel> lbam;
+   GetLBAM(model, bat, &lbam);
+   std::vector<RatingLiveLoadCase> cases;
+   for (auto effect : { fetMz, fetFy, fetFx })
+   {
+      for (auto optimization : { optMinimize, optMaximize })
+      {
+         CComPtr<ILiveLoadModelSectionResults> extremes;
+         CAnalysisResult ar(_T(__FILE__), __LINE__);
+         ar = model->pVehicularResponse[bat]->ComputeForces(m_LBAMPoi, stage, g_LiveLoadModelType[llType],
+            vehicleIdx, roMember, effect, optimization, vlcDefault, VARIANT_TRUE,
+            GetLiveLoadDistributionFactorType(llType), VARIANT_TRUE, &extremes);
+         Float64 left, right;
+         CComPtr<ILiveLoadConfiguration> configs[2];
+         extremes->GetResult(0, &left, &configs[0], &right, &configs[1]);
+         for (int face = 0; face < 2; ++face)
+         {
+            if (!configs[face]) continue;
+            VARIANT_BOOL applicable;
+            configs[face]->get_IsApplicable(&applicable);
+            if (applicable == VARIANT_FALSE) continue;
+            // Do not independently re-optimize another force effect: all three
+            // forces below come from this same axle/lane placement.
+            CComPtr<ISectionResult3Ds> results;
+            ar = concurrent->ComputeForces(m_LBAMPoi, stage, roMember, configs[face], &results);
+            CComPtr<ISectionResult3D> result;
+            results->get_Item(0, &result);
+            RatingLiveLoadCase item;
+            item.RightFace = face == 1;
+            if (item.RightFace)
+            {
+               result->get_ZRight(&item.Forces.Moment);
+               result->get_YRight(&item.Forces.Shear);
+               result->get_XRight(&item.Forces.Axial);
+               item.Forces.Moment *= -1;
+               item.Forces.Axial *= -1;
+            }
+            else
+            {
+               result->get_ZLeft(&item.Forces.Moment);
+               result->get_YLeft(&item.Forces.Shear);
+               result->get_XLeft(&item.Forces.Axial);
+               item.Forces.Shear *= -1;
+            }
+            CreateAxleConfig(lbam, configs[face], &item.Axles);
+            cases.push_back(std::move(item));
+         }
+      }
+   }
+   return cases;
+}
+
 void CGirderModelManager::GetVehicularLiveLoadMoment(IntervalIndexType intervalIdx,pgsTypes::LiveLoadType llType,VehicleIndexType vehicleIdx,const pgsPointOfInterest& poi,pgsTypes::BridgeAnalysisType bat,bool bIncludeImpact,bool bIncludeLLDF,Float64* pMmin,Float64* pMmax,AxleConfiguration* pMinAxleConfig,AxleConfiguration* pMaxAxleConfig) const
 {
    PoiList vPoi;
