@@ -22,6 +22,8 @@
 
 #include <PgsExt\PgsExtLib.h>
 #include <PgsExt\YieldStressRatioArtifact.h>
+#include <cmath>
+#include <stdexcept>
 
 
 /****************************************************************************
@@ -30,6 +32,7 @@ CLASS
 ****************************************************************************/
 pgsYieldStressRatioArtifact::pgsYieldStressRatioArtifact()
 {
+   m_ComputeRatingFactor = false;
    m_bRFComputed = false;
 
    m_RebarRF = 0;
@@ -593,8 +596,92 @@ Float64 pgsYieldStressRatioArtifact::GetStressRatio() const
    return Min(GetRebarStressRatio(), GetStrandStressRatio(),GetSegmentTendonStressRatio(), GetGirderTendonStressRatio());
 }
 
+void pgsYieldStressRatioArtifact::SetComputeRatingFactor(bool computeRatingFactor)
+{
+   m_ComputeRatingFactor = computeRatingFactor;
+}
+
+bool pgsYieldStressRatioArtifact::IsComputingRatingFactor() const
+{
+   return m_ComputeRatingFactor;
+}
+
+Float64 pgsYieldStressRatioArtifact::GetRebarRatingFactor() const
+{
+   return !m_ComputeRatingFactor ? GetRebarStressRatio() :
+      (m_bRebar ? ComputeRatingFactor(m_db, m_Eb, m_fb, m_fyb) : DBL_MAX);
+}
+
+Float64 pgsYieldStressRatioArtifact::GetStrandRatingFactor() const
+{
+   return !m_ComputeRatingFactor ? GetStrandStressRatio() :
+      (m_bStrand ? ComputeRatingFactor(m_dps, m_Eps, m_fps, m_fyps) : DBL_MAX);
+}
+
+Float64 pgsYieldStressRatioArtifact::GetSegmentTendonRatingFactor() const
+{
+   return !m_ComputeRatingFactor ? GetSegmentTendonStressRatio() :
+      (m_bSegmentTendon ? ComputeRatingFactor(m_dptSegment, m_EptSegment, m_fptSegment, m_fyptSegment) : DBL_MAX);
+}
+
+Float64 pgsYieldStressRatioArtifact::GetGirderTendonRatingFactor() const
+{
+   return !m_ComputeRatingFactor ? GetGirderTendonStressRatio() :
+      (m_bGirderTendon ? ComputeRatingFactor(m_dptGirder, m_EptGirder, m_fptGirder, m_fyptGirder) : DBL_MAX);
+}
+
+Float64 pgsYieldStressRatioArtifact::GetRatingFactor() const
+{
+   return Min(GetRebarRatingFactor(), GetStrandRatingFactor(), GetSegmentTendonRatingFactor(), GetGirderTendonRatingFactor());
+}
+
+Float64 pgsYieldStressRatioArtifact::ComputeRatingFactor(Float64 d, Float64 E, Float64 fbcr, Float64 fy) const
+{
+   // MBE 6A.4.2.1 and 6A.5.4.2.2b; use the stress model in Example A9.7.4.2.2.
+   // f = fbcr + (E/Eg)*(d-c)/Icr * max(sign(Mcr)*(MD + RF*ML) - |Mcr|, 0).
+   // Solve at f = allowable. Permanent effects and the stress at cracking stay fixed.
+   Float64 permanentMoment = m_gDC*m_Mdc + m_gDW*m_Mdw + m_gCR*m_Mcr +
+      m_gSH*m_Msh + m_gRE*m_Mre + m_gPS*m_Mps;
+   Float64 liveMoment = m_gLL*m_Mllim; // already includes LLDF
+   Float64 allowable = m_AllowableStressRatio*fy;
+   if (!std::isfinite(permanentMoment) || !std::isfinite(liveMoment) ||
+      !std::isfinite(m_Mcrack) || !std::isfinite(d) || !std::isfinite(m_c) ||
+      !std::isfinite(E) || !std::isfinite(m_Eg) || !std::isfinite(m_Icrack) ||
+      !std::isfinite(fbcr) || !std::isfinite(allowable) ||
+      E <= 0.0 || m_Eg <= 0.0 || m_Icrack <= 0.0 || d <= m_c || allowable <= 0.0)
+   {
+      throw std::invalid_argument("Invalid Service I cracked-section rating parameters");
+   }
+
+   Float64 stressPerMoment = (E/m_Eg)*(d-m_c)/m_Icrack;
+   Float64 direction = (m_Mcrack < 0.0 ? -1.0 : 1.0);
+   Float64 crackingMoment = fabs(m_Mcrack);
+   permanentMoment *= direction;
+   liveMoment *= direction;
+   if (!std::isfinite(stressPerMoment) || stressPerMoment <= 0.0)
+   {
+      throw std::invalid_argument("Invalid Service I cracked-section stress coefficient");
+   }
+
+   // Retain zero additional tensile stress below cracking rather than extrapolating
+   // the cracked-section slope to a negative excess moment.
+   Float64 permanentStress = fbcr + stressPerMoment*Max(permanentMoment-crackingMoment, 0.0);
+   if (allowable < permanentStress)
+   {
+      return 0.0;
+   }
+   if (liveMoment <= 0.0)
+   {
+      return DBL_MAX;
+   }
+
+   Float64 limitingMoment = crackingMoment + (allowable-fbcr)/stressPerMoment;
+   return Min(DBL_MAX, Max(0.0, (limitingMoment-permanentMoment)/liveMoment));
+}
+
 void pgsYieldStressRatioArtifact::MakeCopy(const pgsYieldStressRatioArtifact& rOther)
 {
+   m_ComputeRatingFactor = rOther.m_ComputeRatingFactor;
    m_POI            = rOther.m_POI;
    m_RatingType     = rOther.m_RatingType;
    m_VehicleIndex   = rOther.m_VehicleIndex;

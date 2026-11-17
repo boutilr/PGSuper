@@ -707,12 +707,14 @@ void CLoadRatingDetailsChapterBuilder::StressRatingDetails(rptChapter* pChapter,
 void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* pChapter,std::shared_ptr<WBFL::EAF::Broker> pBroker,bool bPositiveMoment,const std::vector<const pgsRatingArtifact*>& RatingArtifacts,bool bSplicedGirder) const
 {
    bool isData = false;
+   bool computeRatingFactor = false;
    for (auto pRatingArtifact : RatingArtifacts)
    {
       const pgsRatingArtifact::YieldStressRatios& artifacts = pRatingArtifact->GetYieldStressRatios(bPositiveMoment);
       if (artifacts.size() != 0)
       {
          isData = true;
+         computeRatingFactor = artifacts[0].second.IsComputingRatingFactor();
          break;
       }
    }
@@ -755,7 +757,7 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
    INIT_UV_PROTOTYPE( rptStressUnitValue,  mod_e,    pDisplayUnits->GetModEUnit(),            false );
    INIT_SCALAR_PROTOTYPE(rptRcScalar, scalar, pDisplayUnits->GetScalarFormat());
 
-   ColumnIndexType nColumns = 18;
+   ColumnIndexType nColumns = 18 + (computeRatingFactor ? 1 : 0);
    if ( bSplicedGirder )
    {
       nColumns += 4;
@@ -810,6 +812,10 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
          (*table)(0, col++) << COLHDR(RPT_STRESS(_T("s")), rptStressUnitTag, pDisplayUnits->GetStressUnit());
          (*table)(0, col++) << COLHDR(RPT_STRESS(_T("r")), rptStressUnitTag, pDisplayUnits->GetStressUnit());
          (*table)(0, col++) << _T("Stress") << rptNewLine << _T("Ratio") << rptNewLine << RPT_STRESS(_T("r")) << _T("/") << RPT_STRESS(_T("s"));
+         if (computeRatingFactor)
+         {
+            (*table)(0, col++) << _T("Service I") << rptNewLine << _T("RF");
+         }
          (*table)(0, col++) << _T("Reinf.") << rptNewLine << _T("Type");
 
          pPara = new rptParagraph;
@@ -831,6 +837,10 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
          pPara = new rptParagraph(rptStyleManager::GetFootnoteStyle());
          *pChapter << pPara;
          *pPara << LIVELOAD_PER_GIRDER << rptNewLine;
+         if (computeRatingFactor)
+         {
+            *pPara << _T("MBE 6A.5.4.2.2b, Example A9.7.4.2.2: RF scales live load only, with permanent loads and stress at cracking fixed. Stresses and stress ratio are shown at RF = 1 for the reinforcement controlling the RF.") << rptNewLine;
+         }
 
          row = table->GetNumberOfHeaderRows();
       }
@@ -852,14 +862,19 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
          Float64 segmentTendonSR = artifact.GetSegmentTendonStressRatio();
          Float64 girderTendonSR = artifact.GetGirderTendonStressRatio();
 
-         Float64 SR = Min(rebarSR, strandSR, segmentTendonSR, girderTendonSR);
+         Float64 rebarRF = artifact.GetRebarRatingFactor();
+         Float64 strandRF = artifact.GetStrandRatingFactor();
+         Float64 segmentTendonRF = artifact.GetSegmentTendonRatingFactor();
+         Float64 girderTendonRF = artifact.GetGirderTendonRatingFactor();
+         Float64 RF = Min(rebarRF, strandRF, segmentTendonRF, girderTendonRF);
+         IndexType srIdx = MinIndex(rebarRF, strandRF, segmentTendonRF, girderTendonRF);
+         Float64 ratios[] = { rebarSR, strandSR, segmentTendonSR, girderTendonSR };
+         Float64 SR = ratios[srIdx];
 
-         if (1.0 <= SR && !ReportAtThisPoi(poi, controllingPoi))
+         if (1.0 <= RF && !ReportAtThisPoi(poi, controllingPoi))
          {
             continue;
          }
-
-         IndexType srIdx = MinIndex(rebarSR, strandSR, segmentTendonSR, girderTendonSR);
 
          Float64 d;
          Float64 E;
@@ -930,6 +945,18 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
          else
          {
             (*table)(row, col++) << RF_PASS(rating_factor, SR);
+         }
+
+         if (computeRatingFactor)
+         {
+            if (RF < 1.0)
+            {
+               (*table)(row, col++) << RF_FAIL(rating_factor, RF);
+            }
+            else
+            {
+               (*table)(row, col++) << RF_PASS(rating_factor, RF);
+            }
          }
 
          if (srIdx == 0)

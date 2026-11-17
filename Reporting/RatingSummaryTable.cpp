@@ -27,6 +27,7 @@
 #include <PgsExt\ISummaryRatingArtifact.h>
 #include <PgsExt\CapacityToDemand.h>
 #include <PsgLib\Helpers.h>
+#include <LRFD/MBEManager.h>
 
 #include <IFace/Tools.h>
 #include <EAF/EAFDisplayUnits.h>
@@ -141,8 +142,8 @@ rptRcTable* CRatingSummaryTable::BuildByLimitState(std::shared_ptr<WBFL::EAF::Br
          (*table)(row0,0) << _T("Service I");
          row0 += 2;
 
-         (*table)(row1++,1) << _T("Stress Ratio (+M)");
-         (*table)(row1++,1) << _T("Stress Ratio (-M)");
+         (*table)(row1++,1) << (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() ? _T("Rating Factor (+M)") : _T("Stress Ratio (+M)"));
+         (*table)(row1++,1) << (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() ? _T("Rating Factor (-M)") : _T("Stress Ratio (-M)"));
       }
 
       if ( ratingTableType == Design || ratingTableType == Legal )
@@ -172,7 +173,7 @@ rptRcTable* CRatingSummaryTable::BuildByLimitState(std::shared_ptr<WBFL::EAF::Br
          (*table)(row1++,1) << _T("Shear");
 
          (*table)(row0++,0) << _T("Service I");
-         (*table)(row1++,1) << _T("Stress Ratio");
+         (*table)(row1++,1) << (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() ? _T("Rating Factor") : _T("Stress Ratio"));
       }
 
       if ( ratingTableType == Design || ratingTableType == Legal )
@@ -983,7 +984,8 @@ rptRcTable* CRatingSummaryTable::BuildYieldStressRatio(std::shared_ptr<WBFL::EAF
    ColumnIndexType col = 0;
 
    (*pTable)(0, col++) << _T("Truck");
-   (*pTable)(0, col++) << _T("Yield") << rptNewLine << _T("Stress") << rptNewLine << _T("Ratio");
+   (*pTable)(0, col++) << (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() ?
+      _T("Service I Rating Factor") : _T("Yield Stress Ratio"));
    (*pTable)(0, col++) << Sub2(symbol(gamma), _T("LL"));
    (*pTable)(0, col++) << _T("Controlling Point") << rptNewLine << RPT_LFT_SUPPORT_LOCATION;
    (*pTable)(0, col++) << _T("Cause");
