@@ -379,7 +379,7 @@ private:
    void AddEmergencyLiveLoad(ILBAMModel* pModel, std::shared_ptr<ILibrary> pLibrary, pgsTypes::LiveLoadType llType, Float64 IMtruck, Float64 IMlane) const;
    void AddSHVLoad(ILBAMModel* pModel, std::shared_ptr<ILibrary> pLibrary, pgsTypes::LiveLoadType llType, Float64 IMtruck, Float64 IMlane) const;
    void AddPedestrianLoad(const std::_tstring& strLLName,Float64 wPedLL,IVehicularLoads* pVehicles) const;
-   void AddUserTruck(const std::_tstring& strLLName,std::shared_ptr<ILibrary> pLibrary,Float64 IMtruck,Float64 IMlane,IVehicularLoads* pVehicles) const;
+   void AddUserTruck(const std::_tstring& strLLName,std::shared_ptr<ILibrary> pLibrary,Float64 IMtruck,Float64 IMlane,IVehicularLoads* pVehicles,pgsTypes::LiveLoadType llType) const;
    void AddDummyLiveLoad(IVehicularLoads* pVehicles) const;
 
    void GetLiveLoadModel(pgsTypes::LiveLoadType llType,const CGirderKey& girderKey,ILiveLoadModel** ppLiveLoadModel) const;

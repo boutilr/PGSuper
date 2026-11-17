@@ -1326,7 +1326,7 @@ BEGIN
     LTEXT           "for span length greater than ",IDC_BRIDGE_LENGTH_LABEL,127,58,90,8
     EDITTEXT        IDC_BRIDGE_LENGTH,218,55,40,14,ES_RIGHT | ES_AUTOHSCROLL
     LTEXT           "Static",IDC_BRIDGE_LENGTH_UNITS,261,58,19,8
-    CONTROL         "Neglect axles that do not contribute to the maximum load effect under consideration",IDC_CHECK_NOTIONAL,
+    CONTROL         "Notional vehicle: neglect axles that reduce the extreme load effect",IDC_CHECK_NOTIONAL,
                     "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,19,89,315,15
     CONTROL         "Custom1",IDC_AXLES_GRID,"GXWND",WS_BORDER | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP,15,111,191,118
     PUSHBUTTON      "Add",IDC_ADD,44,239,50,14
@@ -1335,6 +1335,7 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,246,270,50,14
     PUSHBUTTON      "Help",ID_HELP,298,270,50,14
     GROUPBOX        "Truck Configuration",IDC_STATIC,7,75,341,188
+    LTEXT           "Required for notional permits (MBE 6A.4.5.4.1). Actual trucks may include all axles.",IDC_STATIC,212,173,130,48
     LTEXT           "Spacing is measured between axles.\n\nOne axle may have a variable spacing. Enter variable spacing as min-max (e.g. 14-30)",IDC_STATIC,212,116,136,48
     LTEXT           "Static",IDC_TRUCK_DIMENSIONS,215,183,121,45
 END
