@@ -2268,7 +2268,7 @@ CString RatingLibraryEntry::GetSpecialPermitType(pgsTypes::SpecialPermitType per
 
 RatingLibraryEntry::RatingLibraryEntry() :
 m_bUseCurrentSpecification(true),
-m_SpecificationVersion(WBFL::LRFD::MBEManager::Edition::SecondEditionWith2016Interims)
+m_SpecificationVersion(WBFL::LRFD::MBEManager::GetLatestEdition())
 {
    // default for LRFR before 2013
    m_LiveLoadFactorModels[pgsTypes::lrDesign_Inventory].SetLiveLoadFactorType(pgsTypes::gllSingleValue);
