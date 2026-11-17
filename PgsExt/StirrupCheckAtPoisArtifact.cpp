@@ -252,7 +252,7 @@ Float64 pgsLongReinfShearArtifact::GetCapacityForce() const
    Float64 Pr = GetRebarForce();
    Float64 Pps = GetPretensionForce();
    Float64 Pc = GetConcreteForce(); // UHPC has a contribution due to the tensile strength of UHPC
-   return Pr + Pps + Pc;
+   return m_RatingModifier * (Pr + Pps + Pc);
 }
 
 Float64 pgsLongReinfShearArtifact::GetConcreteForce() const
@@ -304,6 +304,8 @@ bool pgsLongReinfShearArtifact::PassedCapacity() const
    {
       return true;
    }
+
+   if (m_HasRatingFactor) return 1.0 <= m_RatingFactor;
 
    if (m_Equation == 1 && fabs(m_Mu) <= fabs(m_Mr) && !IsZero(m_Mr))
    {

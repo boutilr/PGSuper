@@ -248,6 +248,9 @@ CProjectAgentImp::CProjectAgentImp()
 
    m_bExcludeLegalLoadLaneLoading = false;
    m_bIncludePedestrianLiveLoad = false;
+   m_bUseUncrackedMCFTAllowance = true;
+   m_bNeglectPrestressSizeEffect = true;
+   m_bUseReducedDemandK = true;
    m_SpecialPermitType = pgsTypes::ptSingleTripWithEscort;
 
    m_RangeOfApplicabilityAction = WBFL::LRFD::RangeOfApplicabilityAction::Enforce;
@@ -684,6 +687,9 @@ HRESULT CProjectAgentImp::RatingSpecificationProc(IStructuredSave* pSave,IStruct
       pSave->put_Property(_T("SystemFactorShear"),   CComVariant(pObj->m_SystemFactorShear));
       pSave->put_Property(_T("ADTT"),CComVariant(pObj->m_ADTT));
       pSave->put_Property(_T("IncludePedestrianLiveLoad"),CComVariant(pObj->m_bIncludePedestrianLiveLoad));
+      pSave->put_Property(_T("UseUncrackedMCFTAllowance"), CComVariant(pObj->m_bUseUncrackedMCFTAllowance));
+      pSave->put_Property(_T("NeglectPrestressSizeEffect"), CComVariant(pObj->m_bNeglectPrestressSizeEffect));
+      pSave->put_Property(_T("UseReducedDemandK"), CComVariant(pObj->m_bUseReducedDemandK));
 
       pSave->BeginUnit(_T("DesignInventoryRating"),5.0);
       pSave->put_Property(_T("Enabled"),CComVariant(pObj->m_bEnableRating[pgsTypes::lrDesign_Inventory]));
@@ -898,6 +904,11 @@ HRESULT CProjectAgentImp::RatingSpecificationProc(IStructuredSave* pSave,IStruct
    }
    else
    {
+      // Missing allowance settings retain the pre-allowance behavior for existing projects.
+      pObj->m_bUseUncrackedMCFTAllowance = false;
+      pObj->m_bNeglectPrestressSizeEffect = false;
+      pObj->m_bUseReducedDemandK = false;
+
       // it is OK if this fails... older versions files don't have this data block
       if (!FAILED(pLoad->BeginUnit(_T("RatingSpecification"))) )
       {
@@ -950,6 +961,25 @@ HRESULT CProjectAgentImp::RatingSpecificationProc(IStructuredSave* pSave,IStruct
          }
 
          pObj->m_bIncludePedestrianLiveLoad = (var.boolVal == VARIANT_TRUE ? true : false);
+
+         {
+            CComVariant option;
+            option.vt = VT_BOOL;
+            if (SUCCEEDED(pLoad->get_Property(_T("UseUncrackedMCFTAllowance"), &option)) && option.vt == VT_BOOL)
+               pObj->m_bUseUncrackedMCFTAllowance = option.boolVal == VARIANT_TRUE;
+         }
+         {
+            CComVariant option;
+            option.vt = VT_BOOL;
+            if (SUCCEEDED(pLoad->get_Property(_T("NeglectPrestressSizeEffect"), &option)) && option.vt == VT_BOOL)
+               pObj->m_bNeglectPrestressSizeEffect = option.boolVal == VARIANT_TRUE;
+         }
+         {
+            CComVariant option;
+            option.vt = VT_BOOL;
+            if (SUCCEEDED(pLoad->get_Property(_T("UseReducedDemandK"), &option)) && option.vt == VT_BOOL)
+               pObj->m_bUseReducedDemandK = option.boolVal == VARIANT_TRUE;
+         }
 
          //////////////////////////////////////////////////////
          {
@@ -9354,6 +9384,48 @@ void CProjectAgentImp::IncludePedestrianLiveLoad(bool bInclude)
 bool CProjectAgentImp::IncludePedestrianLiveLoad() const
 {
    return m_bIncludePedestrianLiveLoad;
+}
+
+bool CProjectAgentImp::UseUncrackedMCFTAllowance() const
+{
+   return m_bUseUncrackedMCFTAllowance;
+}
+
+void CProjectAgentImp::UseUncrackedMCFTAllowance(bool enabled)
+{
+   if (m_bUseUncrackedMCFTAllowance != enabled)
+   {
+      m_bUseUncrackedMCFTAllowance = enabled;
+      RatingSpecificationChanged(true);
+   }
+}
+
+bool CProjectAgentImp::NeglectPrestressSizeEffect() const
+{
+   return m_bNeglectPrestressSizeEffect;
+}
+
+void CProjectAgentImp::NeglectPrestressSizeEffect(bool enabled)
+{
+   if (m_bNeglectPrestressSizeEffect != enabled)
+   {
+      m_bNeglectPrestressSizeEffect = enabled;
+      RatingSpecificationChanged(true);
+   }
+}
+
+bool CProjectAgentImp::UseReducedDemandK() const
+{
+   return m_bUseReducedDemandK;
+}
+
+void CProjectAgentImp::UseReducedDemandK(bool enabled)
+{
+   if (m_bUseReducedDemandK != enabled)
+   {
+      m_bUseReducedDemandK = enabled;
+      RatingSpecificationChanged(true);
+   }
 }
 
 void CProjectAgentImp::SetADTT(Int16 adtt)

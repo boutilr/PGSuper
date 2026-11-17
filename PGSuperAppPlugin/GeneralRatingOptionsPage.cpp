@@ -24,8 +24,11 @@
 //
 
 #include "stdafx.h"
+#include <LRFD/MBEManager.h>
 #include "resource.h"
 #include "PGSuperApp.h"
+
+#include "PsgLib\RatingLibraryEntry.h"
 
 #include "GeneralRatingOptionsPage.h"
 #include "RatingOptionsDlg.h"
@@ -73,6 +76,9 @@ void CGeneralRatingOptionsPage::DoDataExchange(CDataExchange* pDX)
    DDX_Keyword(pDX,IDC_ADTT,_T("Unknown"),m_Data.ADTT);
 
    DDX_Check_Bool(pDX, IDC_PEDESTRIAN, m_Data.bIncludePedestrianLiveLoad);
+   DDX_Check_Bool(pDX, IDC_MBE_ZERO_STRAIN, m_Data.bUseUncrackedMCFTAllowance);
+   DDX_Check_Bool(pDX, IDC_MBE_SIZE_EFFECT, m_Data.bNeglectPrestressSizeEffect);
+   DDX_Check_Bool(pDX, IDC_MBE_REDUCED_K, m_Data.bUseReducedDemandK);
 
    DDX_Check_Bool(pDX, IDC_DESIGN, m_Data.bDesignRating);
    DDX_Check_Bool(pDX, IDC_LEGAL,  m_Data.bLegalRating);
@@ -84,6 +90,7 @@ BEGIN_MESSAGE_MAP(CGeneralRatingOptionsPage, CPropertyPage)
 	//{{AFX_MSG_MAP(CGeneralRatingOptionsPage)
 	ON_COMMAND(ID_HELP, OnHelp)
    ON_NOTIFY_EX(TTN_NEEDTEXT,0,OnToolTipNotify)
+   ON_CBN_SELCHANGE(IDC_RATING_CRITERIA, OnRatingCriteriaChanged)
    ON_CBN_DROPDOWN(IDC_LOAD_RATING_EVENT, OnLoadRatingEventChanging)
    ON_CBN_SELCHANGE(IDC_LOAD_RATING_EVENT, OnLoadRatingEventChanged)
 	//}}AFX_MSG_MAP
@@ -111,9 +118,23 @@ BOOL CGeneralRatingOptionsPage::OnInitDialog()
 
    FillLoadRatingEventComboBox();
    CPropertyPage::OnInitDialog();
+   OnRatingCriteriaChanged();
 
    return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CGeneralRatingOptionsPage::OnRatingCriteriaChanged()
+{
+   CString name;
+   GetDlgItem(IDC_RATING_CRITERIA)->GetWindowText(name);
+   auto broker = EAFGetBroker();
+   GET_IFACE2(broker, ILibrary, library);
+   const auto* criteria = library->GetRatingEntry(name);
+   BOOL enabled = criteria && WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= criteria->GetSpecificationVersion();
+   GetDlgItem(IDC_MBE_ZERO_STRAIN)->EnableWindow(enabled);
+   GetDlgItem(IDC_MBE_SIZE_EFFECT)->EnableWindow(enabled);
+   GetDlgItem(IDC_MBE_REDUCED_K)->EnableWindow(enabled);
 }
 
 void CGeneralRatingOptionsPage::OnHelp() 

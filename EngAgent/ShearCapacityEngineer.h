@@ -21,8 +21,11 @@
 ///////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include <IFace/AnalysisResults.h>
 
 #include <Details.h>
+#include <array>
+#include <optional>
 
 /*****************************************************************************
 CLASS 
@@ -48,6 +51,12 @@ public:
 
    void ComputeShearCapacity(IntervalIndexType intervalIdx, pgsTypes::LimitState limitState, const pgsPointOfInterest& poi,const GDRCONFIG* pConfig, SHEARCAPACITYDETAILS* pmcd) const;
 
+   // One cache per rating point, interval and limit state, with one entry per tension side.
+   using RatingSectionCache = std::array<std::optional<SHEARCAPACITYDETAILS>, 2>;
+   void ComputeRatingShearCapacity(IntervalIndexType intervalIdx, pgsTypes::LimitState limitState,
+      const pgsPointOfInterest& poi, const RatingForceState& forces, RatingSectionCache& cache,
+      SHEARCAPACITYDETAILS* details) const;
+
    // concrete stress at girder centroid used to calculate shear capacity
    void ComputeFpc(const pgsPointOfInterest& pPoi, const GDRCONFIG* pConfig, FPCDETAILS* mcd) const;
 
@@ -66,12 +75,12 @@ private:
    StatusGroupIDType m_StatusGroupID;
    StatusCallbackIDType m_scidGirderDescriptionError;
 
-   bool GetGeneralInformation(IntervalIndexType intervalIdx, pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, const GDRCONFIG* pConfig, SHEARCAPACITYDETAILS* pscd) const;
-   bool GetInformation(IntervalIndexType intervalIdx, pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, const GDRCONFIG* pConfig, SHEARCAPACITYDETAILS* pscd) const;
+   bool GetGeneralInformation(IntervalIndexType intervalIdx, pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, const GDRCONFIG* pConfig, SHEARCAPACITYDETAILS* pscd, const RatingForceState* ratingForces = nullptr) const;
+   bool GetInformation(IntervalIndexType intervalIdx, pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, const GDRCONFIG* pConfig, SHEARCAPACITYDETAILS* pscd, const RatingForceState* ratingForces = nullptr) const;
    void ComputeShearCapacityDetails(IntervalIndexType intervalIdx, pgsTypes::LimitState limitState, const pgsPointOfInterest& poi,SHEARCAPACITYDETAILS* pmcd) const;
 
-   bool ComputeVc(const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const;
-   bool ComputeVcc(const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const;
+   bool ComputeVc(pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const;
+   bool ComputeVcc(pgsTypes::LimitState limitState, const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const;
    bool ComputeVuhpc(const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const;
    bool ComputeVs(const pgsPointOfInterest& poi, SHEARCAPACITYDETAILS* pscd) const;
 

@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include <cfloat>
 
 #include <PgsExt\PgsExtExp.h>
 #include <System\SectionValue.h>
@@ -53,6 +54,12 @@ public:
 
    pgsLongReinfShearArtifact& operator = (const pgsLongReinfShearArtifact& rOther) = default;
 
+   void SetVehicleName(const std::_tstring& name) { m_RatingVehicleName = name; }
+   const std::_tstring& GetVehicleName() const { return m_RatingVehicleName; }
+   void SetRatingModifier(Float64 modifier) { m_RatingModifier = modifier; }
+   void SetRatingFactor(Float64 factor) { m_RatingFactor = factor; m_HasRatingFactor = true; }
+   Float64 GetRatingFactor() const { return m_RatingFactor; }
+   bool HasRatingFactor() const { return m_HasRatingFactor; }
    Float64 GetFy() const;
    void SetFy(Float64 fy);
 
@@ -159,6 +166,10 @@ public:
 
 
 private:
+   std::_tstring m_RatingVehicleName;
+   Float64 m_RatingModifier{ 1.0 };
+   bool m_HasRatingFactor{ false };
+   Float64 m_RatingFactor{ DBL_MAX };
    Float64 m_Fy{0.0};
    Float64 m_Es{ 0.0 };
    Float64 m_As{ 0.0 };

@@ -53,6 +53,14 @@ public:
    virtual std::_tstring GetRatingSpecification() const = 0;
    virtual void SetRatingSpecification(const std::_tstring& spec) = 0;
 
+   // Optional MBE Fourth Edition rating allowances, saved per project.
+   virtual bool UseUncrackedMCFTAllowance() const = 0;
+   virtual void UseUncrackedMCFTAllowance(bool enabled) = 0;
+   virtual bool NeglectPrestressSizeEffect() const = 0;
+   virtual void NeglectPrestressSizeEffect(bool enabled) = 0;
+   virtual bool UseReducedDemandK() const = 0;
+   virtual void UseReducedDemandK(bool enabled) = 0;
+
    virtual void SetADTT(Int16 adtt) = 0;
    virtual Int16 GetADTT() const = 0; // < 0 = Unknown
 

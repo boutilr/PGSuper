@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include <cfloat>
 
 #include <PgsExt\PgsExtExp.h>
 #include <PgsExt\ReportPointOfInterest.h>
@@ -122,12 +123,30 @@ public:
    void SetHorizontalInterfaceShearArtifact(const pgsHorizontalShearArtifact& artifact);
    const pgsHorizontalShearArtifact& GetHorizontalInterfaceShearArtifact() const;
 
+   void SetLongitudinalVehicle(VehicleIndexType index, const std::_tstring& name, Float64 weight)
+   { m_LongVehicleIndex = index; m_LongVehicleName = name; m_LongVehicleWeight = weight; }
+   const std::_tstring& GetLongitudinalVehicleName() const { return m_LongVehicleName; }
+   const std::_tstring& GetVerticalVehicleName() const { return m_strVehicleName; }
+   VehicleIndexType GetVerticalVehicleIndex() const { return m_VehicleIndex; }
+   Float64 GetVerticalVehicleWeight() const { return m_VehicleWeight; }
+
+   // Explicit MBE 4 solutions: resistance is evaluated at the scaled truck load.
+   void SetIteratedRatingFactors(Float64 vertical, Float64 longitudinal);
+   bool HasIteratedRatingFactors() const { return m_HasIteratedRating; }
+   Float64 GetVerticalRatingFactor() const { return m_VerticalRF; }
+   Float64 GetLongitudinalRatingFactor() const { return m_LongitudinalRF; }
    Float64 GetRatingFactor() const;
 
 protected:
    void MakeCopy(const pgsShearRatingArtifact& rOther);
    void MakeAssignment(const pgsShearRatingArtifact& rOther);
 
+   VehicleIndexType m_LongVehicleIndex = INVALID_INDEX;
+   std::_tstring m_LongVehicleName;
+   Float64 m_LongVehicleWeight = 0;
+   bool m_HasIteratedRating = false;
+   Float64 m_VerticalRF = DBL_MAX;
+   Float64 m_LongitudinalRF = DBL_MAX;
    mutable bool m_bRFComputed;
    mutable Float64 m_RF;
 
