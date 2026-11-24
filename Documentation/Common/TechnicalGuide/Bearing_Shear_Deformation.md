@@ -13,34 +13,35 @@ In PGSuper, points of longitudinal fixity in the superstructure are assumed to b
 
 The following formula is used to compute the factored thermal movement:
 
-$$\Delta_{\text{thermal}} = \Delta_0 \times \alpha \times L_{pf} \times (T_{\max} - T_{\min})$$
+\f[
+\Delta_{\text{thermal}} = \Delta_0 \times \alpha \times L_{pf} \times (T_{\max} - T_{\min})
+\f]
 
 where
 
-$$\Delta_0 = \text{thermal movement factor}$$
-
-$$\alpha = \text{coefficient of thermal expansion}$$
-
-$$L_{pf} = \text{distance from bearing to adjacent point of longitudinal fixity}$$
-
-$$(T_{\max} - T_{\min}) = \text{temperature range based on Procedure A (Article 3.12)}$$
+- \f$ \Delta_0 \f$ is the thermal movement factor.
+- \f$ \alpha \f$ is the coefficient of thermal expansion.
+- \f$ L_{pf} \f$ is the distance from bearing to adjacent point of longitudinal fixity.
+- \f$ (T_{\max} - T_{\min}) \f$ is the temperature range based on Procedure A (Article 3.12).
 
 ### Creep, Shrinkage and Relaxation
 
 For refined loss methods, the contribution of shear deformation provided by time-dependent effects are accounted for by computing the shortening of the bottom flange due to change in length of prestressing steel caused by creep, shrinkage, and relaxation using the following formula (PCI BDM Eq. 10.8.3.8.2-6):
 
-$$\Delta_s = -\Delta L_{bf} = -\frac{\left(1 + \dfrac{e_p y_b}{r ^ 2} \right)}{\left(1 + \dfrac{e_p ^ 2}{r ^ 2} \right)} \left(\Delta L_{ten} \right)$$
+\f[
+\Delta_s = -\Delta L_{bf} = -\frac{\left(1 + \dfrac{e_p y_b}{r ^ 2} \right)}{\left(1 + \dfrac{e_p ^ 2}{r ^ 2} \right)} \left(\Delta L_{ten} \right)
+\f]
 
 For the timestep method, bottom-flange shortening is computed using the following formula which sums the contributions of strain-induced deformations over the discrete segments along the length of the girder from the point of longitudinal fixity:
 
-$$\Delta_s = \sum_{i=1}^{n} \epsilon_{\text{avg},i} \cdot \Delta x_i$$
+\f[
+\Delta_s = \sum_{i=1}^{n} \epsilon_{\text{avg},i} \cdot \Delta x_i
+\f]
 
 where
 
-
-$$ \epsilon_{\text{avg}} = \text{average strain for each segment determined using the midpoint rule, which approximates the strain at the midpoint of the segment as representative value for that segment.}$$
-
-$$ \Delta x = \text{distance between the consecutive points of interest along the girder which is multiplied by the average strain to calculate the deformation contribution from that segment.}$$
+- \f$ \epsilon_{\text{avg}} \f$ is the average strain for each segment determined using the midpoint rule, which approximates the strain at the midpoint of the segment as representative value for that segment.
+- \f$ \Delta x \f$ is the distance between the consecutive points of interest along the girder which is multiplied by the average strain to calculate the deformation contribution from that segment.
 
 
 
